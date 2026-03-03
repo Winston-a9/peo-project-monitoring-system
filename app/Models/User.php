@@ -46,4 +46,12 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    /**
+     * Get the students associated with this user.
+     */
+    public function students()
+    {
+        return $this->hasMany(Student::class);
+    }
 }

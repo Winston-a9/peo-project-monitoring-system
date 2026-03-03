@@ -11,16 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-<<<<<<< HEAD
         // In your database migration (database/migrations/xxxx_create_users_table.php)
-=======
->>>>>>> 33baeb89651948608801199ef8dceec70f723e41
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->enum('role', ['admin', 'user','student'])->default('student');
             $table->rememberToken();
             $table->timestamps();
         });
