@@ -14,7 +14,11 @@ class DatabaseSeeder extends Seeder
      * Seed the application's database.
      */
     public function run(): void
+<<<<<<< HEAD
    {
+=======
+{
+>>>>>>> 33baeb89651948608801199ef8dceec70f723e41
     $this->call([
         AdminSeeder::class,
     ]);

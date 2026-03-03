@@ -11,7 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+<<<<<<< HEAD
         // In your database migration (database/migrations/xxxx_create_users_table.php)
+=======
+>>>>>>> 33baeb89651948608801199ef8dceec70f723e41
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name');
