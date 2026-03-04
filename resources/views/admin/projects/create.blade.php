@@ -1,0 +1,288 @@
+<x-app-layout>
+<x-slot name="header">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h2 style="font-family:'Syne',sans-serif; font-weight:800; font-size:1.6rem; letter-spacing:-0.03em; color:#1a0f00; display:flex; align-items:center; gap:0.6rem;">
+                <span style="background:#f97316; width:34px; height:34px; border-radius:9px; display:inline-flex; align-items:center; justify-content:center; box-shadow:0 2px 10px rgba(249,115,22,0.35);">
+                    <i class="fas fa-plus-circle" style="color:white; font-size:0.85rem;"></i>
+                </span>
+                Create New Project
+            </h2>
+            <p style="color:#6b4f35; font-size:0.82rem; margin-top:3px;">Add a new project to the system</p>
+        </div>
+        <a href="{{ route('admin.projects.index') }}"
+           style="display:inline-flex; align-items:center; gap:0.5rem; padding:0.6rem 1.1rem; border:1.5px solid rgba(26,15,0,0.1); border-radius:9px; font-weight:600; font-size:0.855rem; color:#6b4f35; text-decoration:none; background:white; transition:all 0.2s;"
+           onmouseover="this.style.borderColor='#f97316';this.style.color='#ea580c'"
+           onmouseout="this.style.borderColor='rgba(26,15,0,0.1)';this.style.color='#6b4f35'">
+            <i class="fas fa-arrow-left"></i> Back
+        </a>
+    </div>
+</x-slot>
+
+<style>
+    :root {
+        --orange-500: #f97316;
+        --orange-600: #ea580c;
+        --ink:        #1a0f00;
+        --ink-muted:  #6b4f35;
+        --surface:    #fffaf5;
+        --border:     rgba(249,115,22,0.14);
+    }
+
+    .form-card {
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        overflow: hidden;
+    }
+
+    .section-header {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--border);
+        background: #fffaf5;
+        display: flex; align-items: center; gap: 0.5rem;
+    }
+
+    .section-header span {
+        font-family: 'Syne', sans-serif;
+        font-weight: 700; font-size: 0.875rem;
+        color: var(--ink); letter-spacing: -0.01em;
+    }
+
+    .section-body { padding: 1.5rem; }
+
+    .field-label {
+        display: block;
+        font-size: 0.72rem; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.06em;
+        color: var(--ink-muted); margin-bottom: 0.45rem;
+    }
+
+    .field-input {
+        width: 100%;
+        padding: 0.7rem 1rem;
+        border: 1.5px solid rgba(26,15,0,0.1);
+        border-radius: 9px;
+        font-size: 0.875rem;
+        color: var(--ink);
+        background: white;
+        outline: none;
+        font-family: 'Instrument Sans', sans-serif;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .field-input:focus {
+        border-color: var(--orange-500);
+        box-shadow: 0 0 0 3px rgba(249,115,22,0.1);
+    }
+
+    .field-input.has-error { border-color: #ef4444; }
+
+    .field-error {
+        font-size: 0.775rem; color: #ef4444;
+        margin-top: 0.35rem; display: flex; align-items: center; gap: 0.3rem;
+    }
+
+    .prefix-wrap { position: relative; }
+    .prefix-wrap .prefix {
+        position: absolute; left: 0.875rem; top: 50%; transform: translateY(-50%);
+        color: var(--ink-muted); font-size: 0.85rem; font-weight: 600; pointer-events: none;
+    }
+    .prefix-wrap .field-input { padding-left: 1.75rem; }
+
+    .prog-bar-track {
+        height: 4px; background: rgba(249,115,22,0.1);
+        border-radius: 99px; margin-top: 0.5rem; overflow: hidden;
+    }
+    .prog-bar-fill { height: 100%; border-radius: 99px; transition: width 0.4s ease; }
+
+    @keyframes fadeUp {
+        from { opacity:0; transform:translateY(14px); }
+        to   { opacity:1; transform:translateY(0); }
+    }
+    .fade-up { animation: fadeUp 0.45s ease both; }
+</style>
+
+<div class="max-w-4xl mx-auto fade-up">
+    <form method="POST" action="{{ route('admin.projects.store') }}">
+        @csrf
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.25rem; margin-bottom:1.25rem;">
+
+            {{-- Project Information --}}
+            <div class="form-card" style="grid-column:1 / -1;">
+                <div class="section-header">
+                    <i class="fas fa-circle-info" style="color:var(--orange-500); font-size:0.85rem;"></i>
+                    <span>Project Information</span>
+                </div>
+                <div class="section-body" style="display:grid; grid-template-columns:1fr 1fr; gap:1.25rem;">
+
+                    <div>
+                        <label class="field-label">In Charge</label>
+                        <input type="text" name="in_charge" class="field-input {{ $errors->has('in_charge') ? 'has-error' : '' }}"
+                            placeholder="Who is responsible?" value="{{ old('in_charge') }}" required>
+                        @error('in_charge')<p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
+                    </div>
+
+                    <div>
+                        <label class="field-label">Project Title</label>
+                        <input type="text" name="project_title" class="field-input {{ $errors->has('project_title') ? 'has-error' : '' }}"
+                            placeholder="Give the project a name" value="{{ old('project_title') }}" required>
+                        @error('project_title')<p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
+                    </div>
+
+                    <div>
+                        <label class="field-label">Location</label>
+                        <input type="text" name="location" class="field-input {{ $errors->has('location') ? 'has-error' : '' }}"
+                            placeholder="Project location" value="{{ old('location') }}" required>
+                        @error('location')<p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
+                    </div>
+
+                    <div>
+                        <label class="field-label">Contractor</label>
+                        <input type="text" name="contractor" class="field-input {{ $errors->has('contractor') ? 'has-error' : '' }}"
+                            placeholder="Contractor company" value="{{ old('contractor') }}" required>
+                        @error('contractor')<p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
+                    </div>
+
+                    <div>
+                        <label class="field-label">Contract Amount</label>
+                        <div class="prefix-wrap">
+                            <span class="prefix">₱</span>
+                            <input type="number" name="contract_amount" class="field-input {{ $errors->has('contract_amount') ? 'has-error' : '' }}"
+                                placeholder="0.00" value="{{ old('contract_amount', 0) }}" min="0" step="0.01" required>
+                        </div>
+                        @error('contract_amount')<p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
+                    </div>
+
+                    <div>
+                        <label class="field-label">Status</label>
+                        <select name="status" class="field-input" id="status_sel" onchange="toggleCompletedAt()"
+                            style="appearance:none; background-image:url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%236b4f35%22 stroke-width=%222%22%3E%3Cpath d=%22M6 9l6 6 6-6%22/%3E%3C/svg%3E'); background-position:right 0.6rem center; background-repeat:no-repeat; background-size:1.1em; padding-right:2rem; cursor:pointer;">
+                            <option value="ongoing"   {{ old('status') == 'ongoing'   ? 'selected' : '' }}>Ongoing</option>
+                            <option value="completed" {{ old('status') == 'completed' ? 'selected' : '' }}>Completed</option>
+                        </select>
+                    </div>
+
+                    <div id="completed_at_field" class="{{ old('status') == 'completed' ? '' : 'hidden' }}" style="grid-column:1/-1;">
+                        <label class="field-label">Date Completed</label>
+                        <input type="date" name="completed_at" class="field-input {{ $errors->has('completed_at') ? 'has-error' : '' }}"
+                            value="{{ old('completed_at') }}">
+                        @error('completed_at')<p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
+                    </div>
+
+                </div>
+            </div>
+
+            {{-- Contract Dates --}}
+            <div class="form-card">
+                <div class="section-header">
+                    <i class="fas fa-calendar-days" style="color:var(--orange-500); font-size:0.85rem;"></i>
+                    <span>Contract Dates</span>
+                </div>
+                <div class="section-body" style="display:flex; flex-direction:column; gap:1.1rem;">
+                    <div>
+                        <label class="field-label">Date Started</label>
+                        <input type="date" name="date_started" class="field-input {{ $errors->has('date_started') ? 'has-error' : '' }}"
+                            value="{{ old('date_started') }}" required>
+                        @error('date_started')<p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
+                    </div>
+                    <div>
+                        <label class="field-label">Original Expiry</label>
+                        <input type="date" name="original_contract_expiry" class="field-input {{ $errors->has('original_contract_expiry') ? 'has-error' : '' }}"
+                            value="{{ old('original_contract_expiry') }}" required>
+                        @error('original_contract_expiry')<p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
+                    </div>
+                </div>
+            </div>
+
+            {{-- Progress --}}
+            <div class="form-card">
+                <div class="section-header">
+                    <i class="fas fa-chart-bar" style="color:var(--orange-500); font-size:0.85rem;"></i>
+                    <span>Progress</span>
+                </div>
+                <div class="section-body" style="display:flex; flex-direction:column; gap:1.1rem;">
+                    <div>
+                        <label class="field-label">As Planned <span style="font-weight:400; text-transform:none; letter-spacing:0; color:#9ca3af;">(%)</span></label>
+                        <div class="prefix-wrap" style="position:relative;">
+                            <input type="number" name="as_planned" id="as_planned" class="field-input"
+                                style="padding-right:2.5rem;" placeholder="0" value="{{ old('as_planned') }}" min="0" max="100" step="0.01" oninput="liveSlippage()">
+                            <span style="position:absolute; right:0.875rem; top:50%; transform:translateY(-50%); color:var(--ink-muted); font-size:0.8rem; font-weight:600;">%</span>
+                        </div>
+                        <div class="prog-bar-track"><div class="prog-bar-fill" id="ap_bar" style="background:var(--orange-500); width:0%;"></div></div>
+                    </div>
+                    <div>
+                        <label class="field-label">Work Done <span style="font-weight:400; text-transform:none; letter-spacing:0; color:#9ca3af;">(%)</span></label>
+                        <div style="position:relative;">
+                            <input type="number" name="work_done" id="work_done" class="field-input"
+                                style="padding-right:2.5rem;" placeholder="0" value="{{ old('work_done') }}" min="0" max="100" step="0.01" oninput="liveSlippage()">
+                            <span style="position:absolute; right:0.875rem; top:50%; transform:translateY(-50%); color:var(--ink-muted); font-size:0.8rem; font-weight:600;">%</span>
+                        </div>
+                        <div class="prog-bar-track"><div class="prog-bar-fill" id="wd_bar" style="background:#3b82f6; width:0%;"></div></div>
+                    </div>
+                    <div>
+                        <label class="field-label">Slippage <span style="font-weight:400; text-transform:none; letter-spacing:0; color:#9ca3af;">(auto-calculated)</span></label>
+                        <div style="position:relative;">
+                            <input type="number" name="slippage" id="slippage" class="field-input"
+                                style="padding-right:2.5rem; background:#fffaf5; cursor:not-allowed;" readonly value="{{ old('slippage', 0) }}">
+                            <span style="position:absolute; right:0.875rem; top:50%; transform:translateY(-50%); color:var(--ink-muted); font-size:0.8rem; font-weight:600;">%</span>
+                        </div>
+                        <p id="slippage_label" style="font-size:0.75rem; margin-top:0.4rem; font-weight:600; color:#9ca3af;"></p>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Remarks --}}
+            <div class="form-card" style="grid-column:1/-1;">
+                <div class="section-header">
+                    <i class="fas fa-comment-dots" style="color:var(--orange-500); font-size:0.85rem;"></i>
+                    <span>Remarks / Recommendation <span style="font-weight:400; font-family:'Instrument Sans',sans-serif; letter-spacing:0; font-size:0.78rem; color:#9ca3af;">(optional)</span></span>
+                </div>
+                <div class="section-body">
+                    <textarea name="remarks_recommendation" rows="4" class="field-input" style="resize:none;"
+                        placeholder="Enter any remarks or recommendations…">{{ old('remarks_recommendation') }}</textarea>
+                </div>
+            </div>
+
+        </div>
+
+        {{-- Actions --}}
+        <div style="display:flex; gap:0.875rem; padding-top:0.25rem;">
+            <button type="submit"
+                style="display:inline-flex; align-items:center; gap:0.5rem; padding:0.75rem 1.75rem; background:var(--orange-500); color:white; font-weight:700; font-size:0.9rem; border-radius:10px; border:none; cursor:pointer; box-shadow:0 3px 14px rgba(249,115,22,0.38); font-family:'Instrument Sans',sans-serif; transition:all 0.2s;"
+                onmouseover="this.style.background='#ea580c';this.style.transform='translateY(-1px)'"
+                onmouseout="this.style.background='#f97316';this.style.transform='translateY(0)'">
+                <i class="fas fa-save"></i> Create Project
+            </button>
+            <a href="{{ route('admin.projects.index') }}"
+               style="display:inline-flex; align-items:center; gap:0.5rem; padding:0.75rem 1.5rem; border:1.5px solid rgba(26,15,0,0.1); border-radius:10px; font-weight:600; font-size:0.875rem; color:var(--ink-muted); text-decoration:none; background:white; transition:all 0.2s;"
+               onmouseover="this.style.borderColor='var(--orange-500)';this.style.color='var(--orange-600)'"
+               onmouseout="this.style.borderColor='rgba(26,15,0,0.1)';this.style.color='var(--ink-muted)'">
+                <i class="fas fa-times"></i> Cancel
+            </a>
+        </div>
+
+    </form>
+</div>
+
+<script>
+    function toggleCompletedAt() {
+        const v = document.getElementById('status_sel').value;
+        document.getElementById('completed_at_field').classList.toggle('hidden', v !== 'completed');
+    }
+
+    function liveSlippage() {
+        const ap = parseFloat(document.getElementById('as_planned').value) || 0;
+        const wd = parseFloat(document.getElementById('work_done').value) || 0;
+        const sl = (wd - ap).toFixed(2);
+        document.getElementById('slippage').value = sl;
+        document.getElementById('ap_bar').style.width = Math.min(ap, 100) + '%';
+        document.getElementById('wd_bar').style.width = Math.min(wd, 100) + '%';
+        const lbl = document.getElementById('slippage_label');
+        if (sl > 0)      { lbl.style.color='#16a34a'; lbl.innerHTML='<i class="fas fa-arrow-up"></i> Ahead of schedule'; }
+        else if (sl < 0) { lbl.style.color='#dc2626'; lbl.innerHTML='<i class="fas fa-arrow-down"></i> Behind schedule'; }
+        else             { lbl.style.color='#9ca3af'; lbl.innerHTML='<i class="fas fa-minus"></i> On schedule'; }
+    }
+</script>
+</x-app-layout>
