@@ -2,13 +2,8 @@
 
 namespace App\Http\Controllers\Auth;
 
-<<<<<<< HEAD
 use App\Http\Controllers\Controller;
 use App\Models\User;
-=======
-use App\Models\User;
-use App\Http\Controllers\Controller;
->>>>>>> 89caed72e1a46b970403232f253207870b3ea870
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -44,20 +39,12 @@ class RegisteredUserController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-<<<<<<< HEAD
-=======
-            'role' => 'user', // Default new users to 'user' role
->>>>>>> 89caed72e1a46b970403232f253207870b3ea870
         ]);
 
         event(new Registered($user));
 
         Auth::login($user);
 
-<<<<<<< HEAD
         return redirect(route('dashboard', absolute: false));
-=======
-        return redirect()->route('user.dashboard');
->>>>>>> 89caed72e1a46b970403232f253207870b3ea870
     }
 }
