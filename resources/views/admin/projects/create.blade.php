@@ -223,12 +223,22 @@
                     </div>
                     <div>
                         <label class="field-label">Slippage <span style="font-weight:400; text-transform:none; letter-spacing:0; color:#9ca3af;">(auto-calculated)</span></label>
-                        <div style="position:relative;">
-                            <input type="number" name="slippage" id="slippage" class="field-input"
-                                style="padding-right:2.5rem; background:#fffaf5; cursor:not-allowed;" readonly value="{{ old('slippage', 0) }}">
-                            <span style="position:absolute; right:0.875rem; top:50%; transform:translateY(-50%); color:var(--ink-muted); font-size:0.8rem; font-weight:600;">%</span>
+                        
+                        {{-- Hidden input so slippage still submits with the form --}}
+                        <input type="hidden" name="slippage" id="slippage" value="{{ old('slippage', 0) }}">
+
+                        <div id="slippage-display" style="
+                            display:flex; align-items:center; justify-content:space-between;
+                            padding:0.75rem 1rem;
+                            border:1.5px solid rgba(26,15,0,0.08);
+                            border-radius:9px;
+                            background:#fffaf5;
+                            min-height:42px;">
+                            <p id="slippage_label" style="font-size:0.825rem; font-weight:600; color:#9ca3af;">
+                                <i class="fas fa-minus"></i> Enter values above
+                            </p>
+                            <span id="slippage-value" style="font-family:'Syne',sans-serif; font-size:1.15rem; font-weight:800; color:#9ca3af;">—</span>
                         </div>
-                        <p id="slippage_label" style="font-size:0.75rem; margin-top:0.4rem; font-weight:600; color:#9ca3af;"></p>
                     </div>
                 </div>
             </div>
@@ -273,16 +283,50 @@
     }
 
     function liveSlippage() {
-        const ap = parseFloat(document.getElementById('as_planned').value) || 0;
-        const wd = parseFloat(document.getElementById('work_done').value) || 0;
-        const sl = (wd - ap).toFixed(2);
-        document.getElementById('slippage').value = sl;
-        document.getElementById('ap_bar').style.width = Math.min(ap, 100) + '%';
-        document.getElementById('wd_bar').style.width = Math.min(wd, 100) + '%';
-        const lbl = document.getElementById('slippage_label');
-        if (sl > 0)      { lbl.style.color='#16a34a'; lbl.innerHTML='<i class="fas fa-arrow-up"></i> Ahead of schedule'; }
-        else if (sl < 0) { lbl.style.color='#dc2626'; lbl.innerHTML='<i class="fas fa-arrow-down"></i> Behind schedule'; }
-        else             { lbl.style.color='#9ca3af'; lbl.innerHTML='<i class="fas fa-minus"></i> On schedule'; }
+    const ap = parseFloat(document.getElementById('as_planned').value);
+    const wd = parseFloat(document.getElementById('work_done').value);
+
+    document.getElementById('ap_bar').style.width = Math.min(ap || 0, 100) + '%';
+    document.getElementById('wd_bar').style.width = Math.min(wd || 0, 100) + '%';
+
+    const lbl     = document.getElementById('slippage_label');
+    const valEl   = document.getElementById('slippage-value');
+    const display = document.getElementById('slippage-display');
+
+    if (isNaN(ap) || isNaN(wd)) {
+        lbl.style.color   = '#9ca3af';
+        lbl.innerHTML     = '<i class="fas fa-minus"></i> Enter values above';
+        valEl.textContent = '—';
+        valEl.style.color = '#9ca3af';
+        display.style.borderColor = 'rgba(26,15,0,0.08)';
+        document.getElementById('slippage').value = 0;
+        return;
     }
+
+    const sl = (wd - ap).toFixed(2);
+    document.getElementById('slippage').value = sl;
+
+    if (sl > 0) {
+        lbl.style.color        = '#16a34a';
+        lbl.innerHTML          = '<i class="fas fa-arrow-up"></i> Ahead of schedule';
+        valEl.style.color      = '#16a34a';
+        display.style.borderColor = 'rgba(22,163,74,0.2)';
+        display.style.background  = 'rgba(22,163,74,0.04)';
+    } else if (sl < 0) {
+        lbl.style.color        = '#dc2626';
+        lbl.innerHTML          = '<i class="fas fa-arrow-down"></i> Behind schedule';
+        valEl.style.color      = '#dc2626';
+        display.style.borderColor = 'rgba(220,38,38,0.2)';
+        display.style.background  = 'rgba(220,38,38,0.04)';
+    } else {
+        lbl.style.color        = '#9ca3af';
+        lbl.innerHTML          = '<i class="fas fa-minus"></i> On schedule';
+        valEl.style.color      = '#9ca3af';
+        display.style.borderColor = 'rgba(26,15,0,0.08)';
+        display.style.background  = '#fffaf5';
+    }
+
+    valEl.textContent = (sl > 0 ? '+' : '') + sl + '%';
+}
 </script>
 </x-app-layout>

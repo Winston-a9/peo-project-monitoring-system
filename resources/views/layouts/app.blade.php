@@ -38,14 +38,7 @@
             }
         </style>
 
-        <script>
-            function toggleSidebar() {
-                const sidebar = document.getElementById('sidebar');
-                const overlay = document.getElementById('sidebar-overlay');
-                sidebar.classList.toggle('-translate-x-full');
-                overlay.classList.toggle('hidden');
-            }
-        </script>
+        
     </head>
     <body class="font-sans antialiased">
         <div class="min-h-screen flex">
@@ -54,7 +47,7 @@
             @include('layouts.navigation')
 
             <!-- Main Content -->
-            <div class="flex-1 flex flex-col">
+                <div class="flex-1 flex flex-col" style="margin-left: var(--sb-width-collapsed); transition: margin-left 0.28s cubic-bezier(0.4,0,0.2,1);">
 
                 <!-- Page Heading -->
                 @isset($header)

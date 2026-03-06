@@ -244,15 +244,24 @@
                         @error('work_done')<p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
                     </div>
                     <div>
-                        <label class="field-label">Slippage <span style="font-weight:400; text-transform:none; letter-spacing:0; color:#9ca3af;">(auto)</span></label>
-                        <div style="position:relative;">
-                            <input type="number" name="slippage" id="slippage" class="field-input"
-                                style="padding-right:2.5rem; background:#fffaf5; cursor:not-allowed;"
-                                value="{{ old('slippage', $project->slippage) }}" readonly>
-                            <span style="position:absolute; right:0.875rem; top:50%; transform:translateY(-50%); color:var(--ink-muted); font-size:0.8rem; font-weight:600;">%</span>
-                        </div>
-                        <p id="slippage_label" style="font-size:0.75rem; margin-top:0.4rem; font-weight:600;"></p>
+                    <label class="field-label">Slippage <span style="font-weight:400; text-transform:none; letter-spacing:0; color:#9ca3af;">(auto)</span></label>
+
+                    {{-- Hidden input so slippage still submits with the form --}}
+                    <input type="hidden" name="slippage" id="slippage" value="{{ old('slippage', $project->slippage) }}">
+
+                    <div id="slippage-display" style="
+                        display:flex; align-items:center; justify-content:space-between;
+                        padding:0.75rem 1rem;
+                        border:1.5px solid rgba(26,15,0,0.08);
+                        border-radius:9px;
+                        background:#fffaf5;
+                        min-height:42px;">
+                        <p id="slippage_label" style="font-size:0.825rem; font-weight:600; color:#9ca3af;">
+                            <i class="fas fa-minus"></i> On schedule
+                        </p>
+                        <span id="slippage-value" style="font-family:'Syne',sans-serif; font-size:1.15rem; font-weight:800; color:#9ca3af;">—</span>
                     </div>
+                </div>
                 </div>
             </div>
 
@@ -352,26 +361,27 @@
                         <div id="documents-list" style="display:flex; flex-direction:column; gap:0.5rem;">
                             @foreach($savedDocuments as $i => $val)
                             @php $dayVal = $savedDays[$i] ?? 0; $isTE = str_starts_with($val ?? '', 'Time Extension'); @endphp
-                            <div class="dynamic-row">
-                                <select name="documents_pressed[]" class="dynamic-select"
-                                    onchange="onDocumentChange(this)">
-                                    <option value="">— Select Document —</option>
-                                    @foreach($documentOptions as $opt)
-                                        <option value="{{ $opt }}" {{ $val === $opt ? 'selected' : '' }}>{{ $opt }}</option>
-                                    @endforeach
-                                </select>
-                                <div class="days-wrap">
-                                    <input type="number" name="extension_days[]" class="days-input"
-                                        value="{{ $dayVal }}" min="0" placeholder="0"
-                                        {{ !$isTE ? 'disabled' : '' }}
-                                        oninput="recomputeRevisedExpiry()">
-                                    <span class="days-lbl">days</span>
-                                </div>
-                                <button type="button" class="remove-btn"
-                                    onclick="removeDocumentRow(this)" title="Remove">
-                                    <i class="fas fa-times"></i>
-                                </button>
+                        <div class="dynamic-row">
+                            <select name="documents_pressed[]" class="dynamic-select"
+                                onchange="onDocumentChange(this)">
+                                <option value="">— Select Document —</option>
+                                @foreach($documentOptions as $opt)
+                                    <option value="{{ $opt }}" {{ $val === $opt ? 'selected' : '' }}>{{ $opt }}</option>
+                                @endforeach
+                            </select>
+                            <div class="days-wrap">
+                                <input type="number" name="extension_days[]" class="days-input"
+                                    value="{{ $dayVal }}" min="0" placeholder="0"
+                                    {{ !$isTE ? 'disabled' : '' }}
+                                    data-te="{{ $isTE ? '1' : '0' }}"
+                                    oninput="recomputeRevisedExpiry()">
+                                <span class="days-lbl">days</span>
                             </div>
+                            <button type="button" class="remove-btn"
+                                onclick="removeDocumentRow(this)" title="Remove">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
                             @endforeach
                         </div>
                         {{-- Total days summary --}}
@@ -423,19 +433,55 @@ function toggleCompletedAt() {
         document.getElementById('completed_at_field').classList.toggle('hidden', document.getElementById('status_sel').value !== 'completed');
     }
 function computeSlippage() {
-        const ap = parseFloat(document.getElementById('as_planned').value) || 0;
-        const wd = parseFloat(document.getElementById('work_done').value) || 0;
-        const sl = (wd - ap).toFixed(2);
-        document.getElementById('slippage').value = sl;
-        document.getElementById('ap_bar').style.width = Math.min(ap, 100) + '%';
-        document.getElementById('wd_bar').style.width = Math.min(wd, 100) + '%';
-        const lbl = document.getElementById('slippage_label');
-        if      (sl > 0) { lbl.style.color='#16a34a'; lbl.innerHTML='<i class="fas fa-arrow-up"></i> Ahead of schedule'; }
-        else if (sl < 0) { lbl.style.color='#dc2626'; lbl.innerHTML='<i class="fas fa-arrow-down"></i> Behind schedule'; }
-        else             { lbl.style.color='#9ca3af'; lbl.innerHTML='<i class="fas fa-minus"></i> On schedule'; }
+    const ap = parseFloat(document.getElementById('as_planned').value);
+    const wd = parseFloat(document.getElementById('work_done').value);
+
+    document.getElementById('ap_bar').style.width = Math.min(ap || 0, 100) + '%';
+    document.getElementById('wd_bar').style.width = Math.min(wd || 0, 100) + '%';
+
+    const lbl     = document.getElementById('slippage_label');
+    const valEl   = document.getElementById('slippage-value');
+    const display = document.getElementById('slippage-display');
+
+    if (isNaN(ap) || isNaN(wd)) {
+        lbl.style.color           = '#9ca3af';
+        lbl.innerHTML             = '<i class="fas fa-minus"></i> On schedule';
+        valEl.textContent         = '—';
+        valEl.style.color         = '#9ca3af';
+        display.style.borderColor = 'rgba(26,15,0,0.08)';
+        display.style.background  = '#fffaf5';
+        document.getElementById('slippage').value = 0;
+        return;
     }
 
-    /* ── Revised expiry auto-compute ── */
+    const sl = (wd - ap).toFixed(2);
+    document.getElementById('slippage').value = sl;
+
+    if (sl > 0) {
+        lbl.style.color           = '#16a34a';
+        lbl.innerHTML             = '<i class="fas fa-arrow-up"></i> Ahead of schedule';
+        valEl.style.color         = '#16a34a';
+        display.style.borderColor = 'rgba(22,163,74,0.2)';
+        display.style.background  = 'rgba(22,163,74,0.04)';
+    } else if (sl < 0) {
+        lbl.style.color           = '#dc2626';
+        lbl.innerHTML             = '<i class="fas fa-arrow-down"></i> Behind schedule';
+        valEl.style.color         = '#dc2626';
+        display.style.borderColor = 'rgba(220,38,38,0.2)';
+        display.style.background  = 'rgba(220,38,38,0.04)';
+    } else {
+        lbl.style.color           = '#9ca3af';
+        lbl.innerHTML             = '<i class="fas fa-minus"></i> On schedule';
+        valEl.style.color         = '#9ca3af';
+        display.style.borderColor = 'rgba(26,15,0,0.08)';
+        display.style.background  = '#fffaf5';
+    }
+
+    valEl.textContent = (sl > 0 ? '+' : '') + sl + '%';
+}
+
+
+/* ── Revised expiry auto-compute ── */
 function recomputeRevisedExpiry() {
     const originalVal = document.getElementById('original_contract_expiry').value;
     const rows = document.getElementById('documents-list').querySelectorAll('.dynamic-row');
@@ -444,25 +490,32 @@ function recomputeRevisedExpiry() {
     rows.forEach(row => {
         const sel  = row.querySelector('select');
         const days = row.querySelector('.days-input');
-        if (sel && days && sel.value.startsWith('Time Extension')) {
-            // Count days whether input is enabled or disabled (previously saved rows)
-            total += parseInt(days.value) || 0;
+        if (!sel || !days) return;
+
+        // Sum ALL Time Extension rows — even if input is disabled (read via .value directly)
+        if (sel.value.startsWith('Time Extension')) {
+            const v = parseInt(days.value) || 0;
+            total += v;
         }
     });
 
+    // Days summary badge
     const summaryEl  = document.getElementById('days-summary');
     const totalNumEl = document.getElementById('total-days-num');
     if (total > 0) {
-        totalNumEl.textContent = total + ' days';
+        totalNumEl.textContent = total + (total === 1 ? ' day' : ' days');
         summaryEl.style.display = 'flex';
     } else {
         summaryEl.style.display = 'none';
     }
 
+    // Revised expiry pill + field
     const pill     = document.getElementById('revised-preview-pill');
     const pillText = document.getElementById('revised-preview-text');
+
     if (total > 0 && originalVal) {
-        const base = new Date(originalVal);
+        // Always base off original — each TE row contributes its own days
+        const base = new Date(originalVal + 'T00:00:00'); // force local midnight, avoid UTC shift
         base.setDate(base.getDate() + total);
         const iso = base.toISOString().split('T')[0];
         document.getElementById('revised_contract_expiry').value = iso;
@@ -470,13 +523,11 @@ function recomputeRevisedExpiry() {
         pillText.textContent = fmt;
         pill.style.display = 'inline-flex';
     } else {
-        document.getElementById('revised_contract_expiry').value = '';
+        document.getElementById('revised_contract_expiry').value =
+            '{{ $project->revised_contract_expiry ? $project->revised_contract_expiry->format("Y-m-d") : "" }}';
         pill.style.display = 'none';
     }
 }
-
-    /* ── Document row: enable days only for Time Extension ── */
-    /* ── Document row: enable days only for Time Extension ── */
 function onDocumentChange(sel) {
     const row  = sel.closest('.dynamic-row');
     const days = row.querySelector('.days-input');
@@ -640,11 +691,22 @@ function refreshDocumentOptions() {
     }
 
    document.addEventListener('DOMContentLoaded', () => {
-        computeSlippage();
-        updateCount('issuances-list', 'issuance-count');
-        updateCount('documents-list', 'documents-count');
-        recomputeRevisedExpiry();
-        refreshDocumentOptions();
+    // Re-enable days inputs for saved Time Extension rows
+    // (they may have been rendered with disabled attr incorrectly)
+    document.getElementById('documents-list').querySelectorAll('.dynamic-row').forEach(row => {
+        const sel  = row.querySelector('select');
+        const days = row.querySelector('.days-input');
+        if (!sel || !days) return;
+        if (sel.value.startsWith('Time Extension')) {
+            days.disabled = false;
+        }
     });
+
+    computeSlippage();
+    updateCount('issuances-list', 'issuance-count');
+    updateCount('documents-list', 'documents-count');
+    recomputeRevisedExpiry();
+    refreshDocumentOptions();
+});
 </script>
 </x-app-layout>
