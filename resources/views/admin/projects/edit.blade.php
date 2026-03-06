@@ -199,16 +199,17 @@
                     </div>
                     <div>
                         <label class="field-label" style="display:flex; align-items:center; justify-content:space-between;">
-                            <span>Revised Expiry <span style="font-weight:400; text-transform:none; letter-spacing:0; color:#9ca3af;">(optional)</span></span>
+                            <span>Revised Expiry <span style="font-weight:400; text-transform:none; letter-spacing:0; color:#9ca3af;"></span></span>
                             <span id="revised-preview-pill" style="display:none; align-items:center; gap:0.3rem; padding:2px 9px; border-radius:99px; font-size:0.68rem; font-weight:700; background:rgba(34,197,94,0.1); color:#16a34a; border:1px solid rgba(34,197,94,0.25);">
                                 <i class="fas fa-calculator" style="font-size:0.6rem;"></i>
                                 <span id="revised-preview-text"></span>
                             </span>
                         </label>
                         <input type="date" name="revised_contract_expiry" id="revised_contract_expiry"
-                            class="field-input {{ $errors->has('revised_contract_expiry') ? 'has-error' : '' }}"
-                            value="{{ old('revised_contract_expiry', $project->revised_contract_expiry ? $project->revised_contract_expiry->format('Y-m-d') : '') }}">
-                        @error('revised_contract_expiry')<p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
+                            class="field-input readonly-field"
+                            value="{{ old('revised_contract_expiry', $project->revised_contract_expiry ? $project->revised_contract_expiry->format('Y-m-d') : '') }}"
+                            readonly>
+                            @error('revised_contract_expiry')<p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
                     </div>
                 </div>
             </div>
@@ -320,6 +321,9 @@
                             </div>
                             @endforeach
                         </div>
+                    </div>
+                    {{-- end LEFT --}}
+
                     {{-- Divider --}}
                     <div class="col-divider"></div>
 
@@ -415,10 +419,10 @@
 
 <script>
     /* ── Slippage ── */
-    function toggleCompletedAt() {
+function toggleCompletedAt() {
         document.getElementById('completed_at_field').classList.toggle('hidden', document.getElementById('status_sel').value !== 'completed');
     }
-    function computeSlippage() {
+function computeSlippage() {
         const ap = parseFloat(document.getElementById('as_planned').value) || 0;
         const wd = parseFloat(document.getElementById('work_done').value) || 0;
         const sl = (wd - ap).toFixed(2);
@@ -432,55 +436,119 @@
     }
 
     /* ── Revised expiry auto-compute ── */
-    function recomputeRevisedExpiry() {
-        const originalVal = document.getElementById('original_contract_expiry').value;
-        const rows = document.getElementById('documents-list').querySelectorAll('.dynamic-row');
+function recomputeRevisedExpiry() {
+    const originalVal = document.getElementById('original_contract_expiry').value;
+    const rows = document.getElementById('documents-list').querySelectorAll('.dynamic-row');
 
-        let total = 0;
-        rows.forEach(row => {
-            const sel  = row.querySelector('select');
-            const days = row.querySelector('.days-input');
-            if (sel && days && !days.disabled && sel.value.startsWith('Time Extension')) {
-                total += parseInt(days.value) || 0;
-            }
-        });
-
-        // Update total days badge
-        const summaryEl = document.getElementById('days-summary');
-        const totalNumEl = document.getElementById('total-days-num');
-        if (total > 0) {
-            totalNumEl.textContent = total + ' days';
-            summaryEl.style.display = 'flex';
-        } else {
-            summaryEl.style.display = 'none';
+    let total = 0;
+    rows.forEach(row => {
+        const sel  = row.querySelector('select');
+        const days = row.querySelector('.days-input');
+        if (sel && days && sel.value.startsWith('Time Extension')) {
+            // Count days whether input is enabled or disabled (previously saved rows)
+            total += parseInt(days.value) || 0;
         }
+    });
 
-        // Auto-fill revised expiry
-        const pill     = document.getElementById('revised-preview-pill');
-        const pillText = document.getElementById('revised-preview-text');
-        if (total > 0 && originalVal) {
-            const base = new Date(originalVal);
-            base.setDate(base.getDate() + total);
-            const iso = base.toISOString().split('T')[0];
-            document.getElementById('revised_contract_expiry').value = iso;
-            const fmt = base.toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
-            pillText.textContent = fmt;
-            pill.style.display = 'inline-flex';
-        } else {
-            pill.style.display = 'none';
-        }
+    const summaryEl  = document.getElementById('days-summary');
+    const totalNumEl = document.getElementById('total-days-num');
+    if (total > 0) {
+        totalNumEl.textContent = total + ' days';
+        summaryEl.style.display = 'flex';
+    } else {
+        summaryEl.style.display = 'none';
     }
+
+    const pill     = document.getElementById('revised-preview-pill');
+    const pillText = document.getElementById('revised-preview-text');
+    if (total > 0 && originalVal) {
+        const base = new Date(originalVal);
+        base.setDate(base.getDate() + total);
+        const iso = base.toISOString().split('T')[0];
+        document.getElementById('revised_contract_expiry').value = iso;
+        const fmt = base.toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
+        pillText.textContent = fmt;
+        pill.style.display = 'inline-flex';
+    } else {
+        document.getElementById('revised_contract_expiry').value = '';
+        pill.style.display = 'none';
+    }
+}
 
     /* ── Document row: enable days only for Time Extension ── */
-    function onDocumentChange(sel) {
-        const row  = sel.closest('.dynamic-row');
-        const days = row.querySelector('.days-input');
-        const isTE = sel.value.startsWith('Time Extension');
-        days.disabled = !isTE;
-        if (!isTE) days.value = 0;
-        updateCount('documents-list', 'documents-count');
-        recomputeRevisedExpiry();
+    /* ── Document row: enable days only for Time Extension ── */
+function onDocumentChange(sel) {
+    const row  = sel.closest('.dynamic-row');
+    const days = row.querySelector('.days-input');
+    const isTE = sel.value.startsWith('Time Extension');
+    days.disabled = !isTE;
+    if (!isTE) days.value = 0;
+    updateCount('documents-list', 'documents-count');
+    recomputeRevisedExpiry();
+    refreshDocumentOptions();
+}
+
+/* ── Figure out which Time Extensions are already used & what the next allowed one is ── */
+function getUsedTimeExtensions() {
+    const selects = document.getElementById('documents-list').querySelectorAll('select');
+    const used = new Set();
+    selects.forEach(s => {
+        if (s.value.startsWith('Time Extension')) used.add(s.value);
+    });
+    return used;
+}
+
+function getNextAllowedExtension(used) {
+    for (let i = 1; i <= 5; i++) {
+        const te = `Time Extension ${i}`;
+        if (!used.has(te)) return te; // first unused = next allowed
     }
+    return null; // all 5 used
+}
+
+function refreshDocumentOptions() {
+    const selects = Array.from(document.getElementById('documents-list').querySelectorAll('select'));
+
+    // Build used set from ALL rows (including current row's own selection)
+    const used = getUsedTimeExtensions();
+
+    // Find the highest TE number already used across all rows
+    let highestUsed = 0;
+    used.forEach(te => {
+        const n = parseInt(te.replace('Time Extension ', ''));
+        if (n > highestUsed) highestUsed = n;
+    });
+
+    // Next allowed = highestUsed + 1
+    const nextAllowedNum = highestUsed + 1;
+
+    selects.forEach(sel => {
+        const currentVal = sel.value;
+        const currentNum = currentVal.startsWith('Time Extension')
+            ? parseInt(currentVal.replace('Time Extension ', ''))
+            : null;
+
+        Array.from(sel.options).forEach(opt => {
+            if (!opt.value.startsWith('Time Extension')) return;
+
+            const num = parseInt(opt.value.replace('Time Extension ', ''));
+
+            // This row's own current selection is always visible
+            if (num === currentNum) {
+                opt.hidden = false;
+                opt.disabled = false;
+                return;
+            }
+
+            // Hide if already used by any row, OR not the next sequential one
+            const alreadyUsed   = used.has(opt.value);
+            const notNextInLine = num !== nextAllowedNum;
+
+            opt.hidden   = alreadyUsed || notNextInLine;
+            opt.disabled = alreadyUsed || notNextInLine;
+        });
+    });
+}
 
     /* ── Issuance rows ── */
     const ISSUANCE_OPTS = [
@@ -542,6 +610,7 @@
         row.innerHTML = documentRowHTML();
         document.getElementById('documents-list').appendChild(row);
         updateCount('documents-list', 'documents-count');
+        refreshDocumentOptions();
     }
     function removeDocumentRow(btn) {
         const list = document.getElementById('documents-list');
@@ -556,6 +625,7 @@
         btn.closest('.dynamic-row').remove();
         updateCount('documents-list', 'documents-count');
         recomputeRevisedExpiry();
+        refreshDocumentOptions();
     }
 
     /* ── Generic count chip updater ── */
@@ -569,11 +639,12 @@
         chip.style.borderColor = filled > 0 ? 'rgba(249,115,22,0.3)' : 'rgba(249,115,22,0.15)';
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
+   document.addEventListener('DOMContentLoaded', () => {
         computeSlippage();
         updateCount('issuances-list', 'issuance-count');
         updateCount('documents-list', 'documents-count');
         recomputeRevisedExpiry();
+        refreshDocumentOptions();
     });
 </script>
 </x-app-layout>

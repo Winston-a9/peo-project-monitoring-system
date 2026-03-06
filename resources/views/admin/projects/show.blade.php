@@ -34,8 +34,7 @@
     $issuances        = is_array($issuances)        ? array_values(array_filter($issuances))        : [];
     $documentsPressed = is_array($documentsPressed) ? array_values(array_filter($documentsPressed)) : [];
     $extensionDays    = is_array($extensionDays)    ? $extensionDays                                : [];
-    $totalDays        = (int) array_sum($extensionDays);
-@endphp
+    $totalDays = (int) array_sum(array_map(fn($d) => (int) $d, array_filter((array) $extensionDays)));@endphp
 
 <style>
     :root {

@@ -118,6 +118,24 @@ class ProjectController extends Controller
     array_filter($request->input('extension_days', []), fn($v) => $v !== null)
     );
 
+    // Recompute revised_contract_expiry from ALL Time Extension days combined
+    $documents = $request->input('documents_pressed', []);
+    $days      = $request->input('extension_days', []);
+    $totalDays = 0;
+
+    foreach ($documents as $i => $doc) {
+        if (str_starts_with($doc ?? '', 'Time Extension')) {
+            $totalDays += (int) ($days[$i] ?? 0);
+        }
+    }
+
+    if ($totalDays > 0) {
+        $data['revised_contract_expiry'] = \Carbon\Carbon::parse($request->original_contract_expiry)
+            ->addDays($totalDays)
+            ->toDateString();
+    } else {
+        $data['revised_contract_expiry'] = null;
+    }
 
     $project->update($data);
 
