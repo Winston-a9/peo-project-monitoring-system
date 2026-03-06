@@ -2,25 +2,98 @@
 <x-slot name="header">
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-            <h2 style="font-family:'Syne',sans-serif; font-weight:800; font-size:1.6rem; letter-spacing:-0.03em; color:#1a0f00; display:flex; align-items:center; gap:0.6rem;">
+            <h2 style="font-family:'Syne',sans-serif; font-weight:800; font-size:1.6rem; letter-spacing:-0.03em; color:var(--text-primary); display:flex; align-items:center; gap:0.6rem;">
                 <span style="background:#f97316; width:34px; height:34px; border-radius:9px; display:inline-flex; align-items:center; justify-content:center; box-shadow:0 2px 10px rgba(249,115,22,0.35);">
                     <i class="fas fa-edit" style="color:white; font-size:0.85rem;"></i>
                 </span>
                 Edit Project
             </h2>
-            <p style="color:#6b4f35; font-size:0.82rem; margin-top:3px;">
+            <p style="color:var(--text-secondary); font-size:0.82rem; margin-top:3px;">
                 Editing: <span style="font-weight:700; color:#f97316;">{{ $project->project_title }}</span>
             </p>
         </div>
-        <div style="display:flex; gap:0.6rem;">
+        <div style="display:flex; gap:0.6rem; align-items:center;">
             <a href="{{ route('admin.projects.show', $project) }}"
-               style="display:inline-flex; align-items:center; gap:0.4rem; padding:0.6rem 1rem; border:1.5px solid rgba(26,15,0,0.1); border-radius:9px; font-weight:600; font-size:0.825rem; color:#6b4f35; text-decoration:none; background:white; transition:all 0.2s;">
+               style="display:inline-flex; align-items:center; gap:0.4rem; padding:0.6rem 1rem; border:1.5px solid var(--border); border-radius:9px; font-weight:600; font-size:0.825rem; color:var(--text-secondary); text-decoration:none; background:var(--bg-secondary); transition:all 0.2s;">
                 <i class="fas fa-eye"></i> View
             </a>
             <a href="{{ route('admin.projects.index') }}"
-               style="display:inline-flex; align-items:center; gap:0.4rem; padding:0.6rem 1rem; border:1.5px solid rgba(26,15,0,0.1); border-radius:9px; font-weight:600; font-size:0.825rem; color:#6b4f35; text-decoration:none; background:white; transition:all 0.2s;">
+               style="display:inline-flex; align-items:center; gap:0.4rem; padding:0.6rem 1rem; border:1.5px solid var(--border); border-radius:9px; font-weight:600; font-size:0.825rem; color:var(--text-secondary); text-decoration:none; background:var(--bg-secondary); transition:all 0.2s;">
                 <i class="fas fa-arrow-left"></i> Back
             </a>
+            <!-- Theme Toggle Button -->
+            <button id="themeToggle" type="button" aria-label="Toggle dark mode" style="
+                background: var(--bg-secondary);
+                border: 1.5px solid var(--border);
+                border-radius: 10px;
+                padding: 0.5rem 0.95rem;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                color: var(--text-primary);
+                font-size: 0.9rem;
+                font-weight: 500;
+                white-space: nowrap;
+                position: relative;
+                z-index: 50;
+                font-family: 'Instrument Sans', sans-serif;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+                transition: all 0.3s ease;
+            " onmouseover="this.style.background='rgba(249,115,22,0.12)'; this.style.borderColor='rgba(249,115,22,0.4)'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)'" 
+               onmouseout="this.style.background='var(--bg-secondary)'; this.style.borderColor='var(--border)'; this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.05)'" 
+               onclick="toggleTheme()">
+                <i class="fas" id="themeIcon" style="color:#f97316; font-size: 0.95rem;"></i>
+                <span id="themeLabel" style="font-weight: 600;">Light</span>
+            </button>
+
+            <script>
+                function initTheme() {
+                    const html = document.documentElement;
+                    const currentTheme = html.classList.contains('dark') ? 'dark' : 'light';
+                    updateThemeButton(currentTheme);
+                }
+
+                function updateThemeButton(theme) {
+                    const icon = document.getElementById('themeIcon');
+                    const label = document.getElementById('themeLabel');
+                    
+                    if (theme === 'dark') {
+                        icon.className = 'fas fa-moon';
+                        label.textContent = 'Dark';
+                    } else {
+                        icon.className = 'fas fa-sun';
+                        label.textContent = 'Light';
+                    }
+                }
+
+                function toggleTheme() {
+                    const html = document.documentElement;
+                    const body = document.body;
+                    const currentTheme = html.classList.contains('dark') ? 'dark' : 'light';
+                    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+                    // Update DOM
+                    html.classList.remove(currentTheme);
+                    html.classList.add(newTheme);
+                    
+                    if (newTheme === 'dark') {
+                        body.classList.add('dark');
+                    } else {
+                        body.classList.remove('dark');
+                    }
+
+                    // Save preference
+                    localStorage.setItem('theme-mode', newTheme);
+                    
+                    // Update button
+                    updateThemeButton(newTheme);
+                }
+
+                // Initialize on page load
+                document.addEventListener('DOMContentLoaded', initTheme);
+                initTheme();
+            </script>
         </div>
     </div>
 </x-slot>
@@ -32,15 +105,33 @@
         --ink:        #1a0f00;
         --ink-muted:  #6b4f35;
         --border:     rgba(249,115,22,0.14);
+        --bg-primary: #ffffff;
+        --bg-secondary: #fffaf5;
+        --text-primary: #1a0f00;
+        --text-secondary: #6b4f35;
     }
-    .form-card { background:white; border:1px solid var(--border); border-radius:14px; overflow:hidden; }
-    .section-header { padding:1rem 1.5rem; border-bottom:1px solid var(--border); background:#fffaf5; display:flex; align-items:center; gap:0.5rem; }
+
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --bg-primary: #0f0f0f;
+            --bg-secondary: #1a1a1a;
+            --text-primary: #f5f5f0;
+            --text-secondary: #9ca3af;
+            --ink: #f5f5f0;
+            --ink-muted: #9ca3af;
+            --border: rgba(249,115,22,0.25);
+        }
+    }
+
+    body { color: var(--text-primary); transition: background 0.3s, color 0.3s; }
+    .form-card { background:var(--bg-primary); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+    .section-header { padding:1rem 1.5rem; border-bottom:1px solid var(--border); background:var(--bg-secondary); display:flex; align-items:center; gap:0.5rem; }
     .section-header span { font-family:'Syne',sans-serif; font-weight:700; font-size:0.875rem; color:var(--ink); }
     .section-body { padding:1.5rem; }
     .field-label { display:block; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-muted); margin-bottom:0.45rem; }
-    .field-input { width:100%; padding:0.7rem 1rem; border:1.5px solid rgba(26,15,0,0.1); border-radius:9px; font-size:0.875rem; color:var(--ink); background:white; outline:none; font-family:'Instrument Sans',sans-serif; transition:border-color 0.2s, box-shadow 0.2s; }
+    .field-input { width:100%; padding:0.7rem 1rem; border:1.5px solid var(--border); border-radius:9px; font-size:0.875rem; color:var(--text-primary); background:var(--bg-primary); outline:none; font-family:'Instrument Sans',sans-serif; transition:border-color 0.2s, box-shadow 0.2s; }
     .field-input:focus { border-color:var(--orange-500); box-shadow:0 0 0 3px rgba(249,115,22,0.1); }
-    .field-input.readonly-field { background:#fffaf5; cursor:not-allowed; color:var(--ink-muted); }
+    .field-input.readonly-field { background:var(--bg-secondary); cursor:not-allowed; color:var(--ink-muted); }
     .field-input.has-error { border-color:#ef4444; }
     .field-error { font-size:0.775rem; color:#ef4444; margin-top:0.35rem; display:flex; align-items:center; gap:0.3rem; }
     .prog-bar-track { height:4px; background:rgba(249,115,22,0.1); border-radius:99px; margin-top:0.5rem; overflow:hidden; }
@@ -55,10 +146,10 @@
     .dynamic-select {
         flex:1; min-width:0;
         padding:0.65rem 2.2rem 0.65rem 0.9rem;
-        border:1.5px solid rgba(26,15,0,0.1); border-radius:9px;
-        font-size:0.855rem; color:var(--ink); background:white; outline:none;
+        border:1.5px solid var(--border); border-radius:9px;
+        font-size:0.855rem; color:var(--text-primary); background:var(--bg-primary); outline:none;
         font-family:'Instrument Sans',sans-serif; appearance:none;
-        background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b4f35' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+        background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
         background-position:right 0.6rem center; background-repeat:no-repeat; background-size:1.1em;
         cursor:pointer; transition:border-color 0.2s, box-shadow 0.2s;
     }
@@ -68,13 +159,13 @@
     .days-wrap { position:relative; flex-shrink:0; width:96px; }
     .days-input {
         width:100%; padding:0.65rem 1.8rem 0.65rem 0.75rem;
-        border:1.5px solid rgba(26,15,0,0.1); border-radius:9px;
-        font-size:0.855rem; color:var(--ink); background:white; outline:none;
+        border:1.5px solid var(--border); border-radius:9px;
+        font-size:0.855rem; color:var(--text-primary); background:var(--bg-primary); outline:none;
         font-family:'Instrument Sans',sans-serif; text-align:center;
         transition:border-color 0.2s, box-shadow 0.2s;
     }
     .days-input:focus { border-color:var(--orange-500); box-shadow:0 0 0 3px rgba(249,115,22,0.1); }
-    .days-input:disabled { background:#f3f4f6; color:#9ca3af; cursor:not-allowed; border-color:rgba(26,15,0,0.06); }
+    .days-input:disabled { background:var(--bg-secondary); color:#9ca3af; cursor:not-allowed; border-color:var(--border); }
     .days-wrap .days-lbl {
         position:absolute; right:0.5rem; top:50%; transform:translateY(-50%);
         font-size:0.62rem; font-weight:700; text-transform:uppercase;

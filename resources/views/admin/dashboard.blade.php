@@ -12,11 +12,86 @@
                     Admin Dashboard
                 </h2>
             </div>
-            <div style="display:flex; align-items:center; gap:0.65rem; background:white; border:1px solid rgba(249,115,22,0.15); border-radius:10px; padding:0.5rem 0.9rem;">
-                <div style="width:8px; height:8px; background:#22c55e; border-radius:50%; animation:pulse-dot 2s infinite; flex-shrink:0;"></div>
-                <span style="font-size:0.8rem; font-weight:600; color:#6b4f35; font-family:'Instrument Sans',sans-serif;">
-                    {{ now()->format('l, F j, Y') }}
-                </span>
+            <div style="display:flex; align-items:center; gap:0.65rem;">
+                <div style="display:flex; align-items:center; gap:0.65rem; background:white; border:1px solid rgba(249,115,22,0.15); border-radius:10px; padding:0.5rem 0.9rem;">
+                    <div style="width:8px; height:8px; background:#22c55e; border-radius:50%; animation:pulse-dot 2s infinite; flex-shrink:0;"></div>
+                    <span style="font-size:0.8rem; font-weight:600; color:#6b4f35; font-family:'Instrument Sans',sans-serif;">
+                        {{ now()->format('l, F j, Y') }}
+                    </span>
+                </div>
+                <!-- Theme Toggle Button -->
+                <button id="themeToggle" type="button" aria-label="Toggle dark mode" style="
+                    background: var(--bg-secondary);
+                    border: 1.5px solid var(--border);
+                    border-radius: 10px;
+                    padding: 0.5rem 0.95rem;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    color: var(--text-primary);
+                    font-size: 0.9rem;
+                    font-weight: 500;
+                    white-space: nowrap;
+                    position: relative;
+                    z-index: 50;
+                    font-family: 'Instrument Sans', sans-serif;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+                    transition: all 0.3s ease;
+                " onmouseover="this.style.background='rgba(249,115,22,0.12)'; this.style.borderColor='rgba(249,115,22,0.4)'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)'"
+                   onmouseout="this.style.background='var(--bg-secondary)'; this.style.borderColor='var(--border)'; this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.05)'"
+                   onclick="toggleTheme()">
+                    <i class="fas" id="themeIcon" style="color:#f97316; font-size: 0.95rem;"></i>
+                    <span id="themeLabel" style="font-weight: 600;">Light</span>
+                </button>
+
+                <script>
+                    function initTheme() {
+                        const html = document.documentElement;
+                        const currentTheme = html.classList.contains('dark') ? 'dark' : 'light';
+                        updateThemeButton(currentTheme);
+                    }
+
+                    function updateThemeButton(theme) {
+                        const icon = document.getElementById('themeIcon');
+                        const label = document.getElementById('themeLabel');
+                        
+                        if (theme === 'dark') {
+                            icon.className = 'fas fa-moon';
+                            label.textContent = 'Dark';
+                        } else {
+                            icon.className = 'fas fa-sun';
+                            label.textContent = 'Light';
+                        }
+                    }
+
+                    function toggleTheme() {
+                        const html = document.documentElement;
+                        const body = document.body;
+                        const currentTheme = html.classList.contains('dark') ? 'dark' : 'light';
+                        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+                        // Update DOM
+                        html.classList.remove(currentTheme);
+                        html.classList.add(newTheme);
+                        
+                        if (newTheme === 'dark') {
+                            body.classList.add('dark');
+                        } else {
+                            body.classList.remove('dark');
+                        }
+
+                        // Save preference
+                        localStorage.setItem('theme-mode', newTheme);
+                        
+                        // Update button
+                        updateThemeButton(newTheme);
+                    }
+
+                    // Initialize on page load
+                    document.addEventListener('DOMContentLoaded', initTheme);
+                    initTheme();
+                </script>
             </div>
         </div>
     </x-slot>
@@ -32,7 +107,25 @@
             --ink:  #1a0f00;
             --muted:#6b4f35;
             --border: rgba(249,115,22,0.12);
+            --bg-primary: #ffffff;
+            --bg-secondary: #fffaf5;
+            --text-primary: #1a0f00;
+            --text-secondary: #6b4f35;
         }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --ink: #f5f5f0;
+                --muted: #9ca3af;
+                --border: rgba(249,115,22,0.25);
+                --bg-primary: #0f0f0f;
+                --bg-secondary: #1a1a1a;
+                --text-primary: #f5f5f0;
+                --text-secondary: #9ca3af;
+            }
+        }
+
+        body { color: var(--text-primary); transition: background 0.3s, color 0.3s; }
 
         @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:0.5;transform:scale(0.85);} }
         @keyframes fadeUp { from{opacity:0;transform:translateY(16px);} to{opacity:1;transform:translateY(0);} }
@@ -49,7 +142,7 @@
 
         /* Metric cards */
         .metric-card {
-            background: white;
+            background: var(--bg-primary);
             border: 1px solid var(--border);
             border-radius: 16px;
             padding: 1.4rem 1.5rem;
@@ -62,11 +155,11 @@
             content: '';
             position: absolute;
             inset: 0;
-            background: linear-gradient(135deg, rgba(249,115,22,0.03) 0%, transparent 60%);
+            background: linear-gradient(135deg, rgba(249,115,22,0.05) 0%, transparent 60%);
             opacity: 0;
             transition: opacity 0.3s;
         }
-        .metric-card:hover { transform: translateY(-5px); box-shadow: 0 16px 40px rgba(249,115,22,0.12), 0 4px 12px rgba(0,0,0,0.06); border-color: rgba(249,115,22,0.28); }
+        .metric-card:hover { transform: translateY(-5px); box-shadow: 0 16px 40px rgba(249,115,22,0.15); border-color: var(--o500); }
         .metric-card:hover::before { opacity: 1; }
         .metric-card:hover .metric-icon { transform: scale(1.12) rotate(-4deg); }
         .metric-card:hover .metric-bar-fill { filter: brightness(1.08); }
@@ -80,14 +173,14 @@
         .metric-val {
             font-family: 'Syne', sans-serif;
             font-size: 2.6rem; font-weight: 800;
-            color: var(--ink); line-height: 1;
+            color: var(--text-primary); line-height: 1;
             letter-spacing: -0.04em;
             animation: countUp 0.5s ease both;
         }
         .metric-label {
             font-size: 0.68rem; font-weight: 700;
             text-transform: uppercase; letter-spacing: 0.08em;
-            color: var(--muted); margin-bottom: 0.6rem;
+            color: var(--text-secondary); margin-bottom: 0.6rem;
         }
         .metric-sub { font-size: 0.73rem; color: #9ca3af; margin-top: 0.35rem; }
         .metric-bar {
@@ -110,14 +203,25 @@
 
         /* Welcome banner */
         .welcome-banner {
-            background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 50%, #fff7ed 100%);
-            background-size: 200% 100%;
             border: 1px solid rgba(249,115,22,0.2);
             border-radius: 16px;
             padding: 1.35rem 1.6rem;
             position: relative;
             overflow: hidden;
-            animation: shimmer 4s ease infinite;
+            color: var(--text-primary);
+        }
+        @media (prefers-color-scheme: light) {
+            .welcome-banner {
+                background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 50%, #fff7ed 100%);
+                background-size: 200% 100%;
+                animation: shimmer 4s ease infinite;
+            }
+        }
+        @media (prefers-color-scheme: dark) {
+            .welcome-banner {
+                background: linear-gradient(135deg, rgba(249,115,22,0.1) 0%, rgba(249,115,22,0.08) 50%, rgba(249,115,22,0.1) 100%);
+                background-size: 200% 100%;
+            }
         }
         .welcome-banner::after {
             content: '';
@@ -130,7 +234,7 @@
 
         /* Action cards */
         .action-card {
-            background: white;
+            background: var(--bg-primary);
             border: 1px solid var(--border);
             border-radius: 14px;
             padding: 1.25rem;
@@ -138,6 +242,7 @@
             display: flex; align-items: center; gap: 1rem;
             transition: all 0.22s ease;
             position: relative; overflow: hidden;
+            color: var(--text-primary);
         }
         .action-card::after {
             content: '';
@@ -190,7 +295,7 @@
             font-family: 'Syne', sans-serif;
             font-weight: 800;
             font-size: 0.8rem;
-            color: var(--ink);
+            color: var(--text-primary);
             text-align: center;
             line-height: 1.1;
         }
@@ -199,7 +304,7 @@
         .section-head {
             font-family: 'Syne', sans-serif;
             font-weight: 700; font-size: 0.9rem;
-            color: var(--ink);
+            color: var(--text-primary);
             display: flex; align-items: center; gap: 0.5rem;
             margin-bottom: 1rem; letter-spacing: -0.01em;
         }
@@ -208,23 +313,25 @@
         .recent-row {
             display: flex; align-items: center; gap: 0.75rem;
             padding: 0.7rem 0;
-            border-bottom: 1px solid rgba(249,115,22,0.06);
+            border-bottom: 1px solid var(--border);
             transition: background 0.15s;
+            color: var(--text-primary);
         }
         .recent-row:last-child { border-bottom: none; }
-        .recent-row:hover { background: rgba(249,115,22,0.025); border-radius: 8px; padding-left: 0.4rem; }
+        @media (prefers-color-scheme: light) { .recent-row:hover { background: rgba(249,115,22,0.025); border-radius: 8px; padding-left: 0.4rem; } }
+        @media (prefers-color-scheme: dark) { .recent-row:hover { background: rgba(249,115,22,0.1); border-radius: 8px; padding-left: 0.4rem; } }
 
         /* Panel card */
         .panel {
-            background: white;
+            background: var(--bg-primary);
             border: 1px solid var(--border);
             border-radius: 16px;
             overflow: hidden;
         }
         .panel-head {
             padding: 1rem 1.25rem;
-            border-bottom: 1px solid rgba(249,115,22,0.08);
-            background: #fffaf5;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-secondary);
         }
     </style>
 

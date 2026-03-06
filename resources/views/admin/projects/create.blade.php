@@ -2,20 +2,95 @@
 <x-slot name="header">
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-            <h2 style="font-family:'Syne',sans-serif; font-weight:800; font-size:1.6rem; letter-spacing:-0.03em; color:#1a0f00; display:flex; align-items:center; gap:0.6rem;">
+            <h2 style="font-family:'Syne',sans-serif; font-weight:800; font-size:1.6rem; letter-spacing:-0.03em; color:var(--text-primary); display:flex; align-items:center; gap:0.6rem;">
                 <span style="background:#f97316; width:34px; height:34px; border-radius:9px; display:inline-flex; align-items:center; justify-content:center; box-shadow:0 2px 10px rgba(249,115,22,0.35);">
                     <i class="fas fa-plus-circle" style="color:white; font-size:0.85rem;"></i>
                 </span>
                 Create New Project
             </h2>
-            <p style="color:#6b4f35; font-size:0.82rem; margin-top:3px;">Add a new project to the system</p>
+            <p style="color:var(--text-secondary); font-size:0.82rem; margin-top:3px;">Add a new project to the system</p>
         </div>
-        <a href="{{ route('admin.projects.index') }}"
-           style="display:inline-flex; align-items:center; gap:0.5rem; padding:0.6rem 1.1rem; border:1.5px solid rgba(26,15,0,0.1); border-radius:9px; font-weight:600; font-size:0.855rem; color:#6b4f35; text-decoration:none; background:white; transition:all 0.2s;"
-           onmouseover="this.style.borderColor='#f97316';this.style.color='#ea580c'"
-           onmouseout="this.style.borderColor='rgba(26,15,0,0.1)';this.style.color='#6b4f35'">
-            <i class="fas fa-arrow-left"></i> Back
-        </a>
+        <div style="display:flex; align-items:center; gap:1.25rem;">
+            <a href="{{ route('admin.projects.index') }}"
+               style="display:inline-flex; align-items:center; gap:0.5rem; padding:0.6rem 1.1rem; border:1.5px solid var(--border); border-radius:9px; font-weight:600; font-size:0.855rem; color:var(--text-secondary); text-decoration:none; background:var(--bg-secondary); transition:all 0.2s;"
+               onmouseover="this.style.borderColor='#f97316';this.style.color='#ea580c'"
+               onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-secondary)'">
+                <i class="fas fa-arrow-left"></i> Back
+            </a>
+            <!-- Theme Toggle Button -->
+            <button id="themeToggle" type="button" aria-label="Toggle dark mode" style="
+                background: var(--bg-secondary);
+                border: 1.5px solid var(--border);
+                border-radius: 10px;
+                padding: 0.5rem 0.95rem;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                color: var(--text-primary);
+                font-size: 0.9rem;
+                font-weight: 500;
+                white-space: nowrap;
+                position: relative;
+                z-index: 50;
+                font-family: 'Instrument Sans', sans-serif;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+                transition: all 0.3s ease;
+            " onmouseover="this.style.background='rgba(249,115,22,0.12)'; this.style.borderColor='rgba(249,115,22,0.4)'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)'" 
+               onmouseout="this.style.background='var(--bg-secondary)'; this.style.borderColor='var(--border)'; this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.05)'" 
+               onclick="toggleTheme()">
+                <i class="fas" id="themeIcon" style="color:#f97316; font-size: 0.95rem;"></i>
+                <span id="themeLabel" style="font-weight: 600;">Light</span>
+            </button>
+
+            <script>
+                function initTheme() {
+                    const html = document.documentElement;
+                    const currentTheme = html.classList.contains('dark') ? 'dark' : 'light';
+                    updateThemeButton(currentTheme);
+                }
+
+                function updateThemeButton(theme) {
+                    const icon = document.getElementById('themeIcon');
+                    const label = document.getElementById('themeLabel');
+                    
+                    if (theme === 'dark') {
+                        icon.className = 'fas fa-moon';
+                        label.textContent = 'Dark';
+                    } else {
+                        icon.className = 'fas fa-sun';
+                        label.textContent = 'Light';
+                    }
+                }
+
+                function toggleTheme() {
+                    const html = document.documentElement;
+                    const body = document.body;
+                    const currentTheme = html.classList.contains('dark') ? 'dark' : 'light';
+                    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+                    // Update DOM
+                    html.classList.remove(currentTheme);
+                    html.classList.add(newTheme);
+                    
+                    if (newTheme === 'dark') {
+                        body.classList.add('dark');
+                    } else {
+                        body.classList.remove('dark');
+                    }
+
+                    // Save preference
+                    localStorage.setItem('theme-mode', newTheme);
+                    
+                    // Update button
+                    updateThemeButton(newTheme);
+                }
+
+                // Initialize on page load
+                document.addEventListener('DOMContentLoaded', initTheme);
+                initTheme();
+            </script>
+        </div>
     </div>
 </x-slot>
 
@@ -27,10 +102,28 @@
         --ink-muted:  #6b4f35;
         --surface:    #fffaf5;
         --border:     rgba(249,115,22,0.14);
+        --bg-primary: #ffffff;
+        --bg-secondary: #fffaf5;
+        --text-primary: #1a0f00;
+        --text-secondary: #6b4f35;
     }
 
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --bg-primary: #0f0f0f;
+            --bg-secondary: #1a1a1a;
+            --text-primary: #f5f5f0;
+            --text-secondary: #9ca3af;
+            --ink: #f5f5f0;
+            --ink-muted: #9ca3af;
+            --border: rgba(249,115,22,0.25);
+        }
+    }
+
+    body { color: var(--text-primary); transition: background 0.3s, color 0.3s; }
+
     .form-card {
-        background: white;
+        background: var(--bg-primary);
         border: 1px solid var(--border);
         border-radius: 14px;
         overflow: hidden;
@@ -39,7 +132,7 @@
     .section-header {
         padding: 1rem 1.5rem;
         border-bottom: 1px solid var(--border);
-        background: #fffaf5;
+        background: var(--bg-secondary);
         display: flex; align-items: center; gap: 0.5rem;
     }
 
@@ -61,11 +154,11 @@
     .field-input {
         width: 100%;
         padding: 0.7rem 1rem;
-        border: 1.5px solid rgba(26,15,0,0.1);
+        border: 1.5px solid var(--border);
         border-radius: 9px;
         font-size: 0.875rem;
-        color: var(--ink);
-        background: white;
+        color: var(--text-primary);
+        background: var(--bg-primary);
         outline: none;
         font-family: 'Instrument Sans', sans-serif;
         transition: border-color 0.2s, box-shadow 0.2s;

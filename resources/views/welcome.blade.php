@@ -8,6 +8,17 @@
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700|syne:700,800" rel="stylesheet" />
 
+        <!-- Force Light Mode on Welcome Page -->
+        <script>
+            (function() {
+                const html = document.documentElement;
+                html.classList.remove('dark');
+                html.classList.add('light');
+                document.body?.classList.remove('dark');
+                document.documentElement.setAttribute('data-page', 'welcome');
+            })();
+        </script>
+
         @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
             @vite(['resources/css/app.css', 'resources/js/app.js'])
         @endif
@@ -463,7 +474,7 @@
 
         <!-- Hero -->
         <section class="hero">
-            <div class="eyebrow">Project Engineering Office</div>
+            <div class="eyebrow">Province Engineering Office</div>
 
             <h1>
                 Monitor Every<br>

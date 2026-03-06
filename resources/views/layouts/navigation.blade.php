@@ -674,4 +674,6 @@
     window.toggleSidebar = function () {
         sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
     };
+
+
 </script>

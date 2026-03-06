@@ -2,19 +2,94 @@
     <x-slot name="header">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-                <h2 style="font-family:'Syne',sans-serif; font-weight:800; font-size:1.6rem; letter-spacing:-0.03em; color:#1a0f00; display:flex; align-items:center; gap:0.6rem;">
+                <h2 style="font-family:'Syne',sans-serif; font-weight:800; font-size:1.6rem; letter-spacing:-0.03em; color:var(--text-primary); display:flex; align-items:center; gap:0.6rem;">
                     <span style="background:#f97316; width:34px; height:34px; border-radius:9px; display:inline-flex; align-items:center; justify-content:center; box-shadow:0 2px 10px rgba(249,115,22,0.35);">
                         <i class="fas fa-chart-pie" style="color:white; font-size:0.85rem;"></i>
                     </span>
                     Project Overview
                 </h2>
-                <p style="color:#6b4f35; font-size:0.82rem; margin-top:3px;">
-                    Welcome back, <span style="font-weight:700; color:#f97316;">{{ Auth::user()->name }}</span> — read-only access
+                <p style="color:var(--text-secondary); font-size:0.82rem; margin-top:3px;">
+                    Welcome back, <span style="font-weight:700; color:#f97316;">{{ Auth::user()->name }}</span> 
                 </p>
             </div>
-            <div style="display:flex; align-items:center; gap:0.5rem; font-size:0.82rem; color:#6b4f35;">
-                <i class="fas fa-clock" style="color:#f97316;"></i>
-                <span>{{ now()->format('l, F j, Y') }}</span>
+            <div style="display:flex; align-items:center; gap:1.25rem;">
+                <div style="display:flex; align-items:center; gap:0.5rem; font-size:0.82rem; color:var(--text-secondary);">
+                    <i class="fas fa-clock" style="color:#f97316;"></i>
+                    <span>{{ now()->format('l, F j, Y') }}</span>
+                </div>
+                <!-- Theme Toggle Button -->
+                <button id="themeToggle" type="button" aria-label="Toggle dark mode" style="
+                    background: var(--bg-secondary);
+                    border: 1.5px solid var(--border);
+                    border-radius: 10px;
+                    padding: 0.5rem 0.95rem;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    color: var(--text-primary);
+                    font-size: 0.9rem;
+                    font-weight: 500;
+                    white-space: nowrap;
+                    position: relative;
+                    z-index: 50;
+                    font-family: 'Instrument Sans', sans-serif;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+                    transition: all 0.3s ease;
+                " onmouseover="this.style.background='rgba(249,115,22,0.12)'; this.style.borderColor='rgba(249,115,22,0.4)'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)'"
+                   onmouseout="this.style.background='var(--bg-secondary)'; this.style.borderColor='var(--border)'; this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.05)'"
+                   onclick="toggleTheme()">
+                    <i class="fas" id="themeIcon" style="color:#f97316; font-size: 0.95rem;"></i>
+                    <span id="themeLabel" style="font-weight: 600;">Light</span>
+                </button>
+
+                <script>
+                    function initTheme() {
+                        const html = document.documentElement;
+                        const currentTheme = html.classList.contains('dark') ? 'dark' : 'light';
+                        updateThemeButton(currentTheme);
+                    }
+
+                    function updateThemeButton(theme) {
+                        const icon = document.getElementById('themeIcon');
+                        const label = document.getElementById('themeLabel');
+                        
+                        if (theme === 'dark') {
+                            icon.className = 'fas fa-moon';
+                            label.textContent = 'Dark';
+                        } else {
+                            icon.className = 'fas fa-sun';
+                            label.textContent = 'Light';
+                        }
+                    }
+
+                    function toggleTheme() {
+                        const html = document.documentElement;
+                        const body = document.body;
+                        const currentTheme = html.classList.contains('dark') ? 'dark' : 'light';
+                        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+                        // Update DOM
+                        html.classList.remove(currentTheme);
+                        html.classList.add(newTheme);
+                        
+                        if (newTheme === 'dark') {
+                            body.classList.add('dark');
+                        } else {
+                            body.classList.remove('dark');
+                        }
+
+                        // Save preference
+                        localStorage.setItem('theme-mode', newTheme);
+                        
+                        // Update button
+                        updateThemeButton(newTheme);
+                    }
+
+                    // Initialize on page load
+                    document.addEventListener('DOMContentLoaded', initTheme);
+                    initTheme();
+                </script>
             </div>
         </div>
     </x-slot>
@@ -25,6 +100,9 @@
                         ->where(function($q){ $q->whereNull('revised_contract_expiry')->where('original_contract_expiry','>=',now())->orWhere('revised_contract_expiry','>=',now()); })
                         ->count();
         $completed = \App\Models\Project::where('status','completed')->count();
+        $active    = \App\Models\Project::where('status','ongoing')
+                        ->where(function($q){ $q->whereNull('revised_contract_expiry')->where('original_contract_expiry','>',now()->addDays(30))->orWhere('revised_contract_expiry','>',now()->addDays(30)); })
+                        ->count();
         $expiring  = \App\Models\Project::where('status','ongoing')
                         ->where(function($q){ $q->whereNull('revised_contract_expiry')->whereBetween('original_contract_expiry',[now(),now()->addDays(30)])->orWhereBetween('revised_contract_expiry',[now(),now()->addDays(30)]); })
                         ->count();
@@ -33,7 +111,7 @@
                         ->count();
 
         $segments = [
-            ['label'=>'Ongoing',   'count'=>$ongoing,   'color'=>'#3b82f6'],
+            ['label'=>'Active',    'count'=>$active,     'color'=>'#06b6d4'],
             ['label'=>'Completed', 'count'=>$completed, 'color'=>'#22c55e'],
             ['label'=>'Expired',   'count'=>$expired,   'color'=>'#ef4444'],
             ['label'=>'Expiring',  'count'=>$expiring,  'color'=>'#eab308'],
@@ -50,14 +128,6 @@
     @endphp
 
     <style>
-        :root {
-            --orange-500: #f97316;
-            --orange-600: #ea580c;
-            --ink:        #1a0f00;
-            --ink-muted:  #6b4f35;
-            --border:     rgba(249,115,22,0.14);
-        }
-
         @keyframes fadeUp {
             from { opacity:0; transform:translateY(14px); }
             to   { opacity:1; transform:translateY(0); }
@@ -68,38 +138,48 @@
         .fade-up-2 { animation: fadeUp 0.45s 0.08s ease both; }
         .fade-up-3 { animation: fadeUp 0.45s 0.16s ease both; }
 
-        .card { background:white; border:1px solid var(--border); border-radius:16px; overflow:hidden; }
+        .card { background:var(--bg-primary); border:1px solid var(--border); border-radius:16px; overflow:hidden; }
         .card-pad { padding:1.5rem; }
-        .card-header { padding:1rem 1.5rem; border-bottom:1px solid var(--border); background:#fffaf5; display:flex; align-items:center; gap:0.5rem; }
+        .card-header { padding:1rem 1.5rem; border-bottom:1px solid var(--border); background:var(--bg-secondary); display:flex; align-items:center; gap:0.5rem; }
         .card-header-title { font-family:'Syne',sans-serif; font-weight:700; font-size:0.875rem; color:var(--ink); }
 
         .stat-card {
-            background:white; border:1px solid var(--border); border-radius:14px;
+            background:var(--bg-primary); border:1px solid var(--border); border-radius:14px;
             padding:1.25rem 1.4rem; text-decoration:none; display:block;
             transition:transform 0.2s, box-shadow 0.2s, border-color 0.2s;
             position:relative; overflow:hidden;
         }
-        .stat-card:hover { transform:translateY(-3px); box-shadow:0 12px 32px rgba(249,115,22,0.1); border-color:rgba(249,115,22,0.28); }
-        .stat-count { font-family:'Syne',sans-serif; font-size:2.4rem; font-weight:800; letter-spacing:-0.04em; line-height:1; color:var(--ink); }
+        .stat-card:hover { transform:translateY(-3px); box-shadow:0 12px 32px rgba(249,115,22,0.15); border-color:var(--orange-500); }
+        .stat-count { font-family:'Syne',sans-serif; font-size:2.4rem; font-weight:800; letter-spacing:-0.04em; line-height:1; color:var(--text-primary); }
         .stat-bar { height:3px; background:rgba(249,115,22,0.08); border-radius:99px; margin-top:1rem; overflow:hidden; }
         .stat-bar-fill { height:100%; border-radius:99px; animation:barGrow 1.2s cubic-bezier(.16,1,.3,1) both 0.3s; }
 
         .prog-track { height:8px; background:rgba(249,115,22,0.08); border-radius:99px; overflow:hidden; }
         .prog-fill { height:100%; border-radius:99px; animation:barGrow 1.2s cubic-bezier(.16,1,.3,1) both 0.5s; }
 
-        .recent-row { display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:0.8rem 1.5rem; border-bottom:1px solid rgba(249,115,22,0.06); transition:background 0.15s; cursor:pointer; text-decoration:none; }
+        .recent-row { display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:0.8rem 1.5rem; border-bottom:1px solid var(--border); transition:background 0.15s; cursor:pointer; text-decoration:none; color:var(--text-primary); }
         .recent-row:last-child { border-bottom:none; }
-        .recent-row:hover { background:rgba(249,115,22,0.025); }
+        @media (prefers-color-scheme: light) { .recent-row:hover { background:rgba(249,115,22,0.025); } }
+        @media (prefers-color-scheme: dark) { .recent-row:hover { background:rgba(249,115,22,0.15); } }
 
         .badge { display:inline-flex; align-items:center; gap:0.3rem; padding:2px 9px; border-radius:99px; font-size:0.67rem; font-weight:700; border:1px solid; white-space:nowrap; }
-        .badge-ongoing   { background:rgba(59,130,246,0.08);  color:#2563eb; border-color:rgba(59,130,246,0.2); }
-        .badge-completed { background:rgba(34,197,94,0.08);   color:#16a34a; border-color:rgba(34,197,94,0.18); }
-        .badge-expiring  { background:rgba(234,179,8,0.1);    color:#b45309; border-color:rgba(234,179,8,0.22); }
-        .badge-expired   { background:rgba(239,68,68,0.08);   color:#dc2626; border-color:rgba(239,68,68,0.18); }
+        @media (prefers-color-scheme: light) {
+            .badge-ongoing   { background:rgba(59,130,246,0.08);  color:#2563eb; border-color:rgba(59,130,246,0.2); }
+            .badge-completed { background:rgba(34,197,94,0.08);   color:#16a34a; border-color:rgba(34,197,94,0.18); }
+            .badge-expiring  { background:rgba(234,179,8,0.1);    color:#b45309; border-color:rgba(234,179,8,0.22); }
+            .badge-expired   { background:rgba(239,68,68,0.08);   color:#dc2626; border-color:rgba(239,68,68,0.18); }
+        }
+        @media (prefers-color-scheme: dark) {
+            .badge-ongoing   { background:rgba(59,130,246,0.15);  color:#60a5fa; border-color:rgba(59,130,246,0.3); }
+            .badge-completed { background:rgba(34,197,94,0.15);   color:#4ade80; border-color:rgba(34,197,94,0.3); }
+            .badge-expiring  { background:rgba(234,179,8,0.15);    color:#facc15; border-color:rgba(234,179,8,0.3); }
+            .badge-expired   { background:rgba(239,68,68,0.15);   color:#f87171; border-color:rgba(239,68,68,0.3); }
+        }
 
-        .quick-link { display:flex; align-items:center; gap:0.75rem; padding:0.75rem 1.25rem; border-bottom:1px solid rgba(249,115,22,0.06); text-decoration:none; transition:background 0.15s, padding-left 0.18s; }
+        .quick-link { display:flex; align-items:center; gap:0.75rem; padding:0.75rem 1.25rem; border-bottom:1px solid var(--border); text-decoration:none; transition:background 0.15s, padding-left 0.18s; color:var(--text-primary); }
         .quick-link:last-child { border-bottom:none; }
-        .quick-link:hover { background:rgba(249,115,22,0.03); padding-left:1.5rem; }
+        @media (prefers-color-scheme: light) { .quick-link:hover { background:rgba(249,115,22,0.03); padding-left:1.5rem; } }
+        @media (prefers-color-scheme: dark) { .quick-link:hover { background:rgba(249,115,22,0.1); padding-left:1.5rem; } }
 
         .donut-segment { transition:opacity 0.2s, transform 0.2s; transform-origin:center; cursor:pointer; }
         .donut-segment:hover { opacity:0.82; transform:scale(1.05); }
@@ -374,20 +454,106 @@
     </div>
 
     <script>
-        // Donut hover — update center text
-        const center = document.getElementById('donut-center');
-        document.querySelectorAll('.donut-segment').forEach(seg => {
-            seg.addEventListener('mouseenter', () => {
-                center.innerHTML = `
-                    <span style="font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:#1a0f00;line-height:1;">${seg.dataset.count}</span>
-                    <span style="font-size:0.6rem;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-top:2px;">${seg.dataset.label}</span>
-                    <span style="font-size:0.65rem;font-weight:700;color:#9ca3af;">${seg.dataset.pct}%</span>`;
+        // ═══ THEME TOGGLE FUNCTIONALITY ═══
+        const htmlElement = document.documentElement;
+        const themeToggle = document.getElementById('themeToggle');
+        const themeLabel = document.getElementById('themeLabel');
+        const sunIcon = document.getElementById('sunIcon');
+
+        // Initialize theme from localStorage or system preference
+        function initializeTheme() {
+            const savedTheme = localStorage.getItem('userDashboardTheme') || 'auto';
+            
+            if (savedTheme === 'dark') {
+                htmlElement.classList.add('dark');
+                htmlElement.classList.remove('light');
+                updateThemeButton(true);
+            } else if (savedTheme === 'light') {
+                htmlElement.classList.add('light');
+                htmlElement.classList.remove('dark');
+                updateThemeButton(false);
+            } else {
+                // Auto mode: use system preference
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                if (prefersDark) {
+                    htmlElement.classList.add('dark');
+                    htmlElement.classList.remove('light');
+                } else {
+                    htmlElement.classList.add('light');
+                    htmlElement.classList.remove('dark');
+                }
+                updateThemeButton(prefersDark);
+            }
+        }
+
+        function updateThemeButton(isDark) {
+            if (isDark) {
+                themeLabel.textContent = 'Dark';
+                sunIcon.className = 'fas fa-moon';
+                sunIcon.style.color = '#60a5fa';
+            } else {
+                themeLabel.textContent = 'Light';
+                sunIcon.className = 'fas fa-sun';
+                sunIcon.style.color = '#f97316';
+            }
+        }
+
+        // Toggle theme on button click
+        if (themeToggle) {
+            themeToggle.addEventListener('click', function(e) {
+                e.preventDefault();
+                const isDark = htmlElement.classList.contains('dark');
+                
+                if (isDark) {
+                    // Switch to light mode
+                    htmlElement.classList.remove('dark');
+                    htmlElement.classList.add('light');
+                    localStorage.setItem('userDashboardTheme', 'light');
+                    updateThemeButton(false);
+                } else {
+                    // Switch to dark mode
+                    htmlElement.classList.remove('light');
+                    htmlElement.classList.add('dark');
+                    localStorage.setItem('userDashboardTheme', 'dark');
+                    updateThemeButton(true);
+                }
             });
-            seg.addEventListener('mouseleave', () => {
-                center.innerHTML = `
-                    <span style="font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;color:#1a0f00;line-height:1;">{{ $total }}</span>
-                    <span style="font-size:0.65rem;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Total</span>`;
-            });
+        }
+
+        // Initialize theme on page load
+        initializeTheme();
+
+        // Listen to system preference changes (if in auto mode)
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+            const savedTheme = localStorage.getItem('userDashboardTheme');
+            if (!savedTheme || savedTheme === 'auto') {
+                if (e.matches) {
+                    htmlElement.classList.add('dark');
+                    htmlElement.classList.remove('light');
+                } else {
+                    htmlElement.classList.add('light');
+                    htmlElement.classList.remove('dark');
+                }
+                updateThemeButton(e.matches);
+            }
         });
+
+        // ═══ DONUT HOVER FUNCTIONALITY ═══
+        const center = document.getElementById('donut-center');
+        if (center) {
+            document.querySelectorAll('.donut-segment').forEach(seg => {
+                seg.addEventListener('mouseenter', () => {
+                    center.innerHTML = `
+                        <span style="font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:var(--text-primary);line-height:1;">${seg.dataset.count}</span>
+                        <span style="font-size:0.6rem;color:var(--text-secondary);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-top:2px;">${seg.dataset.label}</span>
+                        <span style="font-size:0.65rem;font-weight:700;color:var(--text-secondary);">${seg.dataset.pct}%</span>`;
+                });
+                seg.addEventListener('mouseleave', () => {
+                    center.innerHTML = `
+                        <span style="font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;color:var(--text-primary);line-height:1;">{{ $total }}</span>
+                        <span style="font-size:0.65rem;color:var(--text-secondary);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Total</span>`;
+                });
+            });
+        }
     </script>
 </x-app-layout>

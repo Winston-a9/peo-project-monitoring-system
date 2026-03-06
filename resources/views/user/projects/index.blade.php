@@ -2,20 +2,95 @@
 <x-slot name="header">
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-            <h2 style="font-family:'Syne',sans-serif; font-weight:800; font-size:1.6rem; letter-spacing:-0.03em; color:#1a0f00; display:flex; align-items:center; gap:0.6rem;">
+            <h2 style="font-family:'Syne',sans-serif; font-weight:800; font-size:1.6rem; letter-spacing:-0.03em; color:var(--text-primary); display:flex; align-items:center; gap:0.6rem;">
                 <span style="background:#f97316; width:34px; height:34px; border-radius:9px; display:inline-flex; align-items:center; justify-content:center; box-shadow:0 2px 10px rgba(249,115,22,0.35);">
                     <i class="fas fa-folder-open" style="color:white; font-size:0.85rem;"></i>
                 </span>
                 Projects
             </h2>
-            <p style="color:#6b4f35; font-size:0.82rem; margin-top:3px;">Browse and view all projects — read-only</p>
+            <p style="color:var(--text-secondary); font-size:0.82rem; margin-top:3px;">Browse and view all projects</p>
         </div>
-        <a href="{{ route('user.dashboard') }}"
-           style="display:inline-flex; align-items:center; gap:0.4rem; padding:0.6rem 1rem; border:1.5px solid rgba(26,15,0,0.1); border-radius:9px; font-weight:600; font-size:0.825rem; color:#6b4f35; text-decoration:none; background:white; transition:all 0.2s;"
-           onmouseover="this.style.borderColor='#f97316';this.style.color='#ea580c'"
-           onmouseout="this.style.borderColor='rgba(26,15,0,0.1)';this.style.color='#6b4f35'">
-            <i class="fas fa-arrow-left"></i> Dashboard
-        </a>
+        <div style="display:flex; align-items:center; gap:1.25rem;">
+            <a href="{{ route('user.dashboard') }}"
+               style="display:inline-flex; align-items:center; gap:0.4rem; padding:0.6rem 1rem; border:1.5px solid var(--border); border-radius:9px; font-weight:600; font-size:0.825rem; color:var(--text-secondary); text-decoration:none; background:var(--bg-secondary); transition:all 0.2s;"
+               onmouseover="this.style.borderColor='#f97316';this.style.color='#ea580c'"
+               onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-secondary)'">
+                <i class="fas fa-arrow-left"></i> Dashboard
+            </a>
+            <!-- Theme Toggle Button -->
+            <button id="themeToggle" type="button" aria-label="Toggle dark mode" style="
+                background: var(--bg-secondary);
+                border: 1.5px solid var(--border);
+                border-radius: 10px;
+                padding: 0.5rem 0.95rem;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                color: var(--text-primary);
+                font-size: 0.9rem;
+                font-weight: 500;
+                white-space: nowrap;
+                position: relative;
+                z-index: 50;
+                font-family: 'Instrument Sans', sans-serif;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+                transition: all 0.3s ease;
+            " onmouseover="this.style.background='rgba(249,115,22,0.12)'; this.style.borderColor='rgba(249,115,22,0.4)'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)'" 
+               onmouseout="this.style.background='var(--bg-secondary)'; this.style.borderColor='var(--border)'; this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.05)'" 
+               onclick="toggleTheme()">
+                <i class="fas" id="themeIcon" style="color:#f97316; font-size: 0.95rem;"></i>
+                <span id="themeLabel" style="font-weight: 600;">Light</span>
+            </button>
+
+            <script>
+                function initTheme() {
+                    const html = document.documentElement;
+                    const currentTheme = html.classList.contains('dark') ? 'dark' : 'light';
+                    updateThemeButton(currentTheme);
+                }
+
+                function updateThemeButton(theme) {
+                    const icon = document.getElementById('themeIcon');
+                    const label = document.getElementById('themeLabel');
+                    
+                    if (theme === 'dark') {
+                        icon.className = 'fas fa-moon';
+                        label.textContent = 'Dark';
+                    } else {
+                        icon.className = 'fas fa-sun';
+                        label.textContent = 'Light';
+                    }
+                }
+
+                function toggleTheme() {
+                    const html = document.documentElement;
+                    const body = document.body;
+                    const currentTheme = html.classList.contains('dark') ? 'dark' : 'light';
+                    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+                    // Update DOM
+                    html.classList.remove(currentTheme);
+                    html.classList.add(newTheme);
+                    
+                    if (newTheme === 'dark') {
+                        body.classList.add('dark');
+                    } else {
+                        body.classList.remove('dark');
+                    }
+
+                    // Save preference
+                    localStorage.setItem('theme-mode', newTheme);
+                    
+                    // Update button
+                    updateThemeButton(newTheme);
+                }
+
+                // Initialize on page load
+                document.addEventListener('DOMContentLoaded', initTheme);
+                initTheme();
+            </script>
+        </div>
     </div>
 </x-slot>
 
@@ -26,29 +101,47 @@
         --ink:        #1a0f00;
         --ink-muted:  #6b4f35;
         --border:     rgba(249,115,22,0.14);
+        --bg-primary: #ffffff;
+        --bg-secondary: #fffaf5;
+        --text-primary: #1a0f00;
+        --text-secondary: #6b4f35;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --bg-primary: #0f0f0f;
+            --bg-secondary: #1a1a1a;
+            --text-primary: #f5f5f0;
+            --text-secondary: #9ca3af;
+            --ink: #f5f5f0;
+            --ink-muted: #9ca3af;
+            --border: rgba(249,115,22,0.25);
+        }
     }
 
     @keyframes fadeUp { from{opacity:0;transform:translateY(12px);} to{opacity:1;transform:translateY(0);} }
     .fade-up   { animation: fadeUp 0.4s ease both; }
     .fade-up-2 { animation: fadeUp 0.4s 0.06s ease both; }
 
-    .main-card { background:white; border:1px solid var(--border); border-radius:16px; overflow:hidden; }
-    .filter-bar { padding:1.1rem 1.5rem; border-bottom:1px solid var(--border); background:#fffaf5; }
+    body { transition: background-color 0.3s, color 0.3s; }
+
+    .main-card { background:var(--bg-primary); border:1px solid var(--border); border-radius:16px; overflow:hidden; }
+    .filter-bar { padding:1.1rem 1.5rem; border-bottom:1px solid var(--border); background:var(--bg-secondary); }
 
     .filter-input {
         padding:0.575rem 1rem 0.575rem 2.25rem; width:100%;
-        border:1.5px solid rgba(26,15,0,0.1); border-radius:9px;
-        font-size:0.84rem; color:var(--ink); background:white; outline:none;
+        border:1.5px solid var(--border); border-radius:9px;
+        font-size:0.84rem; color:var(--text-primary); background:var(--bg-primary); outline:none;
         font-family:'Instrument Sans',sans-serif; transition:border-color 0.2s, box-shadow 0.2s;
     }
     .filter-input:focus { border-color:var(--orange-500); box-shadow:0 0 0 3px rgba(249,115,22,0.1); }
 
     .filter-select {
         padding:0.575rem 2.25rem 0.575rem 0.875rem; width:100%;
-        border:1.5px solid rgba(26,15,0,0.1); border-radius:9px;
-        font-size:0.84rem; color:var(--ink); background:white; outline:none;
+        border:1.5px solid var(--border); border-radius:9px;
+        font-size:0.84rem; color:var(--text-primary); background:var(--bg-primary); outline:none;
         appearance:none; cursor:pointer; font-family:'Instrument Sans',sans-serif;
-        background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b4f35' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+        background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
         background-position:right 0.55rem center; background-repeat:no-repeat; background-size:1em;
         transition:border-color 0.2s, box-shadow 0.2s;
     }
@@ -57,9 +150,9 @@
     /* Table */
     .proj-table { width:100%; border-collapse:collapse; }
     .proj-table thead th {
-        padding:0.7rem 1.25rem; background:#fffaf5;
+        padding:0.7rem 1.25rem; background:var(--bg-secondary);
         font-size:0.63rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em;
-        color:var(--ink-muted); border-bottom:1px solid var(--border);
+        color:var(--text-secondary); border-bottom:1px solid var(--border);
         white-space:nowrap; text-align:left; user-select:none;
     }
     .proj-table thead th.sortable { cursor:pointer; transition:color 0.15s; }
@@ -68,52 +161,87 @@
     .proj-table thead th.sort-active .sort-icon { opacity:1; color:var(--orange-500); }
 
     .proj-table tbody td {
-        padding:0.9rem 1.25rem; font-size:0.845rem; color:var(--ink-muted);
-        border-bottom:1px solid rgba(249,115,22,0.06); vertical-align:middle;
+        padding:0.9rem 1.25rem; font-size:0.845rem; color:var(--text-secondary);
+        border-bottom:1px solid var(--border); vertical-align:middle;
     }
     .proj-table tbody tr:last-child td { border-bottom:none; }
     .proj-table tbody tr { transition:background 0.13s; cursor:pointer; }
-    .proj-table tbody tr:hover td { background:rgba(249,115,22,0.025); }
+    @media (prefers-color-scheme: light) {
+        .proj-table tbody tr:hover td { background:rgba(249,115,22,0.025); }
+    }
+    @media (prefers-color-scheme: dark) {
+        .proj-table tbody tr:hover td { background:rgba(249,115,22,0.15); }
+    }
     .proj-table tbody tr:hover td:first-child { box-shadow:inset 3px 0 0 var(--orange-500); }
 
     /* Badges */
     .badge { display:inline-flex; align-items:center; gap:0.3rem; padding:3px 10px; border-radius:99px; font-size:0.68rem; font-weight:700; border:1px solid; white-space:nowrap; }
-    .badge-ongoing   { background:rgba(59,130,246,0.08);  color:#2563eb; border-color:rgba(59,130,246,0.22); }
-    .badge-completed { background:rgba(34,197,94,0.08);   color:#16a34a; border-color:rgba(34,197,94,0.2); }
-    .badge-expiring  { background:rgba(234,179,8,0.1);    color:#b45309; border-color:rgba(234,179,8,0.25); }
-    .badge-expired   { background:rgba(239,68,68,0.08);   color:#dc2626; border-color:rgba(239,68,68,0.2); }
+    @media (prefers-color-scheme: light) {
+        .badge-active    { background:rgba(6,182,212,0.08);   color:#0891b2; border-color:rgba(6,182,212,0.22); }
+        .badge-ongoing   { background:rgba(59,130,246,0.08);  color:#2563eb; border-color:rgba(59,130,246,0.22); }
+        .badge-completed { background:rgba(34,197,94,0.08);   color:#16a34a; border-color:rgba(34,197,94,0.2); }
+        .badge-expiring  { background:rgba(234,179,8,0.1);    color:#b45309; border-color:rgba(234,179,8,0.25); }
+        .badge-expired   { background:rgba(239,68,68,0.08);   color:#dc2626; border-color:rgba(239,68,68,0.2); }
+    }
+    @media (prefers-color-scheme: dark) {
+        .badge-active    { background:rgba(6,182,212,0.15);   color:#06b6d4; border-color:rgba(6,182,212,0.3); }
+        .badge-ongoing   { background:rgba(59,130,246,0.15);  color:#60a5fa; border-color:rgba(59,130,246,0.3); }
+        .badge-completed { background:rgba(34,197,94,0.15);   color:#4ade80; border-color:rgba(34,197,94,0.3); }
+        .badge-expiring  { background:rgba(234,179,8,0.15);    color:#facc15; border-color:rgba(234,179,8,0.3); }
+        .badge-expired   { background:rgba(239,68,68,0.15);   color:#f87171; border-color:rgba(239,68,68,0.3); }
+    }
 
     .slip-pill { display:inline-flex; align-items:center; gap:0.25rem; padding:2px 8px; border-radius:99px; font-size:0.69rem; font-weight:700; }
-    .slip-ahead  { background:rgba(34,197,94,0.1);   color:#16a34a; }
-    .slip-behind { background:rgba(239,68,68,0.1);   color:#dc2626; }
-    .slip-on     { background:rgba(156,163,175,0.1); color:#6b7280; }
+    @media (prefers-color-scheme: light) {
+        .slip-ahead  { background:rgba(34,197,94,0.1);   color:#16a34a; }
+        .slip-behind { background:rgba(239,68,68,0.1);   color:#dc2626; }
+        .slip-on     { background:rgba(156,163,175,0.1); color:#6b7280; }
+    }
+    @media (prefers-color-scheme: dark) {
+        .slip-ahead  { background:rgba(34,197,94,0.15);   color:#4ade80; }
+        .slip-behind { background:rgba(239,68,68,0.15);   color:#f87171; }
+        .slip-on     { background:rgba(156,163,175,0.15); color:#9ca3af; }
+    }
 
-    .view-btn { display:inline-flex; align-items:center; gap:0.3rem; padding:0.38rem 0.8rem; border-radius:8px; font-size:0.755rem; font-weight:600; color:var(--ink-muted); border:1.5px solid rgba(26,15,0,0.1); background:white; text-decoration:none; transition:all 0.16s; white-space:nowrap; }
-    .view-btn:hover { border-color:var(--orange-500); color:var(--orange-600); background:rgba(249,115,22,0.04); }
+    .view-btn {
+        display:inline-flex; align-items:center; gap:0.3rem; padding:0.38rem 0.8rem; border-radius:8px; font-size:0.755rem; font-weight:600;
+        color:var(--ink-muted); border:1.5px solid var(--border); background:var(--bg-primary); text-decoration:none; transition:all 0.16s; white-space:nowrap;
+    }
+    .view-btn:hover { border-color:var(--orange-500); color:var(--orange-600); background:rgba(249,115,22,0.08); }
 
     /* Chips */
     .chip { display:inline-flex; align-items:center; gap:0.3rem; padding:0.3rem 0.75rem; border-radius:99px; font-size:0.72rem; font-weight:600; border:1.5px solid; text-decoration:none; transition:all 0.16s; }
-    .chip-default { background:white; color:var(--ink-muted); border-color:rgba(26,15,0,0.1); }
+    .chip-default { background:var(--bg-primary); color:var(--ink-muted); border-color:var(--border); }
     .chip-default:hover { border-color:rgba(249,115,22,0.35); color:var(--orange-600); }
     .chip-active { background:var(--orange-500); color:white; border-color:var(--orange-500); box-shadow:0 2px 8px rgba(249,115,22,0.28); }
 
     /* Pagination */
-    .pagination-wrap { padding:1rem 1.5rem; border-top:1px solid var(--border); background:#fffaf5; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.75rem; }
+    .pagination-wrap { padding:1rem 1.5rem; border-top:1px solid var(--border); background:var(--bg-secondary); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.75rem; }
     .page-info { font-size:0.78rem; color:var(--ink-muted); }
     .page-links { display:flex; align-items:center; gap:0.3rem; flex-wrap:wrap; }
-    .page-btn { display:inline-flex; align-items:center; justify-content:center; min-width:32px; height:32px; padding:0 0.5rem; border-radius:8px; font-size:0.8rem; font-weight:600; border:1.5px solid rgba(26,15,0,0.1); background:white; color:var(--ink-muted); text-decoration:none; transition:all 0.16s; font-family:'Instrument Sans',sans-serif; }
-    .page-btn:hover:not(.disabled):not(.active) { border-color:var(--orange-500); color:var(--orange-600); background:rgba(249,115,22,0.04); }
+    .page-btn {
+        display:inline-flex; align-items:center; justify-content:center; min-width:32px; height:32px; padding:0 0.5rem; border-radius:8px; font-size:0.8rem; font-weight:600;
+        border:1.5px solid var(--border); background:var(--bg-primary); color:var(--ink-muted); text-decoration:none; transition:all 0.16s; font-family:'Instrument Sans',sans-serif;
+    }
+    .page-btn:hover:not(.disabled):not(.active) { border-color:var(--orange-500); color:var(--orange-600); background:rgba(249,115,22,0.08); }
     .page-btn.active { background:var(--orange-500); border-color:var(--orange-500); color:white; box-shadow:0 2px 8px rgba(249,115,22,0.3); }
     .page-btn.disabled { opacity:0.35; pointer-events:none; cursor:default; }
     .page-btn.ellipsis { border-color:transparent; background:transparent; pointer-events:none; }
 
-    .per-page-select { padding:0.35rem 1.75rem 0.35rem 0.6rem; border:1.5px solid rgba(26,15,0,0.1); border-radius:8px; font-size:0.78rem; color:var(--ink); background:white; outline:none; appearance:none; cursor:pointer; font-family:'Instrument Sans',sans-serif; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b4f35' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-position:right 0.4rem center; background-repeat:no-repeat; background-size:0.9em; transition:border-color 0.2s; }
+    .per-page-select {
+        padding:0.35rem 1.75rem 0.35rem 0.6rem; border:1.5px solid var(--border); border-radius:8px;
+        font-size:0.78rem; color:var(--text-primary); background:var(--bg-primary); outline:none; appearance:none; cursor:pointer;
+        font-family:'Instrument Sans',sans-serif; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+        background-position:right 0.4rem center; background-repeat:no-repeat; background-size:0.9em; transition:border-color 0.2s;
+    }
     .per-page-select:focus { border-color:var(--orange-500); }
 
     .empty-state { padding:3.5rem 1.5rem; text-align:center; }
+
 </style>
 
 @php
+    $today      = now();
     $perPage    = in_array((int)request('per_page',10), [10,25,50]) ? (int)request('per_page',10) : 10;
     $search     = request('search','');
     $inCharge   = request('in_charge','');
@@ -137,10 +265,12 @@
 
     if ($status === 'completed') {
         $q->where('status','completed');
-    } elseif ($status === 'expired') {
-        $q->where('status','!=','completed')->where(fn($x) => $x->whereNull('revised_contract_expiry')->where('original_contract_expiry','<',now())->orWhere('revised_contract_expiry','<',now()));
+    } elseif ($status === 'active') {
+        $q->where('status','ongoing')->where(fn($x) => $x->whereNull('revised_contract_expiry')->where('original_contract_expiry','>',now()->addDays(30))->orWhere('revised_contract_expiry','>',now()->addDays(30)));
     } elseif ($status === 'expiring') {
         $q->where('status','!=','completed')->where(fn($x) => $x->whereNull('revised_contract_expiry')->whereBetween('original_contract_expiry',[now(),now()->addDays(30)])->orWhereBetween('revised_contract_expiry',[now(),now()->addDays(30)]));
+    } elseif ($status === 'expired') {
+        $q->where('status','!=','completed')->where(fn($x) => $x->whereNull('revised_contract_expiry')->where('original_contract_expiry','<',now())->orWhere('revised_contract_expiry','<',now()));
     } elseif ($status === 'ongoing') {
         $q->where('status','ongoing')->where(fn($x) => $x->whereNull('revised_contract_expiry')->where('original_contract_expiry','>=',now())->orWhere('revised_contract_expiry','>=',now()));
     }
@@ -157,10 +287,11 @@
 
     $counts = [
         'all'       => (clone $base)->count(),
-        'ongoing'   => (clone $base)->where('status','ongoing')->where(fn($x) => $x->whereNull('revised_contract_expiry')->where('original_contract_expiry','>=',now())->orWhere('revised_contract_expiry','>=',now()))->count(),
+        'active'    => (clone $base)->where('status','ongoing')->where(fn($x) => $x->whereNull('revised_contract_expiry')->where('original_contract_expiry','>',now()->addDays(30))->orWhere('revised_contract_expiry','>',now()->addDays(30)))->count(),
         'completed' => (clone $base)->where('status','completed')->count(),
         'expiring'  => (clone $base)->where('status','!=','completed')->where(fn($x) => $x->whereNull('revised_contract_expiry')->whereBetween('original_contract_expiry',[now(),now()->addDays(30)])->orWhereBetween('revised_contract_expiry',[now(),now()->addDays(30)]))->count(),
         'expired'   => (clone $base)->where('status','!=','completed')->where(fn($x) => $x->whereNull('revised_contract_expiry')->where('original_contract_expiry','<',now())->orWhere('revised_contract_expiry','<',now()))->count(),
+        'ongoing'   => (clone $base)->where('status','ongoing')->where(fn($x) => $x->whereNull('revised_contract_expiry')->where('original_contract_expiry','>=',now())->orWhere('revised_contract_expiry','>=',now()))->count(),
     ];
 
     $allInCharge = \App\Models\Project::pluck('in_charge')->unique()->filter()->sort()->values();
@@ -175,7 +306,7 @@
     <div class="fade-up" style="display:flex; align-items:center; gap:0.45rem; flex-wrap:wrap;">
         @foreach([
             ['all','All',null,null],
-            ['ongoing','Ongoing','fa-spinner','#3b82f6'],
+            ['active','Active','fa-hourglass-start','#06b6d4'],
             ['completed','Completed','fa-check-circle','#22c55e'],
             ['expiring','Expiring','fa-clock','#eab308'],
             ['expired','Expired','fa-times-circle','#ef4444'],
@@ -270,10 +401,9 @@
                     @forelse($projects as $project)
                     @php
                         $expiry     = $project->revised_contract_expiry ?? $project->original_contract_expiry;
-                        $isExpired  = $expiry->isPast() && $project->status !== 'completed';
-                        $isExpiring = !$isExpired && $expiry->diffInDays(now()) <= 30 && $project->status !== 'completed';
+                        $daysLeft   = (int)$today->diffInDays($expiry, false);
                         $sl         = (float)($project->slippage ?? 0);
-                        $sk         = $project->status==='completed'?'completed':($isExpired?'expired':($isExpiring?'expiring':'ongoing'));
+                        $sk         = $project->status==='completed'?'completed':($daysLeft<0?'expired':($daysLeft<30?'expiring':($project->status==='ongoing'?'active':'ongoing')));
                     @endphp
                     <tr onclick="window.location='{{ route('user.projects.show', $project) }}'">
                         <td>
@@ -294,8 +424,8 @@
                             </div>
                         </td>
                         <td style="white-space:nowrap;">
-                            <div style="font-size:0.82rem; font-weight:600; color:{{ $isExpired?'#dc2626':($isExpiring?'#b45309':'var(--ink)') }};">
-                                <i class="fas {{ $isExpired?'fa-times-circle':($isExpiring?'fa-clock':'fa-calendar-check') }}" style="font-size:0.58rem; margin-right:2px;"></i>
+                            <div style="font-size:0.82rem; font-weight:600; color:{{ $daysLeft<0?'#dc2626':($daysLeft<30?'#b45309':'var(--ink)') }};">
+                                <i class="fas {{ $daysLeft<0?'fa-times-circle':($daysLeft<30?'fa-clock':'fa-calendar-check') }}" style="font-size:0.58rem; margin-right:2px;"></i>
                                 {{ $expiry->format('M d, Y') }}
                             </div>
                             @if($project->revised_contract_expiry)
@@ -320,6 +450,7 @@
                             @if($sk==='completed') <span class="badge badge-completed"><i class="fas fa-check-circle" style="font-size:0.55rem;"></i> Completed</span>
                             @elseif($sk==='expired') <span class="badge badge-expired"><i class="fas fa-times-circle" style="font-size:0.55rem;"></i> Expired</span>
                             @elseif($sk==='expiring') <span class="badge badge-expiring"><i class="fas fa-clock" style="font-size:0.55rem;"></i> Expiring</span>
+                            @elseif($sk==='active') <span class="badge badge-active"><i class="fas fa-hourglass-start" style="font-size:0.55rem;"></i> Active</span>
                             @else <span class="badge badge-ongoing"><i class="fas fa-spinner" style="font-size:0.55rem;"></i> Ongoing</span>
                             @endif
                         </td>
