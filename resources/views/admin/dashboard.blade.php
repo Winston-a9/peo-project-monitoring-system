@@ -105,12 +105,15 @@
             --o500: #f97316;
             --o600: #ea580c;
             --ink:  #1a0f00;
-            --muted:#6b4f35;
-            --border: rgba(249,115,22,0.12);
+            --muted: #6b4f35;
+            --border: rgba(249,115,22,0.14);
             --bg-primary: #ffffff;
             --bg-secondary: #fffaf5;
             --text-primary: #1a0f00;
             --text-secondary: #6b4f35;
+            --orange-500: #f97316;
+            --orange-600: #ea580c;
+            --ink-muted: #9ca3af;
         }
 
         @media (prefers-color-scheme: dark) {
@@ -125,385 +128,432 @@
             }
         }
 
-        body { color: var(--text-primary); transition: background 0.3s, color 0.3s; }
+        body { color: var(--text-primary); transition: background 0.3s, color 0.3s; background: var(--bg-primary); }
 
         @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:0.5;transform:scale(0.85);} }
-        @keyframes fadeUp { from{opacity:0;transform:translateY(16px);} to{opacity:1;transform:translateY(0);} }
-        @keyframes countUp { from{opacity:0;transform:translateY(8px);} to{opacity:1;transform:translateY(0);} }
-        @keyframes barGrow { from{width:0;} to{width:var(--target-width);} }
-        @keyframes shimmer { 0%{background-position:-200% center;} 100%{background-position:200% center;} }
-        @keyframes spin-slow { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(14px);} to{opacity:1;transform:translateY(0);} }
+        @keyframes barGrow { from { width:0%; } }
+
+        .fade-up   { animation: fadeUp 0.45s ease both; }
+        .fade-up-2 { animation: fadeUp 0.45s 0.08s ease both; }
+        .fade-up-3 { animation: fadeUp 0.45s 0.16s ease both; }
+
+        .card { background:var(--bg-primary); border:1px solid var(--border); border-radius:16px; overflow:hidden; }
+        .card-pad { padding:1.5rem; }
+        .card-header { padding:1rem 1.5rem; border-bottom:1px solid var(--border); background:var(--bg-secondary); display:flex; align-items:center; gap:0.5rem; }
+        .card-header-title { font-family:'Syne',sans-serif; font-weight:700; font-size:0.875rem; color:var(--ink); }
+
+        .stat-card {
+            background:var(--bg-primary); border:1px solid var(--border); border-radius:14px;
+            padding:1.25rem 1.4rem; text-decoration:none; display:block;
+            transition:transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+            position:relative; overflow:hidden;
+        }
+        .stat-card:hover { transform:translateY(-3px); box-shadow:0 12px 32px rgba(249,115,22,0.15); border-color:var(--orange-500); }
+        .stat-count { font-family:'Syne',sans-serif; font-size:2.4rem; font-weight:800; letter-spacing:-0.04em; line-height:1; color:var(--text-primary); }
+        .stat-bar { height:3px; background:rgba(249,115,22,0.08); border-radius:99px; margin-top:1rem; overflow:hidden; }
+        .stat-bar-fill { height:100%; border-radius:99px; animation:barGrow 1.2s cubic-bezier(.16,1,.3,1) both 0.3s; }
+
+        .prog-track { height:8px; background:rgba(249,115,22,0.08); border-radius:99px; overflow:hidden; }
+        .prog-fill { height:100%; border-radius:99px; animation:barGrow 1.2s cubic-bezier(.16,1,.3,1) both 0.5s; }
+
+        .recent-row { display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:0.8rem 1.5rem; border-bottom:1px solid var(--border); transition:background 0.15s; cursor:pointer; text-decoration:none; color:var(--text-primary); }
+        .recent-row:last-child { border-bottom:none; }
+        @media (prefers-color-scheme: light) { .recent-row:hover { background:rgba(249,115,22,0.025); } }
+        @media (prefers-color-scheme: dark) { .recent-row:hover { background:rgba(249,115,22,0.15); } }
+
+        .badge { display:inline-flex; align-items:center; gap:0.3rem; padding:2px 9px; border-radius:99px; font-size:0.67rem; font-weight:700; border:1px solid; white-space:nowrap; }
+        @media (prefers-color-scheme: light) {
+            .badge-ongoing   { background:rgba(59,130,246,0.08);  color:#2563eb; border-color:rgba(59,130,246,0.2); }
+            .badge-completed { background:rgba(34,197,94,0.08);   color:#16a34a; border-color:rgba(34,197,94,0.18); }
+            .badge-expiring  { background:rgba(234,179,8,0.1);    color:#b45309; border-color:rgba(234,179,8,0.22); }
+            .badge-expired   { background:rgba(239,68,68,0.08);   color:#dc2626; border-color:rgba(239,68,68,0.18); }
+        }
+        @media (prefers-color-scheme: dark) {
+            .badge-ongoing   { background:rgba(59,130,246,0.15);  color:#60a5fa; border-color:rgba(59,130,246,0.3); }
+            .badge-completed { background:rgba(34,197,94,0.15);   color:#4ade80; border-color:rgba(34,197,94,0.3); }
+            .badge-expiring  { background:rgba(234,179,8,0.15);    color:#facc15; border-color:rgba(234,179,8,0.3); }
+            .badge-expired   { background:rgba(239,68,68,0.15);   color:#f87171; border-color:rgba(239,68,68,0.3); }
+        }
+
+        .quick-link { display:flex; align-items:center; gap:0.75rem; padding:0.75rem 1.25rem; border-bottom:1px solid var(--border); text-decoration:none; transition:background 0.15s, padding-left 0.18s; color:var(--text-primary); }
+        .quick-link:last-child { border-bottom:none; }
+        @media (prefers-color-scheme: light) { .quick-link:hover { background:rgba(249,115,22,0.03); padding-left:1.5rem; } }
+        @media (prefers-color-scheme: dark) { .quick-link:hover { background:rgba(249,115,22,0.1); padding-left:1.5rem; } }
+
+        .donut-segment { transition:opacity 0.2s, transform 0.2s; transform-origin:center; cursor:pointer; }
+        .donut-segment:hover { opacity:0.82; transform:scale(1.05); }
+
+        .dash-section { animation: fadeUp 0.45s ease both; }
+        .dash-section:nth-child(1) { animation-delay: 0s; }
+        .dash-section:nth-child(2) { animation-delay: 0.08s; }
+        .dash-section:nth-child(3) { animation-delay: 0.16s; }
 
         .dash-section { animation: fadeUp 0.45s ease both; }
         .dash-section:nth-child(1) { animation-delay: 0s; }
         .dash-section:nth-child(2) { animation-delay: 0.08s; }
         .dash-section:nth-child(3) { animation-delay: 0.16s; }
         .dash-section:nth-child(4) { animation-delay: 0.24s; }
-
-        /* Metric cards */
-        .metric-card {
-            background: var(--bg-primary);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 1.4rem 1.5rem;
-            position: relative;
-            overflow: hidden;
-            cursor: default;
-            transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
-        }
-        .metric-card::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(135deg, rgba(249,115,22,0.05) 0%, transparent 60%);
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-        .metric-card:hover { transform: translateY(-5px); box-shadow: 0 16px 40px rgba(249,115,22,0.15); border-color: var(--o500); }
-        .metric-card:hover::before { opacity: 1; }
-        .metric-card:hover .metric-icon { transform: scale(1.12) rotate(-4deg); }
-        .metric-card:hover .metric-bar-fill { filter: brightness(1.08); }
-
-        .metric-icon {
-            width: 46px; height: 46px; border-radius: 13px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.1rem; flex-shrink: 0;
-            transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
-        }
-        .metric-val {
-            font-family: 'Syne', sans-serif;
-            font-size: 2.6rem; font-weight: 800;
-            color: var(--text-primary); line-height: 1;
-            letter-spacing: -0.04em;
-            animation: countUp 0.5s ease both;
-        }
-        .metric-label {
-            font-size: 0.68rem; font-weight: 700;
-            text-transform: uppercase; letter-spacing: 0.08em;
-            color: var(--text-secondary); margin-bottom: 0.6rem;
-        }
-        .metric-sub { font-size: 0.73rem; color: #9ca3af; margin-top: 0.35rem; }
-        .metric-bar {
-            height: 4px; background: rgba(249,115,22,0.08);
-            border-radius: 99px; margin-top: 1.1rem; overflow: hidden;
-        }
-        .metric-bar-fill {
-            height: 100%; border-radius: 99px;
-            animation: barGrow 1s cubic-bezier(0.22,1,0.36,1) both;
-            animation-delay: 0.4s;
-            width: var(--target-width);
-        }
-
-        /* Trend badges */
-        .trend-badge {
-            display: inline-flex; align-items: center; gap: 0.25rem;
-            padding: 2px 7px; border-radius: 99px;
-            font-size: 0.65rem; font-weight: 700;
-        }
-
-        /* Welcome banner */
-        .welcome-banner {
-            border: 1px solid rgba(249,115,22,0.2);
-            border-radius: 16px;
-            padding: 1.35rem 1.6rem;
-            position: relative;
-            overflow: hidden;
-            color: var(--text-primary);
-        }
-        @media (prefers-color-scheme: light) {
-            .welcome-banner {
-                background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 50%, #fff7ed 100%);
-                background-size: 200% 100%;
-                animation: shimmer 4s ease infinite;
-            }
-        }
-        @media (prefers-color-scheme: dark) {
-            .welcome-banner {
-                background: linear-gradient(135deg, rgba(249,115,22,0.1) 0%, rgba(249,115,22,0.08) 50%, rgba(249,115,22,0.1) 100%);
-                background-size: 200% 100%;
-            }
-        }
-        .welcome-banner::after {
-            content: '';
-            position: absolute;
-            right: -30px; top: -30px;
-            width: 120px; height: 120px;
-            background: radial-gradient(circle, rgba(249,115,22,0.12) 0%, transparent 70%);
-            pointer-events: none;
-        }
-
-        /* Action cards */
-        .action-card {
-            background: var(--bg-primary);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 1.25rem;
-            text-decoration: none;
-            display: flex; align-items: center; gap: 1rem;
-            transition: all 0.22s ease;
-            position: relative; overflow: hidden;
-            color: var(--text-primary);
-        }
-        .action-card::after {
-            content: '';
-            position: absolute; inset: 0;
-            background: linear-gradient(135deg, transparent, rgba(249,115,22,0.04));
-            opacity: 0; transition: opacity 0.2s;
-        }
-        .action-card:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(249,115,22,0.15); border-color: rgba(249,115,22,0.3); }
-        .action-card:hover::after { opacity: 1; }
-        .action-card:hover .action-arrow { transform: translateX(4px); opacity: 1; }
-        .action-card:active { transform: translateY(-1px); }
-
-        .action-icon-wrap {
-            width: 44px; height: 44px; border-radius: 12px;
-            display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0; font-size: 1rem;
-            transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
-        }
-        .action-card:hover .action-icon-wrap { transform: scale(1.1) rotate(-5deg); }
-
-        .action-arrow {
-            margin-left: auto; font-size: 0.7rem;
-            color: #c4956a; opacity: 0;
-            transition: all 0.2s ease; flex-shrink: 0;
-        }
-
-        /* Status panel */
-        .status-row {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 0.65rem 0.8rem;
-            border-radius: 10px;
-            background: rgba(249,115,22,0.03);
-            border: 1px solid rgba(249,115,22,0.08);
-            transition: background 0.2s, border-color 0.2s;
-            cursor: default;
-        }
-        .status-row:hover { background: rgba(249,115,22,0.07); border-color: rgba(249,115,22,0.15); }
-
-        /* Progress ring */
-        .ring-wrap { position:relative; display:inline-flex; align-items:center; justify-content:center; }
-        .ring-wrap svg { transform: rotate(-90deg); }
-        .ring-track { fill: none; stroke: rgba(249,115,22,0.1); }
-        .ring-fill {
-            fill: none;
-            stroke-linecap: round;
-            transition: stroke-dashoffset 1.2s cubic-bezier(0.22,1,0.36,1);
-        }
-        .ring-label {
-            position: absolute;
-            font-family: 'Syne', sans-serif;
-            font-weight: 800;
-            font-size: 0.8rem;
-            color: var(--text-primary);
-            text-align: center;
-            line-height: 1.1;
-        }
-
-        /* Section headers */
-        .section-head {
-            font-family: 'Syne', sans-serif;
-            font-weight: 700; font-size: 0.9rem;
-            color: var(--text-primary);
-            display: flex; align-items: center; gap: 0.5rem;
-            margin-bottom: 1rem; letter-spacing: -0.01em;
-        }
-
-        /* Recent projects mini table */
-        .recent-row {
-            display: flex; align-items: center; gap: 0.75rem;
-            padding: 0.7rem 0;
-            border-bottom: 1px solid var(--border);
-            transition: background 0.15s;
-            color: var(--text-primary);
-        }
-        .recent-row:last-child { border-bottom: none; }
-        @media (prefers-color-scheme: light) { .recent-row:hover { background: rgba(249,115,22,0.025); border-radius: 8px; padding-left: 0.4rem; } }
-        @media (prefers-color-scheme: dark) { .recent-row:hover { background: rgba(249,115,22,0.1); border-radius: 8px; padding-left: 0.4rem; } }
-
-        /* Panel card */
-        .panel {
-            background: var(--bg-primary);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            overflow: hidden;
-        }
-        .panel-head {
-            padding: 1rem 1.25rem;
-            border-bottom: 1px solid var(--border);
-            background: var(--bg-secondary);
-        }
     </style>
 
     @php
-        $totalProjects  = \App\Models\Project::count();
-        $activeCount    = \App\Models\Project::where('status','ongoing')->where(function($q){ $q->whereNull('revised_contract_expiry')->where('original_contract_expiry','>=',now())->orWhere('revised_contract_expiry','>=',now()); })->count();
-        $expiringCount  = \App\Models\Project::where('status','!=','completed')->where(function($q){ $q->whereNull('revised_contract_expiry')->whereBetween('original_contract_expiry',[now(),now()->addDays(30)])->orWhereBetween('revised_contract_expiry',[now(),now()->addDays(30)]); })->count();
-        $expiredCount   = \App\Models\Project::where(function($q){ $q->whereNull('revised_contract_expiry')->where('original_contract_expiry','<',now())->orWhere('revised_contract_expiry','<',now()); })->where('status','!=','completed')->count();
-        $completedCount = \App\Models\Project::where('status','completed')->count();
+        $total     = \App\Models\Project::count();
+        $ongoing   = \App\Models\Project::where('status','ongoing')
+                        ->where(function($q){ $q->whereNull('revised_contract_expiry')->where('original_contract_expiry','>=',now())->orWhere('revised_contract_expiry','>=',now()); })
+                        ->count();
+        $completed = \App\Models\Project::where('status','completed')->count();
+        $active    = \App\Models\Project::where('status','ongoing')
+                        ->where(function($q){ $q->whereNull('revised_contract_expiry')->where('original_contract_expiry','>',now()->addDays(30))->orWhere('revised_contract_expiry','>',now()->addDays(30)); })
+                        ->count();
+        $expiring  = \App\Models\Project::where('status','ongoing')
+                        ->where(function($q){ $q->whereNull('revised_contract_expiry')->whereBetween('original_contract_expiry',[now(),now()->addDays(30)])->orWhereBetween('revised_contract_expiry',[now(),now()->addDays(30)]); })
+                        ->count();
+        $expired   = \App\Models\Project::where('status','!=','completed')
+                        ->where(function($q){ $q->whereNull('revised_contract_expiry')->where('original_contract_expiry','<',now())->orWhere('revised_contract_expiry','<',now()); })
+                        ->count();
 
-        $activePercent    = $totalProjects ? round($activeCount / $totalProjects * 100) : 0;
-        $completedPercent = $totalProjects ? round($completedCount / $totalProjects * 100) : 0;
-        $expiredPercent   = $totalProjects ? round($expiredCount / $totalProjects * 100) : 0;
+        $segments = [
+            ['label'=>'Active',    'count'=>$active,     'color'=>'#06b6d4'],
+            ['label'=>'Completed', 'count'=>$completed, 'color'=>'#22c55e'],
+            ['label'=>'Expired',   'count'=>$expired,   'color'=>'#ef4444'],
+            ['label'=>'Expiring',  'count'=>$expiring,  'color'=>'#eab308'],
+        ];
 
-        $recentProjects = \App\Models\Project::latest()->take(5)->get();
+        $recent         = \App\Models\Project::orderByDesc('updated_at')->limit(5)->get();
         $avgSlippage    = \App\Models\Project::avg('slippage') ?? 0;
-        $aheadCount     = \App\Models\Project::where('slippage','>',0)->count();
-        $behindCount    = \App\Models\Project::where('slippage','<',0)->count();
+        $expiringProjects = \App\Models\Project::where('status','ongoing')
+            ->where(function($q){ $q->whereNull('revised_contract_expiry')->whereBetween('original_contract_expiry',[now(),now()->addDays(30)])->orWhereBetween('revised_contract_expiry',[now(),now()->addDays(30)]); })
+            ->orderByRaw('COALESCE(revised_contract_expiry, original_contract_expiry) ASC')
+            ->limit(5)->get();
     @endphp
 
-    <div style="display:flex; flex-direction:column; gap:1.25rem;">
+    <div class="space-y-5">
 
-        {{-- ── WELCOME ── --}}
-        <div class="welcome-banner dash-section">
-            <div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
-                <div style="width:42px; height:42px; background:rgba(249,115,22,0.15); border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0; border:1px solid rgba(249,115,22,0.2);">
-                    <i class="fas fa-shield-alt" style="color:#ea580c; font-size:1rem;"></i>
+        {{-- ── ROW 1: Stat cards ── --}}
+        <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:1rem;" class="fade-up">
+            @foreach([
+                ['Total Projects', $total,     'fa-folder',       '#f97316', 'rgba(249,115,22,0.1)',  route('admin.projects.index')],
+                ['Ongoing',        $ongoing,   'fa-spinner',      '#3b82f6', 'rgba(59,130,246,0.1)',   route('admin.projects.index',['status'=>'ongoing'])],
+                ['Completed',      $completed, 'fa-check-circle', '#22c55e', 'rgba(34,197,94,0.1)',    route('admin.projects.index',['status'=>'completed'])],
+                ['Expiring Soon',  $expiring,  'fa-clock',        '#eab308', 'rgba(234,179,8,0.1)',    route('admin.projects.index',['status'=>'expiring'])],
+            ] as [$label,$val,$icon,$color,$bg,$link])
+            <a href="{{ $link }}" class="stat-card">
+                <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:0.5rem;">
+                    <div>
+                        <p style="font-size:0.63rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink-muted); margin-bottom:0.6rem;">{{ $label }}</p>
+                        <p class="stat-count">{{ $val }}</p>
+                    </div>
+                    <div style="width:38px; height:38px; background:{{ $bg }}; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                        <i class="fas {{ $icon }}" style="color:{{ $color }}; font-size:1rem;"></i>
+                    </div>
                 </div>
-                <div style="flex:1;">
-                    <p style="font-family:'Syne',sans-serif; font-weight:800; font-size:1rem; color:#92400e; letter-spacing:-0.01em;">
-                        Welcome back, {{ Auth::user()->name }} 👋
-                    </p>
-                    <p style="color:#b45309; font-size:0.82rem; margin-top:2px;">
-                        You have full administrative access.
-                        @if($expiringCount > 0)
-                            <span style="background:rgba(234,179,8,0.15); color:#92400e; padding:1px 8px; border-radius:99px; font-weight:700; font-size:0.75rem; margin-left:4px;">
-                                <i class="fas fa-exclamation-triangle" style="font-size:0.6rem;"></i>
-                                {{ $expiringCount }} contract{{ $expiringCount > 1 ? 's' : '' }} expiring soon
-                            </span>
+                <div class="stat-bar">
+                    <div class="stat-bar-fill" style="background:{{ $color }}; width:{{ $total > 0 ? round(($val/$total)*100) : 0 }}%;"></div>
+                </div>
+                <p style="font-size:0.68rem; color:#9ca3af; margin-top:0.5rem;">{{ $total > 0 ? round(($val/$total)*100) : 0 }}% of total</p>
+            </a>
+            @endforeach
+        </div>
+
+        {{-- ── ROW 2: Donut + Average Slippage + Quick Access ── --}}
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:1rem;" class="fade-up-2">
+
+            {{-- Donut --}}
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-chart-pie" style="color:var(--orange-500); font-size:0.82rem;"></i>
+                    <span class="card-header-title">Status Breakdown</span>
+                </div>
+                <div class="card-pad" style="display:flex; flex-direction:column; align-items:center; gap:1.25rem;">
+                    @php
+                        $r = 54; $circ = 2 * M_PI * $r; $offset = 0; $donutSegs = [];
+                        foreach($segments as $seg) {
+                            $pct = $total > 0 ? $seg['count'] / $total : 0;
+                            $dash = $pct * $circ; $gap = $circ - $dash;
+                            $donutSegs[] = ['dash'=>$dash,'gap'=>$gap,'offset'=>$offset*$circ,'color'=>$seg['color'],'label'=>$seg['label'],'count'=>$seg['count'],'pct'=>round($pct*100)];
+                            $offset += $pct;
+                        }
+                    @endphp
+                    <div style="position:relative; width:140px; height:140px;">
+                        <svg width="140" height="140" viewBox="0 0 140 140">
+                            <circle cx="70" cy="70" r="{{ $r }}" fill="none" stroke="rgba(249,115,22,0.07)" stroke-width="16"/>
+                            @if($total > 0)
+                                @foreach($donutSegs as $seg)
+                                @if($seg['count'] > 0)
+                                <circle class="donut-segment"
+                                    cx="70" cy="70" r="{{ $r }}" fill="none"
+                                    stroke="{{ $seg['color'] }}" stroke-width="16"
+                                    stroke-dasharray="{{ $seg['dash'] }} {{ $seg['gap'] }}"
+                                    stroke-dashoffset="{{ -$seg['offset'] + $circ/4 }}"
+                                    data-label="{{ $seg['label'] }}" data-count="{{ $seg['count'] }}" data-pct="{{ $seg['pct'] }}">
+                                    <title>{{ $seg['label'] }}: {{ $seg['count'] }} ({{ $seg['pct'] }}%)</title>
+                                </circle>
+                                @endif
+                                @endforeach
+                            @else
+                                <circle cx="70" cy="70" r="{{ $r }}" fill="none" stroke="rgba(249,115,22,0.08)" stroke-width="16"/>
+                            @endif
+                        </svg>
+                        <div id="donut-center" style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; pointer-events:none; transition:all 0.15s;">
+                            <span style="font-family:'Syne',sans-serif; font-size:1.8rem; font-weight:800; color:var(--ink); line-height:1;">{{ $total }}</span>
+                            <span style="font-size:0.65rem; color:#9ca3af; font-weight:600; text-transform:uppercase; letter-spacing:0.05em;">Total</span>
+                        </div>
+                    </div>
+                    <div style="width:100%; display:flex; flex-direction:column; gap:0.45rem;">
+                        @foreach($segments as $seg)
+                        <div style="display:flex; align-items:center; justify-content:space-between;">
+                            <div style="display:flex; align-items:center; gap:0.5rem;">
+                                <div style="width:9px; height:9px; border-radius:3px; background:{{ $seg['color'] }};"></div>
+                                <span style="font-size:0.78rem; color:var(--ink-muted);">{{ $seg['label'] }}</span>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:0.5rem;">
+                                <span style="font-family:'Syne',sans-serif; font-weight:800; font-size:0.85rem; color:var(--ink);">{{ $seg['count'] }}</span>
+                                <span style="font-size:0.68rem; color:#9ca3af; min-width:28px; text-align:right;">{{ $total > 0 ? round(($seg['count']/$total)*100) : 0 }}%</span>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+
+            {{-- Slippage Card --}}
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-wave-square" style="color:var(--orange-500); font-size:0.82rem;"></i>
+                    <span class="card-header-title">Slippage Health</span>
+                </div>
+                <div class="card-pad" style="display:flex; flex-direction:column; gap:1.5rem;">
+
+                    {{-- Slippage card --}}
+                    <div style="background:{{ $avgSlippage >= 0 ? 'rgba(34,197,94,0.05)' : 'rgba(239,68,68,0.05)' }}; border:1px solid {{ $avgSlippage >= 0 ? 'rgba(34,197,94,0.18)' : 'rgba(239,68,68,0.18)' }}; border-radius:12px; padding:1rem; text-align:center;">
+                        <p style="font-size:0.63rem; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:{{ $avgSlippage >= 0 ? '#16a34a' : '#dc2626' }}; margin-bottom:0.4rem;">Avg. Slippage</p>
+                        <p style="font-family:'Syne',sans-serif; font-size:2rem; font-weight:800; color:{{ $avgSlippage >= 0 ? '#16a34a' : '#dc2626' }}; line-height:1;">
+                            {{ $avgSlippage >= 0 ? '+' : '' }}{{ round($avgSlippage,1) }}<span style="font-size:0.9rem;">%</span>
+                        </p>
+                        <p style="font-size:0.72rem; font-weight:600; margin-top:0.35rem; color:{{ $avgSlippage >= 0 ? '#16a34a' : '#dc2626' }};">
+                            <i class="fas {{ $avgSlippage >= 0 ? 'fa-arrow-up' : 'fa-arrow-down' }}" style="font-size:0.58rem;"></i>
+                            {{ $avgSlippage >= 0 ? 'Ahead of schedule' : 'Behind schedule' }}
+                        </p>
+                    </div>
+
+                    @if($expired > 0)
+                    <a href="{{ route('admin.projects.index', ['status'=>'expired']) }}"
+                       style="display:flex; align-items:center; gap:0.75rem; padding:0.75rem 1rem; background:rgba(239,68,68,0.04); border:1px solid rgba(239,68,68,0.16); border-radius:10px; text-decoration:none; transition:background 0.15s;"
+                       onmouseover="this.style.background='rgba(239,68,68,0.09)'" onmouseout="this.style.background='rgba(239,68,68,0.04)'">
+                        <div style="width:32px; height:32px; background:rgba(239,68,68,0.1); border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                            <i class="fas fa-exclamation-triangle" style="color:#dc2626; font-size:0.78rem;"></i>
+                        </div>
+                        <div>
+                            <p style="font-size:0.78rem; font-weight:700; color:#dc2626;">{{ $expired }} Expired {{ Str::plural('Project',$expired) }}</p>
+                            <p style="font-size:0.68rem; color:#ef4444; margin-top:1px;">Click to review</p>
+                        </div>
+                        <i class="fas fa-chevron-right" style="color:#dc2626; font-size:0.58rem; margin-left:auto;"></i>
+                    </a>
+                    @endif
+                </div>
+            </div>
+
+            {{-- Quick Access --}}
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-bolt" style="color:var(--orange-500); font-size:0.82rem;"></i>
+                    <span class="card-header-title">Quick Access</span>
+                </div>
+                <div>
+                    @foreach([
+                        [route('admin.projects.index'),                         'fa-folder-open',  'rgba(249,115,22,0.1)', '#f97316', 'All Projects',   'Browse & manage'],
+                        [route('admin.projects.index',['status'=>'ongoing']),   'fa-spinner',      'rgba(59,130,246,0.1)', '#3b82f6', 'Ongoing',         $ongoing.' active'],
+                        [route('admin.projects.index',['status'=>'expiring']),  'fa-clock',        'rgba(234,179,8,0.1)',  '#ca8a04', 'Expiring Soon',   $expiring.' at risk'],
+                        [route('admin.projects.create'),                        'fa-plus-circle',  'rgba(34,197,94,0.1)',  '#22c55e', 'New Project',     'Create entry'],
+                        [route('admin.reports.index'),                          'fa-file-pdf',     'rgba(139,92,246,0.1)', '#8b5cf6', 'Generate Report', 'Export data'],
+                    ] as [$url,$icon,$bg,$color,$title,$sub])
+                    <a href="{{ $url }}" class="quick-link">
+                        <div style="width:30px; height:30px; border-radius:8px; background:{{ $bg }}; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                            <i class="fas {{ $icon }}" style="color:{{ $color }}; font-size:0.75rem;"></i>
+                        </div>
+                        <div style="flex:1; min-width:0;">
+                            <p style="font-size:0.84rem; font-weight:700; color:var(--ink);">{{ $title }}</p>
+                            <p style="font-size:0.7rem; color:#9ca3af; margin-top:1px;">{{ $sub }}</p>
+                        </div>
+                        <i class="fas fa-chevron-right" style="color:rgba(249,115,22,0.3); font-size:0.58rem; flex-shrink:0;"></i>
+                    </a>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+
+        {{-- ── ROW 3: Recently Updated + Expiring Soon ── --}}
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;" class="fade-up-3">
+
+            {{-- Recently Updated --}}
+            <div class="card">
+                <div class="card-header" style="justify-content:space-between;">
+                    <div style="display:flex; align-items:center; gap:0.5rem;">
+                        <i class="fas fa-history" style="color:var(--orange-500); font-size:0.82rem;"></i>
+                        <span class="card-header-title">Recently Updated</span>
+                    </div>
+                    <a href="{{ route('admin.projects.index') }}" style="font-size:0.72rem; font-weight:600; color:var(--orange-600); text-decoration:none;">View all →</a>
+                </div>
+                @forelse($recent as $project)
+                @php
+                    $expiry    = $project->revised_contract_expiry ?? $project->original_contract_expiry;
+                    $isExpired = $expiry->isPast() && $project->status !== 'completed';
+                    $isExpiring= !$isExpired && $expiry->diffInDays(now()) <= 30 && $project->status !== 'completed';
+                    $sk = $project->status==='completed' ? 'completed' : ($isExpired ? 'expired' : ($isExpiring ? 'expiring' : 'ongoing'));
+                    $sl = (float)($project->slippage ?? 0);
+                    $icons = ['completed'=>'fa-check-circle','expired'=>'fa-times-circle','expiring'=>'fa-clock','ongoing'=>'fa-spinner'];
+                    $colors= ['completed'=>'#22c55e','expired'=>'#dc2626','expiring'=>'#ca8a04','ongoing'=>'#3b82f6'];
+                @endphp
+                <a href="{{ route('admin.projects.show', $project) }}" class="recent-row">
+                    <div style="display:flex; align-items:center; gap:0.75rem; min-width:0; flex:1;">
+                        <div style="width:36px; height:36px; border-radius:9px; background:rgba(249,115,22,0.07); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                            <i class="fas {{ $icons[$sk] }}" style="color:{{ $colors[$sk] }}; font-size:0.85rem;"></i>
+                        </div>
+                        <div style="min-width:0;">
+                            <p style="font-size:0.84rem; font-weight:700; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px;">{{ $project->project_title }}</p>
+                            <p style="font-size:0.7rem; color:#9ca3af; margin-top:1px;">{{ $project->updated_at->diffForHumans() }}</p>
+                        </div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:0.5rem; flex-shrink:0;">
+                        @if($sl > 0)<span style="font-size:0.69rem; font-weight:700; color:#16a34a;">+{{ $sl }}%</span>
+                        @elseif($sl < 0)<span style="font-size:0.69rem; font-weight:700; color:#dc2626;">{{ $sl }}%</span>
                         @endif
-                    </p>
-                </div>
-                <a href="{{ route('admin.projects.index') }}"
-                   style="display:inline-flex; align-items:center; gap:0.4rem; padding:0.55rem 1.1rem; background:white; border:1.5px solid rgba(249,115,22,0.25); border-radius:9px; font-size:0.8rem; font-weight:600; color:#ea580c; text-decoration:none; transition:all 0.2s; white-space:nowrap;"
-                   onmouseover="this.style.background='#fff7ed';this.style.borderColor='#f97316'"
-                   onmouseout="this.style.background='white';this.style.borderColor='rgba(249,115,22,0.25)'">
-                    View All <i class="fas fa-arrow-right" style="font-size:0.65rem;"></i>
+                        <span class="badge badge-{{ $sk }}">{{ ucfirst($sk) }}</span>
+                    </div>
                 </a>
-            </div>
-        </div>
-
-        {{-- ── METRIC CARDS ── --}}
-        <div class="dash-section" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:1rem;">
-
-            {{-- Total --}}
-            <div class="metric-card">
-                <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:0.75rem;">
-                    <div style="flex:1;">
-                        <p class="metric-label">Total Projects</p>
-                        <p class="metric-val">{{ $totalProjects }}</p>
-                        <p class="metric-sub">All-time registered</p>
-                    </div>
-                    <div class="metric-icon" style="background:rgba(249,115,22,0.1);">
-                        <i class="fas fa-layer-group" style="color:#f97316;"></i>
-                    </div>
+                @empty
+                <div style="padding:2.5rem 1.5rem; text-align:center;">
+                    <i class="fas fa-folder-open" style="font-size:1.5rem; color:rgba(249,115,22,0.2); display:block; margin-bottom:0.5rem;"></i>
+                    <p style="font-size:0.84rem; color:#9ca3af;">No projects yet</p>
                 </div>
-                <div class="metric-bar"><div class="metric-bar-fill" style="background:linear-gradient(90deg,#f97316,#fb923c); --target-width:100%;"></div></div>
+                @endforelse
             </div>
 
-            {{-- Active --}}
-            <div class="metric-card">
-                <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:0.75rem;">
-                    <div style="flex:1;">
-                        <p class="metric-label">Active Contracts</p>
-                        <p class="metric-val">{{ $activeCount }}</p>
-                        <p class="metric-sub">{{ $activePercent }}% of total</p>
+            {{-- Expiring Soon --}}
+            <div class="card">
+                <div class="card-header" style="justify-content:space-between;">
+                    <div style="display:flex; align-items:center; gap:0.5rem;">
+                        <i class="fas fa-clock" style="color:#eab308; font-size:0.82rem;"></i>
+                        <span class="card-header-title">Expiring Soon</span>
+                        @if($expiring > 0)
+                        <span style="background:rgba(234,179,8,0.1); color:#b45309; border:1px solid rgba(234,179,8,0.22); padding:1px 8px; border-radius:99px; font-size:0.67rem; font-weight:700;">{{ $expiring }}</span>
+                        @endif
                     </div>
-                    <div class="metric-icon" style="background:rgba(34,197,94,0.1);">
-                        <i class="fas fa-circle-check" style="color:#22c55e;"></i>
-                    </div>
+                    @if($expiring > 0)
+                    <a href="{{ route('admin.projects.index', ['status'=>'expiring']) }}" style="font-size:0.72rem; font-weight:600; color:var(--orange-600); text-decoration:none;">View all →</a>
+                    @endif
                 </div>
-                <div class="metric-bar"><div class="metric-bar-fill" style="background:linear-gradient(90deg,#22c55e,#4ade80); --target-width:{{ $activePercent }}%;"></div></div>
-            </div>
-
-            {{-- Expiring --}}
-            <div class="metric-card" style="{{ $expiringCount > 0 ? 'border-color:rgba(234,179,8,0.3);' : '' }}">
-                <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:0.75rem;">
-                    <div style="flex:1;">
-                        <p class="metric-label">Expiring Soon</p>
-                        <p class="metric-val" style="{{ $expiringCount > 0 ? 'color:#b45309;' : '' }}">{{ $expiringCount }}</p>
-                        <p class="metric-sub">Within 30 days</p>
+                @forelse($expiringProjects as $project)
+                @php
+                    $exp   = $project->revised_contract_expiry ?? $project->original_contract_expiry;
+                    $dLeft = (int) now()->diffInDays($exp, false);
+                    $urgColor = $dLeft <= 7 ? '#dc2626' : ($dLeft <= 14 ? '#b45309' : '#ca8a04');
+                    $urgBg    = $dLeft <= 7 ? 'rgba(239,68,68,0.07)' : 'rgba(234,179,8,0.07)';
+                @endphp
+                <a href="{{ route('admin.projects.show', $project) }}" class="recent-row">
+                    <div style="display:flex; align-items:center; gap:0.75rem; min-width:0; flex:1;">
+                        <div style="width:36px; height:36px; border-radius:9px; background:{{ $urgBg }}; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                            <i class="fas fa-calendar-times" style="color:{{ $urgColor }}; font-size:0.82rem;"></i>
+                        </div>
+                        <div style="min-width:0;">
+                            <p style="font-size:0.84rem; font-weight:700; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px;">{{ $project->project_title }}</p>
+                            <p style="font-size:0.7rem; color:#9ca3af; margin-top:1px;">Expires {{ $exp->format('M d, Y') }}</p>
+                        </div>
                     </div>
-                    <div class="metric-icon" style="background:rgba(234,179,8,0.1);">
-                        <i class="fas fa-clock" style="color:#eab308; {{ $expiringCount > 0 ? 'animation:spin-slow 4s linear infinite;' : '' }}"></i>
+                    <div style="text-align:right; flex-shrink:0;">
+                        <p style="font-family:'Syne',sans-serif; font-size:1.1rem; font-weight:800; color:{{ $urgColor }}; line-height:1;">{{ $dLeft }}</p>
+                        <p style="font-size:0.62rem; color:{{ $urgColor }}; font-weight:600; margin-top:1px;">days left</p>
                     </div>
+                </a>
+                @empty
+                <div style="padding:2.5rem 1.5rem; text-align:center;">
+                    <div style="width:48px; height:48px; background:rgba(34,197,94,0.07); border-radius:12px; display:flex; align-items:center; justify-content:center; margin:0 auto 0.75rem;">
+                        <i class="fas fa-check-circle" style="font-size:1.2rem; color:#22c55e;"></i>
+                    </div>
+                    <p style="font-size:0.84rem; font-weight:700; color:#16a34a;">All clear!</p>
+                    <p style="font-size:0.75rem; color:#9ca3af; margin-top:0.2rem;">No projects expiring in the next 30 days</p>
                 </div>
-                <div class="metric-bar"><div class="metric-bar-fill" style="background:linear-gradient(90deg,#eab308,#facc15); --target-width:{{ $totalProjects ? min(100, $expiringCount/$totalProjects*100) : 0 }}%;"></div></div>
-            </div>
-
-            {{-- Expired --}}
-            <div class="metric-card" style="{{ $expiredCount > 0 ? 'border-color:rgba(239,68,68,0.2);' : '' }}">
-                <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:0.75rem;">
-                    <div style="flex:1;">
-                        <p class="metric-label">Expired</p>
-                        <p class="metric-val" style="{{ $expiredCount > 0 ? 'color:#dc2626;' : '' }}">{{ $expiredCount }}</p>
-                        <p class="metric-sub">Needs attention</p>
-                    </div>
-                    <div class="metric-icon" style="background:rgba(239,68,68,0.1);">
-                        <i class="fas fa-circle-xmark" style="color:#ef4444;"></i>
-                    </div>
-                </div>
-                <div class="metric-bar"><div class="metric-bar-fill" style="background:linear-gradient(90deg,#ef4444,#f87171); --target-width:{{ $expiredPercent }}%;"></div></div>
+                @endforelse
             </div>
 
         </div>
+    </div>
 
-        {{-- ── MIDDLE ROW: Quick Actions + Progress Ring + Status ── --}}
-        <div class="dash-section" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:1rem;">
+    <script>
+        // ═══ DONUT HOVER FUNCTIONALITY ═══
+        const center = document.getElementById('donut-center');
+        if (center) {
+            document.querySelectorAll('.donut-segment').forEach(seg => {
+                seg.addEventListener('mouseenter', () => {
+                    center.innerHTML = `
+                        <span style="font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:var(--text-primary);line-height:1;">${seg.dataset.count}</span>
+                        <span style="font-size:0.6rem;color:var(--text-secondary);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-top:2px;">${seg.dataset.label}</span>
+                        <span style="font-size:0.65rem;font-weight:700;color:var(--text-secondary);">${seg.dataset.pct}%</span>`;
+                });
+                seg.addEventListener('mouseleave', () => {
+                    center.innerHTML = `
+                        <span style="font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;color:var(--text-primary);line-height:1;">{{ $total }}</span>
+                        <span style="font-size:0.65rem;color:var(--text-secondary);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Total</span>`;
+                });
+            });
+        }
+    </script>
+</x-app-layout>
+        <div class="dash-section" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:1.2rem;">
 
             {{-- Quick Actions --}}
             <div class="panel">
                 <div class="panel-head">
                     <p class="section-head" style="margin-bottom:0;">
-                        <i class="fas fa-bolt" style="color:#f97316; font-size:0.75rem;"></i> Quick Actions
+                        <i class="fas fa-bolt" style="color:#f97316; font-size:0.8rem;"></i> Quick Actions
                     </p>
                 </div>
-                <div style="padding:0.875rem; display:flex; flex-direction:column; gap:0.6rem;">
+                <div style="padding:1rem; display:flex; flex-direction:column; gap:0.7rem;">
 
                     <a href="{{ route('admin.projects.create') }}" class="action-card"
                        style="background:linear-gradient(135deg,#fff7ed,white);">
-                        <div class="action-icon-wrap" style="background:rgba(249,115,22,0.12);">
+                        <div class="action-icon-wrap" style="background:rgba(249,115,22,0.14);">
                             <i class="fas fa-plus" style="color:#f97316;"></i>
                         </div>
                         <div>
-                            <p style="font-weight:700; font-size:0.855rem; color:var(--ink);">New Project</p>
-                            <p style="font-size:0.72rem; color:#9ca3af; margin-top:1px;">Register a new entry</p>
+                            <p style="font-weight:700; font-size:0.87rem; color:var(--ink);">New Project</p>
+                            <p style="font-size:0.74rem; color:#9ca3af; margin-top:2px;">Register new entry</p>
                         </div>
                         <i class="fas fa-chevron-right action-arrow"></i>
                     </a>
 
                     <a href="{{ route('admin.projects.index') }}" class="action-card">
-                        <div class="action-icon-wrap" style="background:rgba(59,130,246,0.1);">
+                        <div class="action-icon-wrap" style="background:rgba(59,130,246,0.12);">
                             <i class="fas fa-list-ul" style="color:#3b82f6;"></i>
                         </div>
                         <div>
-                            <p style="font-weight:700; font-size:0.855rem; color:var(--ink);">All Projects</p>
-                            <p style="font-size:0.72rem; color:#9ca3af; margin-top:1px;">Browse & manage</p>
+                            <p style="font-weight:700; font-size:0.87rem; color:var(--ink);">All Projects</p>
+                            <p style="font-size:0.74rem; color:#9ca3af; margin-top:2px;">Browse & manage</p>
                         </div>
                         <i class="fas fa-chevron-right action-arrow"></i>
                     </a>
 
                     <a href="{{ route('admin.projects.index') }}?status=expiring" class="action-card"
-                       style="{{ $expiringCount > 0 ? 'border-color:rgba(234,179,8,0.3); background:linear-gradient(135deg,#fffbeb,white);' : '' }}">
-                        <div class="action-icon-wrap" style="background:rgba(234,179,8,0.1);">
+                       style="{{ $expiringCount > 0 ? 'border-color:rgba(234,179,8,0.35); background:linear-gradient(135deg,#fffbeb,white);' : '' }}">
+                        <div class="action-icon-wrap" style="background:rgba(234,179,8,0.12);">
                             <i class="fas fa-clock" style="color:#eab308;"></i>
                         </div>
                         <div>
-                            <p style="font-weight:700; font-size:0.855rem; color:var(--ink);">Expiring Soon</p>
-                            <p style="font-size:0.72rem; color:#9ca3af; margin-top:1px;">
+                            <p style="font-weight:700; font-size:0.87rem; color:var(--ink);">Expiring Soon</p>
+                            <p style="font-size:0.74rem; color:#9ca3af; margin-top:2px;">
                                 {{ $expiringCount }} contract{{ $expiringCount != 1 ? 's' : '' }} at risk
                             </p>
                         </div>
                         <i class="fas fa-chevron-right action-arrow"></i>
                     </a>
 
-                    <a href="#" class="action-card">
-                        <div class="action-icon-wrap" style="background:rgba(139,92,246,0.1);">
+                    <a href="{{ route('admin.reports.index') }}" class="action-card">
+                        <div class="action-icon-wrap" style="background:rgba(139,92,246,0.12);">
                             <i class="fas fa-file-pdf" style="color:#8b5cf6;"></i>
                         </div>
                         <div>
-                            <p style="font-weight:700; font-size:0.855rem; color:var(--ink);">Generate Report</p>
-                            <p style="font-size:0.72rem; color:#9ca3af; margin-top:1px;">Export analytics</p>
+                            <p style="font-weight:700; font-size:0.87rem; color:var(--ink);">Generate Report</p>
+                            <p style="font-size:0.74rem; color:#9ca3af; margin-top:2px;">Export analytics</p>
                         </div>
                         <i class="fas fa-chevron-right action-arrow"></i>
                     </a>
@@ -515,10 +565,10 @@
             <div class="panel" style="display:flex; flex-direction:column;">
                 <div class="panel-head">
                     <p class="section-head" style="margin-bottom:0;">
-                        <i class="fas fa-chart-donut" style="color:#f97316; font-size:0.75rem;"></i> Project Breakdown
+                        <i class="fas fa-chart-donut" style="color:#f97316; font-size:0.8rem;"></i> Breakdown
                     </p>
                 </div>
-                <div style="padding:1.25rem; flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1.1rem;">
+                <div style="padding:1.5rem; flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1.2rem;">
 
                     {{-- Main ring --}}
                     <div style="position:relative; display:flex; align-items:center; justify-content:center;">
@@ -541,13 +591,13 @@
                                 stroke-dashoffset="-{{ round(($completedPercent + $activePercent) * 3.14159) }}"/>
                         </svg>
                         <div style="position:absolute; text-align:center;">
-                            <p style="font-family:'Syne',sans-serif; font-weight:800; font-size:1.5rem; color:var(--ink); line-height:1;">{{ $totalProjects }}</p>
-                            <p style="font-size:0.6rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#9ca3af;">Total</p>
+                            <p style="font-family:'Syne',sans-serif; font-weight:800; font-size:1.6rem; color:var(--ink); line-height:1;">{{ $totalProjects }}</p>
+                            <p style="font-size:0.62rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#9ca3af; margin-top:2px;">Total</p>
                         </div>
                     </div>
 
                     {{-- Legend --}}
-                    <div style="width:100%; display:flex; flex-direction:column; gap:0.45rem;">
+                    <div style="width:100%; display:flex; flex-direction:column; gap:0.5rem;">
                         @foreach([
                             ['#f97316','Active',$activeCount,$activePercent],
                             ['#22c55e','Completed',$completedCount,$completedPercent],
@@ -555,9 +605,9 @@
                         ] as [$color,$label,$count,$pct])
                         <div style="display:flex; align-items:center; gap:0.6rem;">
                             <div style="width:8px; height:8px; border-radius:2px; background:{{ $color }}; flex-shrink:0;"></div>
-                            <span style="font-size:0.78rem; color:var(--muted); flex:1;">{{ $label }}</span>
-                            <span style="font-family:'Syne',sans-serif; font-weight:700; font-size:0.78rem; color:var(--ink);">{{ $count }}</span>
-                            <span style="font-size:0.7rem; color:#9ca3af; min-width:28px; text-align:right;">{{ $pct }}%</span>
+                            <span style="font-size:0.8rem; color:var(--muted); flex:1;">{{ $label }}</span>
+                            <span style="font-family:'Syne',sans-serif; font-weight:700; font-size:0.8rem; color:var(--ink);">{{ $count }}</span>
+                            <span style="font-size:0.72rem; color:#9ca3af; min-width:30px; text-align:right;">{{ $pct }}%</span>
                         </div>
                         @endforeach
                     </div>
@@ -565,45 +615,45 @@
             </div>
 
             {{-- Slippage Health + System Status --}}
-            <div style="display:flex; flex-direction:column; gap:1rem;">
+            <div style="display:flex; flex-direction:column; gap:1.2rem;">
 
                 {{-- Slippage Health --}}
                 <div class="panel" style="flex:1;">
                     <div class="panel-head">
                         <p class="section-head" style="margin-bottom:0;">
-                            <i class="fas fa-wave-square" style="color:#f97316; font-size:0.75rem;"></i> Slippage Health
+                            <i class="fas fa-wave-square" style="color:#f97316; font-size:0.8rem;"></i> Slippage
                         </p>
                     </div>
-                    <div style="padding:1rem; display:flex; flex-direction:column; gap:0.5rem;">
+                    <div style="padding:1rem; display:flex; flex-direction:column; gap:0.55rem;">
                         @php $totalSlip = $aheadCount + $behindCount + (\App\Models\Project::where('slippage',0)->count()); @endphp
 
-                        <div style="display:flex; align-items:center; justify-content:space-between; padding:0.5rem 0.65rem; background:rgba(34,197,94,0.06); border:1px solid rgba(34,197,94,0.15); border-radius:9px;">
-                            <div style="display:flex; align-items:center; gap:0.5rem;">
-                                <i class="fas fa-arrow-up" style="color:#22c55e; font-size:0.7rem;"></i>
-                                <span style="font-size:0.8rem; color:#15803d; font-weight:600;">Ahead</span>
+                        <div style="display:flex; align-items:center; justify-content:space-between; padding:0.6rem 0.8rem; background:rgba(34,197,94,0.08); border:1.5px solid rgba(34,197,94,0.18); border-radius:10px; transition:all 0.2s;">
+                            <div style="display:flex; align-items:center; gap:0.55rem;">
+                                <i class="fas fa-arrow-up" style="color:#22c55e; font-size:0.75rem;"></i>
+                                <span style="font-size:0.82rem; color:#15803d; font-weight:600;">Ahead</span>
                             </div>
-                            <span style="font-family:'Syne',sans-serif; font-weight:800; font-size:1rem; color:#15803d;">{{ $aheadCount }}</span>
+                            <span style="font-family:'Syne',sans-serif; font-weight:800; font-size:1.05rem; color:#15803d;">{{ $aheadCount }}</span>
                         </div>
 
-                        <div style="display:flex; align-items:center; justify-content:space-between; padding:0.5rem 0.65rem; background:rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.15); border-radius:9px;">
-                            <div style="display:flex; align-items:center; gap:0.5rem;">
-                                <i class="fas fa-arrow-down" style="color:#ef4444; font-size:0.7rem;"></i>
-                                <span style="font-size:0.8rem; color:#dc2626; font-weight:600;">Behind</span>
+                        <div style="display:flex; align-items:center; justify-content:space-between; padding:0.6rem 0.8rem; background:rgba(239,68,68,0.08); border:1.5px solid rgba(239,68,68,0.18); border-radius:10px; transition:all 0.2s;">
+                            <div style="display:flex; align-items:center; gap:0.55rem;">
+                                <i class="fas fa-arrow-down" style="color:#ef4444; font-size:0.75rem;"></i>
+                                <span style="font-size:0.82rem; color:#dc2626; font-weight:600;">Behind</span>
                             </div>
-                            <span style="font-family:'Syne',sans-serif; font-weight:800; font-size:1rem; color:#dc2626;">{{ $behindCount }}</span>
+                            <span style="font-family:'Syne',sans-serif; font-weight:800; font-size:1.05rem; color:#dc2626;">{{ $behindCount }}</span>
                         </div>
 
-                        <div style="display:flex; align-items:center; justify-content:space-between; padding:0.5rem 0.65rem; background:rgba(59,130,246,0.06); border:1px solid rgba(59,130,246,0.15); border-radius:9px;">
-                            <div style="display:flex; align-items:center; gap:0.5rem;">
-                                <i class="fas fa-equals" style="color:#3b82f6; font-size:0.7rem;"></i>
-                                <span style="font-size:0.8rem; color:#1d4ed8; font-weight:600;">On Track</span>
+                        <div style="display:flex; align-items:center; justify-content:space-between; padding:0.6rem 0.8rem; background:rgba(59,130,246,0.08); border:1.5px solid rgba(59,130,246,0.18); border-radius:10px; transition:all 0.2s;">
+                            <div style="display:flex; align-items:center; gap:0.55rem;">
+                                <i class="fas fa-equals" style="color:#3b82f6; font-size:0.75rem;"></i>
+                                <span style="font-size:0.82rem; color:#1d4ed8; font-weight:600;">On Track</span>
                             </div>
-                            <span style="font-family:'Syne',sans-serif; font-weight:800; font-size:1rem; color:#1d4ed8;">{{ \App\Models\Project::where('slippage',0)->count() }}</span>
+                            <span style="font-family:'Syne',sans-serif; font-weight:800; font-size:1.05rem; color:#1d4ed8;">{{ \App\Models\Project::where('slippage',0)->count() }}</span>
                         </div>
 
-                        <div style="margin-top:0.25rem; padding:0.5rem 0.65rem; background:var(--o50); border-radius:9px; text-align:center;">
-                            <p style="font-size:0.68rem; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:0.06em;">Avg Slippage</p>
-                            <p style="font-family:'Syne',sans-serif; font-weight:800; font-size:1.1rem; color:{{ $avgSlippage >= 0 ? '#15803d' : '#dc2626' }}; margin-top:1px;">
+                        <div style="margin-top:0.5rem; padding:0.65rem 0.8rem; background:var(--o50); border:1.5px solid rgba(249,115,22,0.2); border-radius:10px; text-align:center;">
+                            <p style="font-size:0.7rem; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:0.06em;">Avg Slippage</p>
+                            <p style="font-family:'Syne',sans-serif; font-weight:800; font-size:1.15rem; color:{{ $avgSlippage >= 0 ? '#15803d' : '#dc2626' }}; margin-top:3px;">
                                 {{ $avgSlippage >= 0 ? '+' : '' }}{{ number_format($avgSlippage, 2) }}%
                             </p>
                         </div>
@@ -614,20 +664,20 @@
                 <div class="panel">
                     <div class="panel-head">
                         <p class="section-head" style="margin-bottom:0;">
-                            <i class="fas fa-server" style="color:#f97316; font-size:0.75rem;"></i> System
+                            <i class="fas fa-server" style="color:#f97316; font-size:0.8rem;"></i> System
                         </p>
                     </div>
-                    <div style="padding:0.75rem; display:flex; flex-direction:column; gap:0.4rem;">
+                    <div style="padding:0.85rem; display:flex; flex-direction:column; gap:0.5rem;">
                         @foreach([['System','Operational'],['Database','Connected'],['API','Healthy']] as [$lbl,$val])
                         <div class="status-row">
-                            <div style="display:flex; align-items:center; gap:0.55rem;">
+                            <div style="display:flex; align-items:center; gap:0.6rem;">
                                 <div style="width:7px; height:7px; background:#22c55e; border-radius:50%; animation:pulse-dot 2s infinite; flex-shrink:0;"></div>
                                 <div>
-                                    <p style="font-size:0.63rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em; font-weight:700;">{{ $lbl }}</p>
-                                    <p style="font-size:0.8rem; font-weight:600; color:var(--ink);">{{ $val }}</p>
+                                    <p style="font-size:0.64rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em; font-weight:700;">{{ $lbl }}</p>
+                                    <p style="font-size:0.82rem; font-weight:600; color:var(--ink);">{{ $val }}</p>
                                 </div>
                             </div>
-                            <span style="font-size:0.65rem; background:rgba(34,197,94,0.1); color:#16a34a; padding:2px 8px; border-radius:99px; font-weight:700; border:1px solid rgba(34,197,94,0.2);">Online</span>
+                            <span style="font-size:0.67rem; background:rgba(34,197,94,0.12); color:#16a34a; padding:3px 9px; border-radius:99px; font-weight:700; border:1px solid rgba(34,197,94,0.22); flex-shrink:0;">Online</span>
                         </div>
                         @endforeach
                     </div>
@@ -640,15 +690,15 @@
         <div class="dash-section panel">
             <div class="panel-head" style="display:flex; align-items:center; justify-content:space-between;">
                 <p class="section-head" style="margin-bottom:0;">
-                    <i class="fas fa-clock-rotate-left" style="color:#f97316; font-size:0.75rem;"></i> Recent Projects
+                    <i class="fas fa-clock-rotate-left" style="color:#f97316; font-size:0.8rem;"></i> Recent Projects
                 </p>
                 <a href="{{ route('admin.projects.index') }}"
-                   style="font-size:0.75rem; font-weight:600; color:#ea580c; text-decoration:none; display:flex; align-items:center; gap:0.3rem;"
-                   onmouseover="this.style.color='#c2410c'" onmouseout="this.style.color='#ea580c'">
-                    View all <i class="fas fa-arrow-right" style="font-size:0.6rem;"></i>
+                   style="font-size:0.77rem; font-weight:700; color:#ea580c; text-decoration:none; display:flex; align-items:center; gap:0.35rem; transition:all 0.2s;"
+                   onmouseover="this.style.color='#c2410c';this.style.transform='translateX(2px)'" onmouseout="this.style.color='#ea580c';this.style.transform='translateX(0)'">
+                    View all <i class="fas fa-arrow-right" style="font-size:0.65rem;"></i>
                 </a>
             </div>
-            <div style="padding:0.25rem 1.25rem 0.5rem;">
+            <div style="padding:0.3rem 1.3rem 0.6rem;">
                 @forelse($recentProjects as $rp)
                 @php
                     $rSlip = (float)($rp->slippage ?? 0);
@@ -656,49 +706,49 @@
                     $rDays = (int) now()->diffInDays($rExpiry, false);
                 @endphp
                 <div class="recent-row">
-                    <div style="width:32px; height:32px; border-radius:9px; background:var(--o100); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-family:'Syne',sans-serif; font-weight:800; font-size:0.7rem; color:#c2410c;">
+                    <div style="width:34px; height:34px; border-radius:10px; background:var(--o100); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-family:'Syne',sans-serif; font-weight:800; font-size:0.75rem; color:#c2410c;">
                         {{ strtoupper(substr($rp->project_title, 0, 2)) }}
                     </div>
                     <div style="flex:1; min-width:0;">
-                        <p style="font-weight:700; font-size:0.845rem; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ $rp->project_title }}</p>
-                        <p style="font-size:0.7rem; color:#9ca3af; margin-top:1px;">{{ $rp->in_charge }} · {{ $rp->location }}</p>
+                        <p style="font-weight:700; font-size:0.87rem; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ $rp->project_title }}</p>
+                        <p style="font-size:0.72rem; color:#9ca3af; margin-top:2px;">{{ $rp->in_charge }} · {{ $rp->location }}</p>
                     </div>
                     <div style="flex-shrink:0; text-align:right;">
                         @if($rSlip > 0)
-                            <span style="display:inline-flex; align-items:center; gap:0.2rem; font-size:0.7rem; font-weight:700; color:#15803d; background:rgba(34,197,94,0.08); padding:2px 7px; border-radius:99px;">
-                                <i class="fas fa-arrow-up" style="font-size:0.55rem;"></i>+{{ $rSlip }}%
+                            <span style="display:inline-flex; align-items:center; gap:0.25rem; font-size:0.72rem; font-weight:700; color:#15803d; background:rgba(34,197,94,0.1); padding:3px 9px; border-radius:99px; border:1px solid rgba(34,197,94,0.18);">
+                                <i class="fas fa-arrow-up" style="font-size:0.58rem;"></i>+{{ $rSlip }}%
                             </span>
                         @elseif($rSlip < 0)
-                            <span style="display:inline-flex; align-items:center; gap:0.2rem; font-size:0.7rem; font-weight:700; color:#dc2626; background:rgba(239,68,68,0.08); padding:2px 7px; border-radius:99px;">
-                                <i class="fas fa-arrow-down" style="font-size:0.55rem;"></i>{{ $rSlip }}%
+                            <span style="display:inline-flex; align-items:center; gap:0.25rem; font-size:0.72rem; font-weight:700; color:#dc2626; background:rgba(239,68,68,0.1); padding:3px 9px; border-radius:99px; border:1px solid rgba(239,68,68,0.18);">
+                                <i class="fas fa-arrow-down" style="font-size:0.58rem;"></i>{{ $rSlip }}%
                             </span>
                         @else
-                            <span style="font-size:0.7rem; font-weight:700; color:#6b7280; background:rgba(107,114,128,0.08); padding:2px 7px; border-radius:99px;">0%</span>
+                            <span style="font-size:0.72rem; font-weight:700; color:#6b7280; background:rgba(107,114,128,0.1); padding:3px 9px; border-radius:99px; border:1px solid rgba(107,114,128,0.18);">0%</span>
                         @endif
                     </div>
-                    <div style="flex-shrink:0; min-width:70px; text-align:right;">
+                    <div style="flex-shrink:0; min-width:75px; text-align:right;">
                         @if($rp->status === 'completed')
-                            <span style="font-size:0.68rem; font-weight:700; color:#15803d; background:rgba(34,197,94,0.08); padding:2px 8px; border-radius:99px; border:1px solid rgba(34,197,94,0.2);">
-                                <i class="fas fa-check" style="font-size:0.5rem;"></i> Done
+                            <span style="font-size:0.7rem; font-weight:700; color:#15803d; background:rgba(34,197,94,0.1); padding:3px 9px; border-radius:99px; border:1px solid rgba(34,197,94,0.18);">
+                                <i class="fas fa-check" style="font-size:0.52rem;"></i> Done
                             </span>
                         @elseif($rDays < 0)
-                            <span style="font-size:0.68rem; font-weight:700; color:#dc2626; background:rgba(239,68,68,0.08); padding:2px 8px; border-radius:99px; border:1px solid rgba(239,68,68,0.2);">Expired</span>
+                            <span style="font-size:0.7rem; font-weight:700; color:#dc2626; background:rgba(239,68,68,0.1); padding:3px 9px; border-radius:99px; border:1px solid rgba(239,68,68,0.18);">Expired</span>
                         @elseif($rDays <= 30)
-                            <span style="font-size:0.68rem; font-weight:700; color:#b45309; background:rgba(234,179,8,0.1); padding:2px 8px; border-radius:99px; border:1px solid rgba(234,179,8,0.2);">{{ $rDays }}d left</span>
+                            <span style="font-size:0.7rem; font-weight:700; color:#b45309; background:rgba(234,179,8,0.12); padding:3px 9px; border-radius:99px; border:1px solid rgba(234,179,8,0.22);">{{ $rDays }}d left</span>
                         @else
-                            <span style="font-size:0.68rem; font-weight:700; color:#2563eb; background:rgba(59,130,246,0.08); padding:2px 8px; border-radius:99px; border:1px solid rgba(59,130,246,0.2);">Active</span>
+                            <span style="font-size:0.7rem; font-weight:700; color:#2563eb; background:rgba(59,130,246,0.1); padding:3px 9px; border-radius:99px; border:1px solid rgba(59,130,246,0.18);">Active</span>
                         @endif
                     </div>
                     <a href="{{ route('admin.projects.show', $rp) }}"
-                       style="flex-shrink:0; width:28px; height:28px; border-radius:7px; background:var(--o50); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; text-decoration:none; transition:all 0.15s;"
+                       style="flex-shrink:0; width:32px; height:32px; border-radius:8px; background:var(--o50); border:1.5px solid var(--border); display:flex; align-items:center; justify-content:center; text-decoration:none; transition:all 0.15s; margin-left:0.5rem;"
                        onmouseover="this.style.background='#f97316';this.style.borderColor='#f97316';this.querySelector('i').style.color='white'"
                        onmouseout="this.style.background='var(--o50)';this.style.borderColor='var(--border)';this.querySelector('i').style.color='#c4956a'">
-                        <i class="fas fa-eye" style="font-size:0.6rem; color:#c4956a;"></i>
+                        <i class="fas fa-eye" style="font-size:0.65rem; color:#c4956a;"></i>
                     </a>
                 </div>
                 @empty
-                <div style="padding:2rem; text-align:center; color:#9ca3af; font-size:0.845rem;">
-                    No projects yet — <a href="{{ route('admin.projects.create') }}" style="color:#f97316; font-weight:600; text-decoration:none;">create one</a>
+                <div style="padding:2.5rem; text-align:center; color:#9ca3af; font-size:0.87rem;">
+                    No projects yet — <a href="{{ route('admin.projects.create') }}" style="color:#f97316; font-weight:700; text-decoration:none;">create one</a>
                 </div>
                 @endforelse
             </div>

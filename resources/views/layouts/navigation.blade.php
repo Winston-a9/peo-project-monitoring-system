@@ -569,6 +569,14 @@
                     <span class="sb-active-dot"></span>
                 </a>
 
+                <a href="{{ route('admin.reports.index') }}"
+                   class="sb-link {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}"
+                   data-tooltip="Reports">
+                    <span class="sb-link-icon"><i class="fas fa-file-pdf"></i></span>
+                    <span class="sb-link-label">Reports</span>
+                    <span class="sb-active-dot"></span>
+                </a>
+
            {{-- User nav section only — replace the @else block in navigation.blade.php --}}
 
             @else

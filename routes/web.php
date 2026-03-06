@@ -28,7 +28,8 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
     Route::resource('projects', ProjectController::class);
-
+    Route::get('/reports', [ProjectController::class, 'reports'])->name('reports.index');
+    Route::get('/reports/generate', [ProjectController::class, 'generateReport'])->name('reports.generate'); // ← GET not POST
 });
 
 // User Routes

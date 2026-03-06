@@ -570,8 +570,6 @@ function computeSlippage() {
 
     valEl.textContent = (sl > 0 ? '+' : '') + sl + '%';
 }
-
-
 /* ── Revised expiry auto-compute ── */
 function recomputeRevisedExpiry() {
     const originalVal = document.getElementById('original_contract_expiry').value;
@@ -629,7 +627,6 @@ function onDocumentChange(sel) {
     recomputeRevisedExpiry();
     refreshDocumentOptions();
 }
-
 /* ── Figure out which Time Extensions are already used & what the next allowed one is ── */
 function getUsedTimeExtensions() {
     const selects = document.getElementById('documents-list').querySelectorAll('select');
@@ -639,7 +636,6 @@ function getUsedTimeExtensions() {
     });
     return used;
 }
-
 function getNextAllowedExtension(used) {
     for (let i = 1; i <= 5; i++) {
         const te = `Time Extension ${i}`;
@@ -647,7 +643,6 @@ function getNextAllowedExtension(used) {
     }
     return null; // all 5 used
 }
-
 function refreshDocumentOptions() {
     const selects = Array.from(document.getElementById('documents-list').querySelectorAll('select'));
 

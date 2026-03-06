@@ -8,6 +8,7 @@ use App\Models\ProjectLog;
 use App\Models\TimeExtension;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use App\Services\ProjectReportPdf;
 
 class ProjectController extends Controller
 {
@@ -65,7 +66,6 @@ class ProjectController extends Controller
     public function show(Project $project)
     {
         $project->load(['logs.user' => fn($q) => $q->select('id','name')]);
-    // sort newest first
         $project->logs = $project->logs->sortByDesc('created_at');
     return view('admin.projects.show', compact('project'));
     }
@@ -146,6 +146,156 @@ class ProjectController extends Controller
     $project->update($data);
 
     return redirect()->route('admin.projects.index')->with('success', 'Project updated successfully.');
+}
+public function reports()
+{
+    $projects = Project::orderBy('date_started', 'desc')->get();
+
+    $total     = $projects->count();
+    $ongoing   = $projects->where('status', 'ongoing')->count();
+    $completed = $projects->where('status', 'completed')->count();
+    $expired   = $projects->where('status', 'expired')->count();
+
+    return view('admin.reports.index', compact('projects', 'total', 'ongoing', 'completed', 'expired'));
+}
+
+public function generateReport()
+{
+    $clean = fn(string $s) => iconv('UTF-8', 'windows-1252//TRANSLIT//IGNORE', $s) ?: $s;
+
+    // ── Filtered query (matches index blade logic) ──
+    $query = \App\Models\Project::query();
+
+    if (request('search')) {
+        $search = request('search');
+        $query->where(function($q) use ($search) {
+            $q->where('project_title', 'like', "%{$search}%")
+              ->orWhere('location',     'like', "%{$search}%")
+              ->orWhere('contractor',   'like', "%{$search}%");
+        });
+    }
+
+    if (request('in_charge')) {
+        $query->where('in_charge', request('in_charge'));
+    }
+
+    $status = request('status', 'all');
+    if ($status === 'completed') {
+        $query->where('status', 'completed');
+    } elseif ($status === 'active') {
+        $query->where('status', 'ongoing')
+              ->where(function($q) {
+                  $q->whereNull('revised_contract_expiry')
+                    ->where('original_contract_expiry', '>', now()->addDays(30))
+                    ->orWhere('revised_contract_expiry', '>', now()->addDays(30));
+              });
+    } elseif ($status === 'expiring') {
+        $query->where('status', '!=', 'completed')
+              ->where(function($q) {
+                  $q->whereNull('revised_contract_expiry')
+                    ->whereBetween('original_contract_expiry', [now(), now()->addDays(30)])
+                    ->orWhereBetween('revised_contract_expiry', [now(), now()->addDays(30)]);
+              });
+    } elseif ($status === 'expired') {
+        $query->where('status', '!=', 'completed')
+              ->where(function($q) {
+                  $q->whereNull('revised_contract_expiry')
+                    ->where('original_contract_expiry', '<', now())
+                    ->orWhere('revised_contract_expiry', '<', now());
+              });
+    } elseif ($status === 'ongoing') {
+        $query->where('status', 'ongoing')
+              ->where(function($q) {
+                  $q->whereNull('revised_contract_expiry')
+                    ->where('original_contract_expiry', '>=', now())
+                    ->orWhere('revised_contract_expiry', '>=', now());
+              });
+    }
+
+    $projects  = $query->orderBy('date_started', 'desc')->get();
+    $total     = $projects->count();
+    $ongoing   = $projects->where('status', 'ongoing')->count();
+    $completed = $projects->where('status', 'completed')->count();
+    $expired   = $projects->where('status', 'expired')->count();
+
+    // ── Filter label for PDF subtitle ──
+    $filterParts = [];
+    if (request('search'))           $filterParts[] = 'Search: "' . request('search') . '"';
+    if (request('in_charge'))        $filterParts[] = 'In Charge: ' . request('in_charge');
+    if ($status && $status !== 'all') $filterParts[] = 'Status: ' . ucfirst($status);
+    $filterLabel = count($filterParts) ? implode('  |  ', $filterParts) : 'All Projects';
+
+    // ── Build PDF ──
+    $pdf = new ProjectReportPdf('L', 'mm', 'A4');
+    $pdf->SetAutoPageBreak(false);
+    $pdf->SetMargins(10, 10, 10);
+    $pdf->setGeneratedAt(now()->format('F d, Y  h:i A'));
+    $pdf->setFilterLabel($filterLabel);
+    $pdf->AddPage();
+
+    $pdf->SetFont('Helvetica', 'B', 8);
+    $pdf->SetTextColor(107, 79, 53);
+    $pdf->Cell(0, 5, 'PROJECT DETAILS - ' . $total . ' records', 0, 1, 'L');
+    $pdf->Ln(2);
+
+    $cols = [
+        ['#',             8,  'C'],
+        ['Project Title', 55, 'L'],
+        ['In Charge',     32, 'L'],
+        ['Location',      30, 'L'],
+        ['Contractor',    32, 'L'],
+        ['Contract Amt',  30, 'R'],
+        ['Started',       25, 'C'],
+        ['Expiry',        25, 'C'],
+        ['Slippage',      20, 'C'],
+        ['Status',        20, 'C'],
+    ];
+
+    $pdf->TableHeader($cols);
+
+    foreach ($projects as $i => $project) {
+        if ($pdf->GetY() + 7 > 200) {
+            $pdf->AddPage();
+            $pdf->TableHeader($cols);
+        }
+
+        $expiry  = $project->revised_contract_expiry ?? $project->original_contract_expiry;
+        $slip    = (float)($project->slippage ?? 0);
+        $slipStr = ($slip > 0 ? '+' : '') . number_format($slip, 2) . '%';
+        $even    = $i % 2 === 0;
+
+        if ($slip > 0)     $slipColor = [22, 163, 74];
+        elseif ($slip < 0) $slipColor = [220, 38, 38];
+        else               $slipColor = [107, 114, 128];
+
+        $statusMap = [
+            'completed' => [[240,253,244], [22,163,74],  'Completed'],
+            'expired'   => [[254,242,242], [220,38,38],  'Expired'  ],
+            'ongoing'   => [[239,246,255], [37,99,235],  'Ongoing'  ],
+        ];
+        [$statusBg, $statusFg, $statusLabel] = $statusMap[$project->status] ?? $statusMap['ongoing'];
+
+        $pdf->ProjectRow(
+            $i + 1,
+            mb_strimwidth($clean($project->project_title), 0, 35, '...'),
+            mb_strimwidth($clean($project->in_charge),     0, 20, '...'),
+            mb_strimwidth($clean($project->location),      0, 18, '...'),
+            mb_strimwidth($clean($project->contractor),    0, 20, '...'),
+            'P' . number_format($project->contract_amount, 2),
+            $project->date_started->format('m/d/Y'),
+            $expiry->format('m/d/Y'),
+            $slipStr,
+            $slipColor,
+            $statusLabel,
+            $statusBg,
+            $statusFg,
+            $even
+        );
+    }
+
+    $filename = 'projects-report-' . now()->format('Y-m-d') . '.pdf';
+    $pdf->Output('D', $filename);
+    exit;
 }
     public function destroy(Project $project)
     {
