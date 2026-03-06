@@ -11,13 +11,22 @@ return new class extends Migration
      */
     public function up(): void
     {
+<<<<<<< HEAD
+=======
+        // In your database migration (database/migrations/xxxx_create_users_table.php)
+>>>>>>> 89caed72e1a46b970403232f253207870b3ea870
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
+<<<<<<< HEAD
             $table->enum('role', ['admin', 'user',])->default('user');
             $table->string('password');
+=======
+            $table->string('password');
+            $table->enum('role', ['admin', 'user','student'])->default('student');
+>>>>>>> 89caed72e1a46b970403232f253207870b3ea870
             $table->rememberToken();
             $table->timestamps();
         });
