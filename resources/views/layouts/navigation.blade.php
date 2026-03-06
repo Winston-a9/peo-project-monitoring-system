@@ -451,7 +451,7 @@
         left: calc(var(--sb-width-collapsed) - 4px);
         top: 50%;
         transform: translateY(-50%);
-        background: #2d1a00;
+        background: #2d1a00;a
         color: white;
         font-size: 0.75rem;
         font-weight: 600;
@@ -569,6 +569,8 @@
                     <span class="sb-active-dot"></span>
                 </a>
 
+           {{-- User nav section only — replace the @else block in navigation.blade.php --}}
+
             @else
 
                 <span class="sb-section-label">Overview</span>
@@ -578,6 +580,16 @@
                    data-tooltip="Dashboard">
                     <span class="sb-link-icon"><i class="fas fa-home"></i></span>
                     <span class="sb-link-label">Dashboard</span>
+                    <span class="sb-active-dot"></span>
+                </a>
+
+                <span class="sb-section-label">Browse</span>
+
+                <a href="{{ route('user.projects.index') }}"
+                   class="sb-link {{ request()->routeIs('user.projects.*') ? 'active' : '' }}"
+                   data-tooltip="Projects">
+                    <span class="sb-link-icon"><i class="fas fa-folder-open"></i></span>
+                    <span class="sb-link-label">Projects</span>
                     <span class="sb-active-dot"></span>
                 </a>
 

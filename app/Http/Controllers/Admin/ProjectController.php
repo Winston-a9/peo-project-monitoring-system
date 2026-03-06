@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Project;
+use App\Models\ProjectLog;
+use App\Models\TimeExtension;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class ProjectController extends Controller
@@ -66,7 +69,7 @@ class ProjectController extends Controller
 
     public function edit(Project $project)
     {
-        return view('admin.projects.edit', compact('project'));
+    return view('admin.projects.edit', compact('project'));
     }
 
     public function update(Request $request, Project $project)
