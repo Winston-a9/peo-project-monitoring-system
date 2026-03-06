@@ -15,6 +15,9 @@ class ProjectController extends Controller
     {
         $projects = Project::latest()->paginate(10);
         return view('admin.projects.index', compact('projects'));
+         $perPage = in_array((int)request('per_page', 10), [10, 25, 50]) ? (int)request('per_page', 10) : 10;
+        $projects = Project::paginate($perPage)->withQueryString();
+        return view('admin.projects.index', compact('projects'));
     }
 
     public function create()
@@ -149,4 +152,5 @@ class ProjectController extends Controller
         $project->delete();
         return redirect()->route('admin.projects.index')->with('success', 'Project deleted successfully.');
     }
+    
 }

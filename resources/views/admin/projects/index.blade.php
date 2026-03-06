@@ -327,12 +327,96 @@
         </div>
 
         {{-- Pagination --}}
-        <div style="padding:1rem 1.25rem; border-top:1px solid var(--border); background:var(--surface); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem;">
-            <p style="font-size:0.78rem; color:var(--muted);">
-                Showing <strong>{{ $projects->firstItem() }}</strong>–<strong>{{ $projects->lastItem() }}</strong> of <strong>{{ $projects->total() }}</strong> projects
-            </p>
-            {{ $projects->links() }}
+<div style="padding:1rem 1.25rem; border-top:1px solid var(--border); background:var(--surface); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.75rem;">
+
+    {{-- Left: info + per page --}}
+    <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
+        <p style="font-size:0.78rem; color:var(--muted);">
+            Showing <strong>{{ $projects->firstItem() }}</strong>–<strong>{{ $projects->lastItem() }}</strong> of <strong>{{ $projects->total() }}</strong> projects
+        </p>
+        <div style="display:flex; align-items:center; gap:0.4rem;">
+            <span style="font-size:0.72rem; color:#9ca3af;">Per page:</span>
+            <select onchange="changePerPage(this.value)"
+                style="padding:0.3rem 1.6rem 0.3rem 0.6rem; border:1.5px solid rgba(0,0,0,0.09); border-radius:8px; font-size:0.78rem; color:var(--ink); background:white; outline:none; appearance:none; cursor:pointer; font-family:'Instrument Sans',sans-serif;
+                background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b4f35' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E\");
+                background-position:right 0.35rem center; background-repeat:no-repeat; background-size:0.9em;">
+                @foreach([10, 25, 50] as $pp)
+                    <option value="{{ $pp }}" {{ request('per_page', 10) == $pp ? 'selected' : '' }}>{{ $pp }}</option>
+                @endforeach
+            </select>
         </div>
+    </div>
+
+    {{-- Right: page buttons --}}
+    @if($projects->hasPages())
+    <div style="display:flex; align-items:center; gap:0.3rem; flex-wrap:wrap;">
+
+        {{-- Prev --}}
+        @if($projects->onFirstPage())
+            <span style="display:inline-flex; align-items:center; justify-content:center; min-width:32px; height:32px; padding:0 0.5rem; border-radius:8px; font-size:0.8rem; border:1.5px solid rgba(0,0,0,0.08); background:white; color:#d1d5db; pointer-events:none;">
+                <i class="fas fa-chevron-left" style="font-size:0.6rem;"></i>
+            </span>
+        @else
+            <a href="{{ $projects->previousPageUrl() }}"
+               style="display:inline-flex; align-items:center; justify-content:center; min-width:32px; height:32px; padding:0 0.5rem; border-radius:8px; font-size:0.8rem; font-weight:600; border:1.5px solid rgba(0,0,0,0.09); background:white; color:var(--muted); text-decoration:none; transition:all 0.15s;"
+               onmouseover="this.style.borderColor='#f97316';this.style.color='#ea580c'"
+               onmouseout="this.style.borderColor='rgba(0,0,0,0.09)';this.style.color='var(--muted)'">
+                <i class="fas fa-chevron-left" style="font-size:0.6rem;"></i>
+            </a>
+        @endif
+
+        {{-- Page numbers --}}
+        @php
+            $cur  = $projects->currentPage();
+            $last = $projects->lastPage();
+            $pages = [];
+            $prev = null;
+            $raw = [];
+            for ($i = 1; $i <= $last; $i++) {
+                if ($i === 1 || $i === $last || abs($i - $cur) <= 2) $raw[] = $i;
+            }
+            foreach ($raw as $pg) {
+                if ($prev !== null && $pg - $prev > 1) $pages[] = '…';
+                $pages[] = $pg;
+                $prev = $pg;
+            }
+        @endphp
+
+        @foreach($pages as $pg)
+            @if($pg === '…')
+                <span style="display:inline-flex; align-items:center; justify-content:center; min-width:32px; height:32px; font-size:0.8rem; color:#9ca3af;">…</span>
+            @elseif($pg == $cur)
+                <span style="display:inline-flex; align-items:center; justify-content:center; min-width:32px; height:32px; padding:0 0.5rem; border-radius:8px; font-size:0.8rem; font-weight:700; background:#f97316; border:1.5px solid #f97316; color:white; box-shadow:0 2px 8px rgba(249,115,22,0.3);">
+                    {{ $pg }}
+                </span>
+            @else
+                <a href="{{ $projects->url($pg) }}"
+                   style="display:inline-flex; align-items:center; justify-content:center; min-width:32px; height:32px; padding:0 0.5rem; border-radius:8px; font-size:0.8rem; font-weight:600; border:1.5px solid rgba(0,0,0,0.09); background:white; color:var(--muted); text-decoration:none; transition:all 0.15s;"
+                   onmouseover="this.style.borderColor='#f97316';this.style.color='#ea580c';this.style.background='#fff7ed'"
+                   onmouseout="this.style.borderColor='rgba(0,0,0,0.09)';this.style.color='var(--muted)';this.style.background='white'">
+                    {{ $pg }}
+                </a>
+            @endif
+        @endforeach
+
+        {{-- Next --}}
+        @if($projects->hasMorePages())
+            <a href="{{ $projects->nextPageUrl() }}"
+               style="display:inline-flex; align-items:center; justify-content:center; min-width:32px; height:32px; padding:0 0.5rem; border-radius:8px; font-size:0.8rem; font-weight:600; border:1.5px solid rgba(0,0,0,0.09); background:white; color:var(--muted); text-decoration:none; transition:all 0.15s;"
+               onmouseover="this.style.borderColor='#f97316';this.style.color='#ea580c'"
+               onmouseout="this.style.borderColor='rgba(0,0,0,0.09)';this.style.color='var(--muted)'">
+                <i class="fas fa-chevron-right" style="font-size:0.6rem;"></i>
+            </a>
+        @else
+            <span style="display:inline-flex; align-items:center; justify-content:center; min-width:32px; height:32px; padding:0 0.5rem; border-radius:8px; font-size:0.8rem; border:1.5px solid rgba(0,0,0,0.08); background:white; color:#d1d5db; pointer-events:none;">
+                <i class="fas fa-chevron-right" style="font-size:0.6rem;"></i>
+            </span>
+        @endif
+
+    </div>
+    @endif
+
+    </div>
 
     </div>
 
@@ -452,6 +536,12 @@
         document.body.appendChild(f);
         f.submit();
     });
+    function changePerPage(val) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('per_page', val);
+    url.searchParams.set('page', 1);
+    window.location.href = url.toString();
+}
 </script>
 
 </x-app-layout>
