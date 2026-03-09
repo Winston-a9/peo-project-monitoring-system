@@ -29,17 +29,20 @@ return new class extends Migration
             // Documents & Extensions
             $table->json('issuances')->nullable();
             $table->json('documents_pressed')->nullable();
-            $table->string('time_extension')->nullable();
-            $table->json('extension_days')->nullable();
-            $table->json('cost_involved')->nullable();
-            $table->integer('suspension_days')->nullable();
+            $table->integer('time_extension')->nullable();      // count of TE entries
+            $table->json('extension_days')->nullable();         // parallel TE days array
+            $table->json('cost_involved')->nullable();          // parallel TE cost array
+            $table->integer('suspension_days')->nullable();     // total SO days (single accumulating int)
+            $table->integer('variation_order')->nullable();     // count of VO entries
+            $table->json('vo_days')->nullable();                // parallel VO days array
+            $table->json('vo_cost')->nullable();                // parallel VO cost array
 
             // Liquidated Damages
             $table->decimal('ld_accomplished', 5, 2)->nullable();
             $table->decimal('ld_unworked', 5, 2)->nullable();
             $table->decimal('ld_per_day', 15, 2)->nullable();
             $table->decimal('total_ld', 15, 2)->nullable();
-            $table->date('ld_days_overdue')->nullable();
+            $table->integer('ld_days_overdue')->nullable();     // integer, NOT date
 
             $table->timestamps();
         });

@@ -101,6 +101,30 @@ class ProjectController extends Controller
         $teCount      = count($teHistory);
         $nextTeNumber = $teCount + 1;
 
+        // Build VO history: parallel to vo_days / vo_cost
+        $existingVoDays  = $fresh->vo_days ?? [];
+        $existingVoCosts = $fresh->vo_cost ?? [];
+        $existingVoDays  = is_array($existingVoDays)  ? $existingVoDays  : (json_decode($existingVoDays  ?? '[]', true) ?? []);
+        $existingVoCosts = is_array($existingVoCosts) ? $existingVoCosts : (json_decode($existingVoCosts ?? '[]', true) ?? []);
+        $existingVoDays  = array_map('intval', array_filter((array) $existingVoDays));
+        $existingVoCosts = array_map(fn($v) => $v !== null ? (float) $v : null, $existingVoCosts);
+
+        $voHistory = [];
+        $voIndex   = 0;
+        foreach ($existingDocs as $doc) {
+            if (str_starts_with((string) $doc, 'Variation Order')) {
+                $voHistory[] = [
+                    'label' => $doc,
+                    'days'  => $existingVoDays[$voIndex]  ?? 0,
+                    'cost'  => $existingVoCosts[$voIndex] ?? null,
+                ];
+                $voIndex++;
+            }
+        }
+
+        $voCount      = count($voHistory);
+        $nextVoNumber = $voCount + 1;
+
         $hasSO   = collect($existingDocs)->contains('Suspension Order');
         $soCount = $hasSO ? 1 : 0;
 
@@ -110,6 +134,9 @@ class ProjectController extends Controller
             'teHistory'    => $teHistory,
             'teCount'      => $teCount,
             'nextTeNumber' => $nextTeNumber,
+            'voHistory'    => $voHistory,
+            'voCount'      => $voCount,
+            'nextVoNumber' => $nextVoNumber,
             'hasSO'        => $hasSO,
             'soCount'      => $soCount,
         ]);
@@ -134,9 +161,11 @@ class ProjectController extends Controller
             'issuances'                => 'nullable|array',
             'issuances.*'              => 'nullable|string|in:1st Notice of Negative Slippage,2nd Notice of Negative Slippage,3rd Notice of Negative Slippage,Liquidated Damages,Notice to Terminate,Notice of Expiry',
             // New TE this update
-            'new_te_number'            => 'nullable|integer|min:1|max:8',
             'new_te_days'              => 'nullable|integer|min:1|max:9999',
             'new_te_cost'              => 'nullable|numeric|min:0',
+            // New VO this update
+            'new_vo_days'              => 'nullable|integer|min:1|max:9999',
+            'new_vo_cost'              => 'nullable|numeric|min:0',
             // SO
             'new_so_days'              => 'nullable|integer|min:1|max:9999',
             // LD
@@ -183,20 +212,43 @@ class ProjectController extends Controller
 
         $existingSuspDay = (int) ($fresh->suspension_days ?? 0);
 
+        // VO parallel arrays
+        $existingVoDays  = $fresh->vo_days ?? [];
+        $existingVoCosts = $fresh->vo_cost ?? [];
+        $existingVoDays  = is_array($existingVoDays)  ? array_map('intval', array_filter((array) $existingVoDays))  : [];
+        $existingVoCosts = is_array($existingVoCosts) ? array_map(fn($v) => $v !== null ? (float) $v : null, $existingVoCosts) : [];
+
         $currentTECount = collect($existingDocs)
             ->filter(fn($d) => str_starts_with((string) $d, 'Time Extension'))
             ->count();
 
         // Step 4: Append new Time Extension if submitted
-        $newTEDays   = (int) $request->input('new_te_days', 0);
-        $newTENumber = (int) $request->input('new_te_number', 0); // user-selected TE number (1–8)
-        $newTECost   = $request->input('new_te_cost');
+        $newTEDays = (int) $request->input('new_te_days', 0);
+        $newTECost = $request->input('new_te_cost');
 
-        if ($newTEDays > 0 && $newTENumber > 0) {
-            $existingDocs[]  = "Time Extension {$newTENumber}";
+        if ($newTEDays > 0) {
+            $nextNumber      = $currentTECount + 1;
+            $existingDocs[]  = "Time Extension {$nextNumber}";
             $existingDays[]  = $newTEDays;
             $existingCosts[] = ($newTECost !== null && $newTECost !== '') ? (float) $newTECost : null;
         }
+
+        // Step 4b: Append new Variation Order if submitted
+        $newVoDays = (int) $request->input('new_vo_days', 0);
+        $newVoCost = $request->input('new_vo_cost');
+
+        if ($newVoDays > 0) {
+            $currentVOCount  = collect($existingDocs)
+                ->filter(fn($d) => str_starts_with((string) $d, 'Variation Order'))
+                ->count();
+            $nextVONumber    = $currentVOCount + 1;
+            $existingDocs[]  = "Variation Order {$nextVONumber}";
+            $existingVoDays[]  = $newVoDays;
+            $existingVoCosts[] = ($newVoCost !== null && $newVoCost !== '') ? (float) $newVoCost : null;
+        }
+
+        $data['vo_days'] = array_values($existingVoDays);
+        $data['vo_cost'] = array_values($existingVoCosts);
 
         // ── Step 5: Handle Suspension Order ──
         $newSODays = (int) $request->input('new_so_days', 0);
@@ -216,20 +268,26 @@ class ProjectController extends Controller
         $data['extension_days']    = array_values($existingDays);
         $data['cost_involved']     = array_values($existingCosts);
 
-        // ── Step 6: Auto-count time_extension ──
+        // ── Step 6: Auto-count time_extension and variation_order ──
         $data['time_extension'] = collect($data['documents_pressed'])
             ->filter(fn($v) => str_starts_with($v ?? '', 'Time Extension'))
             ->count();
 
+        $data['variation_order'] = collect($data['documents_pressed'])
+            ->filter(fn($v) => str_starts_with($v ?? '', 'Variation Order'))
+            ->count();
+
         // ── Step 7: Recompute revised_contract_expiry ──
         $totalTEDays = (int) array_sum($data['extension_days']);
+        $totalVODays = (int) array_sum(array_map('intval', array_filter((array) ($data['vo_days'] ?? []))));
         $totalSODays = (int) ($data['suspension_days'] ?? 0);
         $baseExpiry  = Carbon::parse($request->original_contract_expiry);
+        $totalExtDays = $totalTEDays + $totalVODays;  // TE and VO both extend the deadline
 
-        if ($totalTEDays > 0) {
+        if ($totalExtDays > 0) {
             $extra = $hasSO ? $totalSODays : 0;
             $data['revised_contract_expiry'] = $baseExpiry->copy()
-                ->addDays($totalTEDays + $extra)
+                ->addDays($totalExtDays + $extra)
                 ->toDateString();
         } elseif ($hasSO && $totalSODays > 0) {
             $data['revised_contract_expiry'] = $baseExpiry->copy()

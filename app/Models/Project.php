@@ -25,12 +25,17 @@ class Project extends Model
         'status',
         'completed_at',
         'remarks_recommendation',
+        // Documents & Extensions
         'issuances',
         'documents_pressed',
         'time_extension',
         'extension_days',
         'cost_involved',
         'suspension_days',
+        'variation_order',
+        'vo_days',
+        'vo_cost',
+        // Liquidated Damages
         'ld_accomplished',
         'ld_unworked',
         'ld_per_day',
@@ -49,18 +54,21 @@ class Project extends Model
             'as_planned'               => 'decimal:2',
             'work_done'                => 'decimal:2',
             'slippage'                 => 'decimal:2',
-            'time_extension'           => 'integer',
             'contract_days'            => 'integer',
             'suspension_days'          => 'integer',
+            'time_extension'           => 'integer',
+            'variation_order'          => 'integer',
             'ld_accomplished'          => 'decimal:2',
             'ld_unworked'              => 'decimal:2',
             'ld_per_day'               => 'decimal:2',
             'total_ld'                 => 'decimal:2',
-            'ld_days_overdue'          => 'integer',  // <-- was 'date', must be integer
-            'extension_days'           => 'array',    // <-- was 'json', array is safer
-            'cost_involved'            => 'array',
-            'documents_pressed'        => 'array',
+            'ld_days_overdue'          => 'integer',    // integer — NOT date
             'issuances'                => 'array',
+            'documents_pressed'        => 'array',
+            'extension_days'           => 'array',      // array — NOT json (avoids stdClass)
+            'cost_involved'            => 'array',
+            'vo_days'                  => 'array',
+            'vo_cost'                  => 'array',
         ];
     }
 
