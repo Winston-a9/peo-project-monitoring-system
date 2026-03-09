@@ -454,11 +454,6 @@
                             @else <span class="badge badge-ongoing"><i class="fas fa-spinner" style="font-size:0.55rem;"></i> Ongoing</span>
                             @endif
                         </td>
-                        <td onclick="event.stopPropagation()">
-                            <a href="{{ route('user.projects.show', $project) }}" class="view-btn">
-                                <i class="fas fa-eye"></i> View
-                            </a>
-                        </td>
                     </tr>
                     @empty
                     <tr>

@@ -167,11 +167,15 @@
     .proj-table tbody tr:last-child td { border-bottom:none; }
     .proj-table tbody tr { transition:background 0.13s; }
     @media (prefers-color-scheme: light) {
-        .proj-table tbody tr:hover td { background:rgba(249,115,22,0.025); }
+    .proj-table tbody tr:hover td { background:rgba(249,115,22,0.04); }
     }
     @media (prefers-color-scheme: dark) {
-        .proj-table tbody tr:hover td { background:rgba(249,115,22,0.15); }
+        .proj-table tbody tr:hover td { background:rgba(249,115,22,0.12); }
     }
+
+    /* ADD THIS too for the cursor */
+    .proj-table tbody tr { cursor: pointer; }
+
     .proj-table tbody tr:hover td:first-child { box-shadow:inset 3px 0 0 var(--orange-500); }
 
     /* Badges */
@@ -443,7 +447,8 @@
                         $sl         = (float)($project->slippage ?? 0);
                         $sk         = $project->status==='completed'?'completed':($daysLeft<0?'expired':($daysLeft<30?'expiring':($project->status==='ongoing'?'active':'ongoing')));
                     @endphp
-                    <tr>
+                    <tr style="cursor:pointer;" onclick="window.location='{{ route('admin.projects.show', $project) }}'">
+
                         <td>
                             <div style="font-weight:700; color:var(--ink); max-width:190px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ $project->project_title }}</div>
                             <div style="font-size:0.68rem; color:#9ca3af; margin-top:2px;">{{ $project->updated_at->diffForHumans() }}</div>
@@ -491,17 +496,6 @@
                             @elseif($sk==='active') <span class="badge badge-active"><i class="fas fa-hourglass-start" style="font-size:0.55rem;"></i> Active</span>
                             @else <span class="badge badge-ongoing"><i class="fas fa-spinner" style="font-size:0.55rem;"></i> Ongoing</span>
                             @endif
-                        </td>
-                        <td onclick="event.stopPropagation()" style="display:flex; gap:0.3rem;">
-                            <a href="{{ route('admin.projects.show', $project) }}" class="view-btn">
-                                <i class="fas fa-eye"></i> View
-                            </a>
-                            <a href="{{ route('admin.projects.edit', $project) }}" class="edit-btn">
-                                <i class="fas fa-pen"></i> Edit
-                            </a>
-                            <button class="delete-btn" onclick="confirmDelete({{ $project->id }}, '{{ addslashes($project->project_title) }}')">
-                                <i class="fas fa-trash"></i>
-                            </button>
                         </td>
                     </tr>
                     @empty
