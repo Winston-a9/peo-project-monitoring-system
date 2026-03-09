@@ -134,6 +134,7 @@
     $existingCosts = is_array($project->cost_involved)     ? $project->cost_involved : [];
     $existingVoDays  = is_array($project->vo_days) ? array_map('intval', array_filter((array)$project->vo_days)) : [];
     $existingVoCosts = is_array($project->vo_cost) ? $project->vo_cost : [];
+    $existingDates   = is_array($project->date_requested ?? null) ? $project->date_requested : [];
 
     // Build TE history: scan documents_pressed for "Time Extension *" entries
     $teHistory = [];
@@ -141,9 +142,10 @@
     foreach ($existingDocs as $doc) {
         if (str_starts_with((string) $doc, 'Time Extension')) {
             $teHistory[] = [
-                'label' => $doc,
-                'days'  => $existingDays[$teIndex]  ?? 0,
-                'cost'  => $existingCosts[$teIndex] ?? null,
+                'label'          => $doc,
+                'days'           => $existingDays[$teIndex]  ?? 0,
+                'cost'           => $existingCosts[$teIndex] ?? null,
+                'date_requested' => $existingDates[$teIndex] ?? null,
             ];
             $teIndex++;
         }
@@ -152,14 +154,17 @@
     $nextTeNumber = $teCount + 1;
 
     // Build VO history: scan documents_pressed for "Variation Order *" entries
-    $voHistory = [];
-    $voIndex   = 0;
+    // VO dates are stored after TE dates in the shared date_requested array
+    $voHistory    = [];
+    $voIndex      = 0;
+    $voDateOffset = $teCount; // VO dates start after all TE dates
     foreach ($existingDocs as $doc) {
         if (str_starts_with((string) $doc, 'Variation Order')) {
             $voHistory[] = [
-                'label' => $doc,
-                'days'  => $existingVoDays[$voIndex]  ?? 0,
-                'cost'  => $existingVoCosts[$voIndex] ?? null,
+                'label'          => $doc,
+                'days'           => $existingVoDays[$voIndex]  ?? 0,
+                'cost'           => $existingVoCosts[$voIndex] ?? null,
+                'date_requested' => $existingDates[$voDateOffset + $voIndex] ?? null,
             ];
             $voIndex++;
         }
@@ -467,7 +472,8 @@
                                 @if(!$teIsLast)<div class="h-line h-line-orange"></div>@endif
                             </div>
                             <div class="h-label {{ $teIsLast ? 'last' : '' }}">{{ $entry['label'] }}
-                                @if($entry['cost']) <span style="font-size:0.72rem; font-weight:500; color:#9ca3af; margin-left:0.4rem;">· ₱{{ number_format($entry['cost'],2) }}</span>@endif
+                                @if($entry['date_requested']) <span style="font-size:0.72rem; font-weight:500; color:#9ca3af; margin-left:0.4rem;">· {{ \Carbon\Carbon::parse($entry['date_requested'])->format('M d, Y') }}</span>@endif
+                                @if($entry['cost']) <span style="font-size:0.72rem; font-weight:500; color:#16a34a; margin-left:0.2rem;">· ₱{{ number_format($entry['cost'],2) }}</span>@endif
                             </div>
                             <div style="display:flex; align-items:flex-start; justify-content:center; padding-top:2px;">
                                 <span class="h-pill {{ $entry['days'] > 0 ? 'h-pill-orange' : 'h-pill-gray' }}">+{{ $entry['days'] }}d</span>
@@ -510,6 +516,11 @@
                             <input type="number" name="new_te_cost" class="field-input" min="0" step="0.01" placeholder="0.00" style="padding-left:1.75rem;">
                         </div>
                         <p class="field-hint">Optional cost for this extension</p>
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Date Requested</label>
+                        <input type="date" name="new_te_date" class="field-input" style="border-color:rgba(249,115,22,0.25);">
+                        <p class="field-hint">When this time extension was requested</p>
                     </div>
                     <div class="field-group" style="grid-column:1/-1;">
                         <label class="field-label">Projected New Expiry (Preview)</label>
@@ -560,7 +571,8 @@
                                 @if(!$voIsLast)<div class="h-line h-line-indigo"></div>@endif
                             </div>
                             <div class="h-label {{ $voIsLast ? 'last' : '' }}">{{ $entry['label'] }}
-                                @if($entry['cost']) <span style="font-size:0.72rem; font-weight:500; color:#9ca3af; margin-left:0.4rem;">· ₱{{ number_format($entry['cost'],2) }}</span>@endif
+                                @if($entry['date_requested']) <span style="font-size:0.72rem; font-weight:500; color:#9ca3af; margin-left:0.4rem;">· {{ \Carbon\Carbon::parse($entry['date_requested'])->format('M d, Y') }}</span>@endif
+                                @if($entry['cost']) <span style="font-size:0.72rem; font-weight:500; color:#16a34a; margin-left:0.2rem;">· ₱{{ number_format($entry['cost'],2) }}</span>@endif
                             </div>
                             <div style="display:flex; align-items:flex-start; justify-content:center; padding-top:2px;">
                                 <span class="h-pill {{ $entry['days'] > 0 ? 'h-pill-indigo' : 'h-pill-gray' }}">+{{ $entry['days'] }}d</span>
@@ -602,12 +614,9 @@
                         <p class="field-hint">Days added by this variation order</p>
                     </div>
                     <div class="field-group">
-                        <label class="field-label">Cost Involved (₱)</label>
-                        <div style="position:relative;">
-                            <span style="position:absolute; left:1rem; top:50%; transform:translateY(-50%); color:var(--ink-muted); font-weight:600; pointer-events:none;">₱</span>
-                            <input type="number" name="new_vo_cost" class="field-input" min="0" step="0.01" placeholder="0.00" style="padding-left:1.75rem; border-color:rgba(99,102,241,0.25);">
-                        </div>
-                        <p class="field-hint">Additional cost for this variation</p>
+                        <label class="field-label">Date Requested</label>
+                        <input type="date" name="new_vo_date" class="field-input" style="border-color:rgba(99,102,241,0.25);">
+                        <p class="field-hint">When this variation order was requested</p>
                     </div>
                     <div class="field-group" style="grid-column:1/-1;">
                         <label class="field-label">Projected New Expiry (Preview)</label>

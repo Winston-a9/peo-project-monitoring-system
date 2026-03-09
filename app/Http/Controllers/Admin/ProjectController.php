@@ -68,31 +68,32 @@ class ProjectController extends Controller
 
     public function edit(Project $project)
     {
-        // Always read fresh from DB so cast fixes apply to existing rows
         $fresh = $project->fresh();
 
         $existingDocs  = $fresh->documents_pressed ?? [];
         $existingDays  = $fresh->extension_days    ?? [];
         $existingCosts = $fresh->cost_involved     ?? [];
 
-        // Safety: ensure arrays even if DB has null or stale string
         $existingDocs  = is_array($existingDocs)  ? $existingDocs  : (json_decode($existingDocs  ?? '[]', true) ?? []);
         $existingDays  = is_array($existingDays)  ? $existingDays  : (json_decode($existingDays  ?? '[]', true) ?? []);
         $existingCosts = is_array($existingCosts) ? $existingCosts : (json_decode($existingCosts ?? '[]', true) ?? []);
 
-        // Cast types to be safe
-        $existingDays  = array_map('intval',           $existingDays);
+        $existingDays  = array_map('intval', $existingDays);
         $existingCosts = array_map(fn($v) => $v !== null ? (float) $v : null, $existingCosts);
 
-        // Build TE history: pair each TE doc with its parallel days/cost index
+        // ── Date requested (parallel array) ──
+        $existingDates = $fresh->date_requested ?? [];
+        $existingDates = is_array($existingDates) ? $existingDates : (json_decode($existingDates ?? '[]', true) ?? []);
+
         $teHistory = [];
         $teIndex   = 0;
         foreach ($existingDocs as $doc) {
             if (str_starts_with((string) $doc, 'Time Extension')) {
                 $teHistory[] = [
-                    'label' => $doc,
-                    'days'  => $existingDays[$teIndex]  ?? 0,
-                    'cost'  => $existingCosts[$teIndex] ?? null,
+                    'label'         => $doc,
+                    'days'          => $existingDays[$teIndex]  ?? 0,
+                    'cost'          => $existingCosts[$teIndex] ?? null,
+                    'date_requested' => $existingDates[$teIndex] ?? null,
                 ];
                 $teIndex++;
             }
@@ -101,7 +102,6 @@ class ProjectController extends Controller
         $teCount      = count($teHistory);
         $nextTeNumber = $teCount + 1;
 
-        // Build VO history: parallel to vo_days / vo_cost
         $existingVoDays  = $fresh->vo_days ?? [];
         $existingVoCosts = $fresh->vo_cost ?? [];
         $existingVoDays  = is_array($existingVoDays)  ? $existingVoDays  : (json_decode($existingVoDays  ?? '[]', true) ?? []);
@@ -109,14 +109,17 @@ class ProjectController extends Controller
         $existingVoDays  = array_map('intval', array_filter((array) $existingVoDays));
         $existingVoCosts = array_map(fn($v) => $v !== null ? (float) $v : null, $existingVoCosts);
 
+        // VO dates start after all TE dates in the shared date_requested array
         $voHistory = [];
         $voIndex   = 0;
+        $voDateOffset = $teCount; // VO dates are appended after TE dates
         foreach ($existingDocs as $doc) {
             if (str_starts_with((string) $doc, 'Variation Order')) {
                 $voHistory[] = [
-                    'label' => $doc,
-                    'days'  => $existingVoDays[$voIndex]  ?? 0,
-                    'cost'  => $existingVoCosts[$voIndex] ?? null,
+                    'label'         => $doc,
+                    'days'          => $existingVoDays[$voIndex]  ?? 0,
+                    'cost'          => $existingVoCosts[$voIndex] ?? null,
+                    'date_requested' => $existingDates[$voDateOffset + $voIndex] ?? null,
                 ];
                 $voIndex++;
             }
@@ -128,7 +131,6 @@ class ProjectController extends Controller
         $hasSO   = collect($existingDocs)->contains('Suspension Order');
         $soCount = $hasSO ? 1 : 0;
 
-        // Pass fresh to view so blade also uses correct data
         return view('admin.projects.edit', [
             'project'      => $fresh,
             'teHistory'    => $teHistory,
@@ -160,15 +162,13 @@ class ProjectController extends Controller
             'completed_at'             => 'nullable|date',
             'issuances'                => 'nullable|array',
             'issuances.*'              => 'nullable|string|in:1st Notice of Negative Slippage,2nd Notice of Negative Slippage,3rd Notice of Negative Slippage,Liquidated Damages,Notice to Terminate,Notice of Expiry',
-            // New TE this update
             'new_te_days'              => 'nullable|integer|min:1|max:9999',
             'new_te_cost'              => 'nullable|numeric|min:0',
-            // New VO this update
+            'new_te_date'              => 'nullable|date',       // ← NEW
             'new_vo_days'              => 'nullable|integer|min:1|max:9999',
             'new_vo_cost'              => 'nullable|numeric|min:0',
-            // SO
+            'new_vo_date'              => 'nullable|date',       // ← NEW
             'new_so_days'              => 'nullable|integer|min:1|max:9999',
-            // LD
             'ld_accomplished'          => 'nullable|numeric|min:0|max:100',
             'ld_per_day'               => 'nullable|numeric|min:0',
             'ld_days_overdue'          => 'nullable|integer|min:0',
@@ -196,59 +196,71 @@ class ProjectController extends Controller
             array_filter($request->input('issuances', []), fn($v) => !empty($v))
         );
 
-        // Step 3: Carry forward existing docs/days/costs
-        // Use fresh() so we always read the latest committed DB values, not the stale bound instance
+        // ── Step 3: Carry forward existing arrays ──
         $fresh = $project->fresh();
 
-        // Model now casts all three as 'array' — but guard anyway for existing null rows
         $existingDocs  = $fresh->documents_pressed ?? [];
         $existingDays  = $fresh->extension_days    ?? [];
         $existingCosts = $fresh->cost_involved     ?? [];
 
-        // Ensure every element is the correct scalar type
         $existingDocs  = is_array($existingDocs)  ? $existingDocs  : [];
-        $existingDays  = is_array($existingDays)  ? array_map('intval',   $existingDays)  : [];
+        $existingDays  = is_array($existingDays)  ? array_map('intval', $existingDays)  : [];
         $existingCosts = is_array($existingCosts) ? array_map(fn($v) => $v !== null ? (float) $v : null, $existingCosts) : [];
 
         $existingSuspDay = (int) ($fresh->suspension_days ?? 0);
 
-        // VO parallel arrays
         $existingVoDays  = $fresh->vo_days ?? [];
         $existingVoCosts = $fresh->vo_cost ?? [];
         $existingVoDays  = is_array($existingVoDays)  ? array_map('intval', array_filter((array) $existingVoDays))  : [];
         $existingVoCosts = is_array($existingVoCosts) ? array_map(fn($v) => $v !== null ? (float) $v : null, $existingVoCosts) : [];
 
+        // ── Date requested parallel array ──
+        $existingDates = $fresh->date_requested ?? [];
+        $existingDates = is_array($existingDates) ? $existingDates : [];
+
         $currentTECount = collect($existingDocs)
             ->filter(fn($d) => str_starts_with((string) $d, 'Time Extension'))
             ->count();
 
-        // Step 4: Append new Time Extension if submitted
+        // ── Step 4: Append new Time Extension ──
         $newTEDays = (int) $request->input('new_te_days', 0);
         $newTECost = $request->input('new_te_cost');
+        $newTEDate = $request->input('new_te_date');
 
         if ($newTEDays > 0) {
             $nextNumber      = $currentTECount + 1;
             $existingDocs[]  = "Time Extension {$nextNumber}";
             $existingDays[]  = $newTEDays;
             $existingCosts[] = ($newTECost !== null && $newTECost !== '') ? (float) $newTECost : null;
+            // Insert the new TE date at the correct position (after existing TE dates, before VO dates)
+            // We rebuild: [all TE dates..., all VO dates...]
+            // Split existing dates into TE portion and VO portion
+            $existingTECount = $currentTECount; // before adding new one
+            $teDates = array_slice($existingDates, 0, $existingTECount);
+            $voDates = array_slice($existingDates, $existingTECount);
+            $teDates[] = $newTEDate ?: null;
+            $existingDates = array_merge($teDates, $voDates);
         }
 
-        // Step 4b: Append new Variation Order if submitted
+        // ── Step 4b: Append new Variation Order ──
         $newVoDays = (int) $request->input('new_vo_days', 0);
         $newVoCost = $request->input('new_vo_cost');
+        $newVODate = $request->input('new_vo_date');
 
         if ($newVoDays > 0) {
-            $currentVOCount  = collect($existingDocs)
+            $currentVOCount    = collect($existingDocs)
                 ->filter(fn($d) => str_starts_with((string) $d, 'Variation Order'))
                 ->count();
-            $nextVONumber    = $currentVOCount + 1;
-            $existingDocs[]  = "Variation Order {$nextVONumber}";
+            $nextVONumber      = $currentVOCount + 1;
+            $existingDocs[]    = "Variation Order {$nextVONumber}";
             $existingVoDays[]  = $newVoDays;
             $existingVoCosts[] = ($newVoCost !== null && $newVoCost !== '') ? (float) $newVoCost : null;
+            $existingDates[]   = $newVODate ?: null;  // VO dates appended at end
         }
 
-        $data['vo_days'] = array_values($existingVoDays);
-        $data['vo_cost'] = array_values($existingVoCosts);
+        $data['vo_days']       = array_values($existingVoDays);
+        $data['vo_cost']       = array_values($existingVoCosts);
+        $data['date_requested'] = array_values($existingDates);  // ← NEW
 
         // ── Step 5: Handle Suspension Order ──
         $newSODays = (int) $request->input('new_so_days', 0);
@@ -268,7 +280,7 @@ class ProjectController extends Controller
         $data['extension_days']    = array_values($existingDays);
         $data['cost_involved']     = array_values($existingCosts);
 
-        // ── Step 6: Auto-count time_extension and variation_order ──
+        // ── Step 6: Auto-count ──
         $data['time_extension'] = collect($data['documents_pressed'])
             ->filter(fn($v) => str_starts_with($v ?? '', 'Time Extension'))
             ->count();
@@ -278,11 +290,11 @@ class ProjectController extends Controller
             ->count();
 
         // ── Step 7: Recompute revised_contract_expiry ──
-        $totalTEDays = (int) array_sum($data['extension_days']);
-        $totalVODays = (int) array_sum(array_map('intval', array_filter((array) ($data['vo_days'] ?? []))));
-        $totalSODays = (int) ($data['suspension_days'] ?? 0);
-        $baseExpiry  = Carbon::parse($request->original_contract_expiry);
-        $totalExtDays = $totalTEDays + $totalVODays;  // TE and VO both extend the deadline
+        $totalTEDays  = (int) array_sum($data['extension_days']);
+        $totalVODays  = (int) array_sum(array_map('intval', array_filter((array) ($data['vo_days'] ?? []))));
+        $totalSODays  = (int) ($data['suspension_days'] ?? 0);
+        $baseExpiry   = Carbon::parse($request->original_contract_expiry);
+        $totalExtDays = $totalTEDays + $totalVODays;
 
         if ($totalExtDays > 0) {
             $extra = $hasSO ? $totalSODays : 0;
@@ -311,7 +323,7 @@ class ProjectController extends Controller
             $data['total_ld'] = null;
         }
 
-        // ── Step 9: Clear LD fields if Liquidated Damages not in issuances ──
+        // ── Step 9: Clear LD if not in issuances ──
         if (!in_array('Liquidated Damages', $data['issuances'])) {
             $data['ld_accomplished'] = null;
             $data['ld_unworked']     = null;
@@ -478,6 +490,4 @@ class ProjectController extends Controller
         $project->delete();
         return redirect()->route('admin.projects.index')->with('success', 'Project deleted successfully.');
     }
-
-
 }

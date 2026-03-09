@@ -35,6 +35,7 @@ class Project extends Model
         'variation_order',
         'vo_days',
         'vo_cost',
+        'date_requested',   // JSON array — one date string per TE/VO entry (parallel index)
         // Liquidated Damages
         'ld_accomplished',
         'ld_unworked',
@@ -62,13 +63,14 @@ class Project extends Model
             'ld_unworked'              => 'decimal:2',
             'ld_per_day'               => 'decimal:2',
             'total_ld'                 => 'decimal:2',
-            'ld_days_overdue'          => 'integer',    // integer — NOT date
+            'ld_days_overdue'          => 'integer',
             'issuances'                => 'array',
             'documents_pressed'        => 'array',
-            'extension_days'           => 'array',      // array — NOT json (avoids stdClass)
+            'extension_days'           => 'array',
             'cost_involved'            => 'array',
             'vo_days'                  => 'array',
             'vo_cost'                  => 'array',
+            'date_requested'           => 'array',   // ← was 'integer', now 'array'
         ];
     }
 

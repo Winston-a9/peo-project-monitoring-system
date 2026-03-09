@@ -53,6 +53,10 @@
     $voEntries   = collect($documentsPressed)->filter(fn($d) => str_starts_with((string)$d, 'Variation Order'))->values();
     $voCount     = $voEntries->count();
 
+    // Get date_requested array (parallel to documents_pressed)
+    $dateRequested = $project->date_requested ?? [];
+    $dateRequested = is_array($dateRequested) ? $dateRequested : (json_decode($dateRequested ?? '[]', true) ?? []);
+
     $totalDaysAdded = $totalTEDays + $totalVODays + $totalSODays;
 
     $slip      = (float)($project->slippage ?? 0);
@@ -389,45 +393,173 @@
     </div>
 
     @if($teCount > 0 || $voCount > 0)
-    <div class="card fade-up delay-2">
+    <div class="card fade-up delay-2" style="overflow:hidden;">
         <div class="card-header">
-            <i class="fas fa-history" style="color:var(--orange-500); font-size:0.8rem;"></i>
-            <span class="card-title">Order History</span>
-            <span style="margin-left:auto; font-size:0.7rem; color:#9ca3af; font-family:'Instrument Sans',sans-serif;">Read-only · saved entries</span>
+            <i class="fas fa-table" style="color:var(--orange-500); font-size:0.8rem;"></i>
+            <span class="card-title">Approved Time Extensions / Variation Orders</span>
+            <span style="margin-left:auto; font-size:0.7rem; color:#9ca3af; font-family:'Instrument Sans',sans-serif;">{{ $teCount + $voCount }} {{ ($teCount + $voCount) === 1 ? 'entry' : 'entries' }}</span>
         </div>
-        <div style="padding:1.1rem 1.25rem; display:flex; flex-direction:column; gap:0.9rem;">
-            @if($teCount > 0)
-            <div>
-                <p style="font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#ea580c; margin-bottom:0.55rem; opacity:0.8;">Time Extensions</p>
-                <div style="display:flex; flex-wrap:wrap; gap:0.5rem;">
-                    @foreach($teEntries as $idx => $label)
-                    @php $teDays = $extensionDays[$idx] ?? 0; $teCost = ($project->cost_involved ?? [])[$idx] ?? null; @endphp
-                    <div class="te-chip">
-                        <i class="fas fa-clock" style="font-size:0.65rem; opacity:0.5;"></i>
-                        <span>{{ $label }}</span>
-                        <span style="font-weight:500; color:var(--ink-muted); font-size:0.7rem;">· {{ $teDays }}d</span>
-                        @if($teCost)<span style="font-weight:700; color:#16a34a; font-size:0.7rem;">· ₱{{ number_format($teCost,2) }}</span>@endif
-                    </div>
+        <div style="overflow-x:auto;">
+            <table style="width:100%; border-collapse:collapse; font-family:'Instrument Sans',sans-serif; font-size:0.82rem;">
+                <thead>
+                    <tr style="background:var(--bg-secondary); border-bottom:2px solid var(--border);">
+                        <th style="padding:0.7rem 1rem; text-align:left; font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--ink-muted); white-space:nowrap; border-right:1px solid var(--border);">
+                            Approved Time Extensions
+                        </th>
+                        <th style="padding:0.7rem 0.75rem; text-align:center; font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--ink-muted); white-space:nowrap; border-right:1px solid var(--border);">
+                            No. of Days
+                        </th>
+                        <th style="padding:0.7rem 0.75rem; text-align:center; font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--ink-muted); border-right:1px solid var(--border);">
+                            Reasons / Coverage
+                        </th>
+                        <th style="padding:0.7rem 0.75rem; text-align:center; font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--ink-muted); white-space:nowrap; border-right:1px solid var(--border);">
+                            Date Requested
+                        </th>
+                        <th style="padding:0.7rem 0.75rem; text-align:center; font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--ink-muted); white-space:nowrap; border-right:1px solid var(--border);">
+                            Revised Expiry
+                        </th>
+                        <th style="padding:0.7rem 1rem; text-align:right; font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--ink-muted); white-space:nowrap;">
+                            Cost Involved
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @php
+                        // Build all rows: TE entries + VO entries, each with cumulative revised expiry
+                        $baseDate    = $project->original_contract_expiry;
+                        $runningDays = 0;
+                        $allRows     = [];
+                        $costInvolved = is_array($project->cost_involved ?? null) ? $project->cost_involved : [];
+
+                        // TE rows
+                        foreach ($teEntries as $idx => $label) {
+                            $days  = (int) ($extensionDays[$idx] ?? 0);
+                            $cost  = $costInvolved[$idx] ?? null;
+                            $date  = $dateRequested[$idx] ?? null;
+                            $runningDays += $days;
+                            $allRows[] = [
+                                'type'    => 'te',
+                                'label'   => $label,
+                                'days'    => $days,
+                                'running' => $runningDays,
+                                'cost'    => $cost,
+                                'date'    => $date,
+                                'revised' => (clone $baseDate)->addDays($runningDays),
+                            ];
+                        }
+
+                        // VO rows (stacked on top of TE total)
+                        foreach ($voEntries as $vIdx => $label) {
+                            $days  = (int) ($voDays[$vIdx] ?? 0);
+                            $cost  = $voCosts[$vIdx] ?? null;
+                            $dateIdx = $teCount + $vIdx; // VO dates come after TE dates
+                            $date  = $dateRequested[$dateIdx] ?? null;
+                            $runningDays += $days;
+                            $allRows[] = [
+                                'type'    => 'vo',
+                                'label'   => $label,
+                                'days'    => $days,
+                                'running' => $runningDays,
+                                'cost'    => $cost,
+                                'date'    => $date,
+                                'revised' => (clone $baseDate)->addDays($runningDays),
+                            ];
+                        }
+                    @endphp
+
+                    @foreach($allRows as $ri => $row)
+                    @php $isEven = $ri % 2 === 0; $isLast = $ri === count($allRows) - 1; @endphp
+                    <tr style="background:{{ $isEven ? 'var(--bg-primary)' : 'var(--bg-secondary)' }}; border-bottom:{{ $isLast ? 'none' : '1px solid var(--border)' }}; transition:background 0.15s;"
+                        onmouseover="this.style.background='rgba(249,115,22,0.04)'"
+                        onmouseout="this.style.background='{{ $isEven ? 'var(--bg-primary)' : 'var(--bg-secondary)' }}'">
+
+                        {{-- Label --}}
+                        <td style="padding:0.75rem 1rem; font-weight:700; color:{{ $row['type']==='te' ? '#ea580c' : '#6366f1' }}; white-space:nowrap; border-right:1px solid var(--border);">
+                            <div style="display:flex; align-items:center; gap:0.45rem;">
+                                <i class="fas {{ $row['type']==='te' ? 'fa-clock' : 'fa-file-signature' }}" style="font-size:0.7rem; opacity:0.6;"></i>
+                                {{ $row['label'] }}
+                                @if($row['type']==='vo')
+                                    <span style="font-size:0.6rem; font-weight:700; background:rgba(99,102,241,0.1); color:#6366f1; border:1px solid rgba(99,102,241,0.2); border-radius:99px; padding:1px 6px; margin-left:2px;">VO</span>
+                                @endif
+                            </div>
+                        </td>
+
+                        {{-- Days --}}
+                        <td style="padding:0.75rem 0.75rem; text-align:center; border-right:1px solid var(--border);">
+                            <span style="display:inline-flex; align-items:center; justify-content:center; font-family:'Syne',sans-serif; font-size:1.05rem; font-weight:800; color:{{ $row['type']==='te' ? '#f97316' : '#6366f1' }}; min-width:2rem;">
+                                {{ $row['days'] }}
+                            </span>
+                        </td>
+
+                        {{-- Reasons / Coverage (not stored — show VO label or dash for TE) --}}
+                        <td style="padding:0.75rem 0.75rem; text-align:center; color:var(--text-secondary); font-size:0.8rem; border-right:1px solid var(--border);">
+                            @if($row['type']==='vo')
+                                <span style="font-style:italic;">{{ $row['label'] }}</span>
+                            @else
+                                <span style="color:#9ca3af;">—</span>
+                            @endif
+                        </td>
+
+                        {{-- Date Requested --}}
+                        <td style="padding:0.75rem 0.75rem; text-align:center; color:var(--text-secondary); font-size:0.8rem; border-right:1px solid var(--border);">
+                            @if($row['date'])
+                                <span style="font-weight:600; color:var(--text-primary);">{{ \Carbon\Carbon::parse($row['date'])->format('m/d/y') }}</span>
+                            @else
+                                <span style="color:#9ca3af;">—</span>
+                            @endif
+                        </td>
+
+                        {{-- Revised Expiry (computed cumulatively) --}}
+                        <td style="padding:0.75rem 0.75rem; text-align:center; border-right:1px solid var(--border);">
+                            <div style="display:flex; flex-direction:column; align-items:center; gap:1px;">
+                                <span style="font-size:0.62rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#9ca3af;">Revised Expiry:</span>
+                                <span style="font-weight:700; color:{{ $isLast ? '#f97316' : 'var(--text-primary)' }}; white-space:nowrap; font-size:0.83rem;">
+                                    {{ $row['revised']->format('m/d/y') }}
+                                </span>
+                            </div>
+                        </td>
+
+                        {{-- Cost Involved --}}
+                        <td style="padding:0.75rem 1rem; text-align:right;">
+                            @if($row['cost'])
+                                <span style="font-weight:700; color:#16a34a; white-space:nowrap;">₱{{ number_format((float)$row['cost'], 2) }}</span>
+                            @else
+                                <span style="color:#9ca3af;">—</span>
+                            @endif
+                        </td>
+                    </tr>
                     @endforeach
-                </div>
-            </div>
-            @endif
-            @if($voCount > 0)
-            <div>
-                <p style="font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#6366f1; margin-bottom:0.55rem; opacity:0.8;">Variation Orders</p>
-                <div style="display:flex; flex-wrap:wrap; gap:0.5rem;">
-                    @foreach($voEntries as $vIdx => $label)
-                    @php $vDays = $voDays[$vIdx] ?? 0; $vCost = $voCosts[$vIdx] ?? null; @endphp
-                    <div class="vo-chip">
-                        <i class="fas fa-file-signature" style="font-size:0.65rem; opacity:0.5;"></i>
-                        <span>{{ $label }}</span>
-                        <span style="font-weight:500; color:#818cf8; font-size:0.7rem;">· {{ $vDays }}d</span>
-                        @if($vCost)<span style="font-weight:700; color:#16a34a; font-size:0.7rem;">· ₱{{ number_format($vCost,2) }}</span>@endif
-                    </div>
-                    @endforeach
-                </div>
-            </div>
-            @endif
+
+                    {{-- Totals footer --}}
+                    <tr style="background:var(--bg-secondary); border-top:2px solid var(--border);">
+                        <td style="padding:0.65rem 1rem; font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-muted); border-right:1px solid var(--border);">
+                            Total
+                        </td>
+                        <td style="padding:0.65rem 0.75rem; text-align:center; border-right:1px solid var(--border);">
+                            <span style="font-family:'Syne',sans-serif; font-size:1.1rem; font-weight:800; color:#f97316;">{{ $totalTEDays + $totalVODays }}</span>
+                            <span style="font-size:0.65rem; color:#9ca3af; margin-left:2px;">days</span>
+                        </td>
+                        <td style="border-right:1px solid var(--border);"></td>
+                        <td style="border-right:1px solid var(--border);"></td>
+                        <td style="padding:0.65rem 0.75rem; text-align:center; border-right:1px solid var(--border);">
+                            @if($project->revised_contract_expiry)
+                                <div style="display:flex; flex-direction:column; align-items:center; gap:1px;">
+                                    <span style="font-size:0.62rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#9ca3af;">Final Revised:</span>
+                                    <span style="font-weight:800; color:#f97316; white-space:nowrap;">{{ $project->revised_contract_expiry->format('m/d/y') }}</span>
+                                </div>
+                            @endif
+                        </td>
+                        <td style="padding:0.65rem 1rem; text-align:right;">
+                            @php $totalCost = collect($allRows)->sum(fn($r) => (float)($r['cost'] ?? 0)); @endphp
+                            @if($totalCost > 0)
+                                <span style="font-weight:800; color:#16a34a; white-space:nowrap;">₱{{ number_format($totalCost, 2) }}</span>
+                            @else
+                                <span style="color:#9ca3af;">—</span>
+                            @endif
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>
     @endif
