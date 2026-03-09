@@ -217,35 +217,63 @@
             @endif
         </div>
 
-        <div class="view-card" style="padding:1.5rem;">
+        <div class="view-card" style="padding:1.5rem; background:linear-gradient(135deg, rgba(249,115,22,0.04) 0%, rgba(249,115,22,0.02) 100%);">
             <p style="font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--ink-muted); display:flex; align-items:center; gap:0.4rem; margin-bottom:1.1rem;">
                 <i class="fas fa-chart-bar" style="color:var(--orange-500);"></i> Progress Overview
             </p>
             <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:1rem;">
-                <div style="background:#fffaf5; border:1px solid var(--border); border-radius:10px; padding:1rem; text-align:center;">
-                    <p style="font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--ink-muted); margin-bottom:0.5rem;">As Planned</p>
-                    <p style="font-family:'Syne',sans-serif; font-size:1.8rem; font-weight:800; color:var(--ink); letter-spacing:-0.03em; line-height:1;">
-                        {{ $project->as_planned }}<span style="font-size:0.9rem; color:var(--ink-muted);">%</span>
+                <!-- As Planned -->
+                <div style="background:var(--bg-primary); border:2px solid transparent; border-image:linear-gradient(135deg, rgba(249,115,22,0.3), rgba(249,115,22,0.1)) 0 1; border-radius:12px; padding:1.25rem; text-align:center; transition:all 0.3s; position:relative; overflow:hidden;" onmouseover="this.style.boxShadow='0 8px 24px rgba(249,115,22,0.15)'; this.style.transform='translateY(-2px)'" onmouseout="this.style.boxShadow='none'; this.style.transform='translateY(0)'">
+                    <div style="position:absolute; top:-50%; right:-50%; width:200px; height:200px; background:rgba(249,115,22,0.05); border-radius:50%; pointer-events:none;"></div>
+                    <div style="display:flex; align-items:center; justify-content:center; margin-bottom:0.75rem; position:relative; z-index:1;">
+                        <div style="width:48px; height:48px; background:linear-gradient(135deg, rgba(249,115,22,0.2), rgba(249,115,22,0.1)); border-radius:12px; display:flex; align-items:center; justify-content:center;">
+                            <i class="fas fa-list-check" style="color:var(--orange-500); font-size:1.2rem;"></i>
+                        </div>
+                    </div>
+                    <p style="font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--ink-muted); margin-bottom:0.5rem; position:relative; z-index:1;">As Planned</p>
+                    <p style="font-family:'Syne',sans-serif; font-size:2rem; font-weight:800; color:var(--orange-500); letter-spacing:-0.03em; line-height:1; position:relative; z-index:1;">
+                        {{ $project->as_planned }}<span style="font-size:1rem; color:var(--ink-muted);">%</span>
                     </p>
-                    <div class="prog-track" style="margin-top:0.75rem;"><div class="prog-fill" style="background:var(--orange-500); width:{{ $project->as_planned }}%;"></div></div>
+                    <div style="margin-top:1rem; position:relative; z-index:1;">
+                        <div style="height:8px; background:rgba(249,115,22,0.1); border-radius:99px; overflow:hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);">
+                            <div style="height:100%; background:linear-gradient(90deg, var(--orange-500), #f97316); width:{{ $project->as_planned }}%; border-radius:99px; transition:width 0.6s ease; box-shadow: 0 0 10px rgba(249,115,22,0.4);"></div>
+                        </div>
+                    </div>
                 </div>
-                <div style="background:#fffaf5; border:1px solid var(--border); border-radius:10px; padding:1rem; text-align:center;">
-                    <p style="font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--ink-muted); margin-bottom:0.5rem;">Work Done</p>
-                    <p style="font-family:'Syne',sans-serif; font-size:1.8rem; font-weight:800; color:var(--ink); letter-spacing:-0.03em; line-height:1;">
-                        {{ $project->work_done }}<span style="font-size:0.9rem; color:var(--ink-muted);">%</span>
+                <!-- Work Done -->
+                <div style="background:var(--bg-primary); border:2px solid transparent; border-image:linear-gradient(135deg, rgba(59,130,246,0.3), rgba(59,130,246,0.1)) 0 1; border-radius:12px; padding:1.25rem; text-align:center; transition:all 0.3s; position:relative; overflow:hidden;" onmouseover="this.style.boxShadow='0 8px 24px rgba(59,130,246,0.15)'; this.style.transform='translateY(-2px)'" onmouseout="this.style.boxShadow='none'; this.style.transform='translateY(0)'">
+                    <div style="position:absolute; top:-50%; right:-50%; width:200px; height:200px; background:rgba(59,130,246,0.05); border-radius:50%; pointer-events:none;"></div>
+                    <div style="display:flex; align-items:center; justify-content:center; margin-bottom:0.75rem; position:relative; z-index:1;">
+                        <div style="width:48px; height:48px; background:linear-gradient(135deg, rgba(59,130,246,0.2), rgba(59,130,246,0.1)); border-radius:12px; display:flex; align-items:center; justify-content:center;">
+                            <i class="fas fa-hammer" style="color:#3b82f6; font-size:1.2rem;"></i>
+                        </div>
+                    </div>
+                    <p style="font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--ink-muted); margin-bottom:0.5rem; position:relative; z-index:1;">Work Done</p>
+                    <p style="font-family:'Syne',sans-serif; font-size:2rem; font-weight:800; color:#3b82f6; letter-spacing:-0.03em; line-height:1; position:relative; z-index:1;">
+                        {{ $project->work_done }}<span style="font-size:1rem; color:var(--ink-muted);">%</span>
                     </p>
-                    <div class="prog-track" style="margin-top:0.75rem;"><div class="prog-fill" style="background:#3b82f6; width:{{ $project->work_done }}%;"></div></div>
+                    <div style="margin-top:1rem; position:relative; z-index:1;">
+                        <div style="height:8px; background:rgba(59,130,246,0.1); border-radius:99px; overflow:hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);">
+                            <div style="height:100%; background:linear-gradient(90deg, #3b82f6, #60a5fa); width:{{ $project->work_done }}%; border-radius:99px; transition:width 0.6s ease; box-shadow: 0 0 10px rgba(59,130,246,0.4);"></div>
+                        </div>
+                    </div>
                 </div>
-                <div style="background:#fffaf5; border:1px solid var(--border); border-radius:10px; padding:1rem; text-align:center;">
-                    <p style="font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--ink-muted); margin-bottom:0.5rem;">Slippage</p>
-                    <p style="font-family:'Syne',sans-serif; font-size:1.8rem; font-weight:800; letter-spacing:-0.03em; line-height:1;
-                       color:{{ $project->slippage < 0 ? '#dc2626' : ($project->slippage > 0 ? '#16a34a' : '#6b7280') }}">
-                        {{ $project->slippage > 0 ? '+' : '' }}{{ $project->slippage }}<span style="font-size:0.9rem;">%</span>
+                <!-- Slippage -->
+                <div style="background:var(--bg-primary); border:2px solid transparent; border-image:linear-gradient(135deg, {{ $project->slippage < 0 ? 'rgba(239,68,68,0.3), rgba(239,68,68,0.1)' : ($project->slippage > 0 ? 'rgba(34,197,94,0.3), rgba(34,197,94,0.1)' : 'rgba(107,79,53,0.3), rgba(107,79,53,0.1)') }}) 0 1; border-radius:12px; padding:1.25rem; text-align:center; transition:all 0.3s; position:relative; overflow:hidden;" onmouseover="this.style.boxShadow='0 8px 24px {{ $project->slippage < 0 ? 'rgba(239,68,68,0.15)' : ($project->slippage > 0 ? 'rgba(34,197,94,0.15)' : 'rgba(107,79,53,0.15)') }}'; this.style.transform='translateY(-2px)'" onmouseout="this.style.boxShadow='none'; this.style.transform='translateY(0)'">
+                    <div style="position:absolute; top:-50%; right:-50%; width:200px; height:200px; background:{{ $project->slippage < 0 ? 'rgba(239,68,68,0.05)' : ($project->slippage > 0 ? 'rgba(34,197,94,0.05)' : 'rgba(107,79,53,0.05)') }}; border-radius:50%; pointer-events:none;"></div>
+                    <div style="display:flex; align-items:center; justify-content:center; margin-bottom:0.75rem; position:relative; z-index:1;">
+                        <div style="width:48px; height:48px; background:{{ $project->slippage < 0 ? 'rgba(239,68,68,0.15)' : ($project->slippage > 0 ? 'rgba(34,197,94,0.15)' : 'rgba(107,79,53,0.15)') }}; border-radius:12px; display:flex; align-items:center; justify-content:center;">
+                            <i class="fas {{ $project->slippage < 0 ? 'fa-arrow-down' : ($project->slippage > 0 ? 'fa-arrow-up' : 'fa-minus') }}" style="color:{{ $project->slippage < 0 ? '#ef4444' : ($project->slippage > 0 ? '#22c55e' : '#9ca3af') }}; font-size:1.2rem;"></i>
+                        </div>
+                    </div>
+                    <p style="font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--ink-muted); margin-bottom:0.5rem; position:relative; z-index:1;">Slippage</p>
+                    <p style="font-family:'Syne',sans-serif; font-size:2rem; font-weight:800; color:{{ $project->slippage < 0 ? '#ef4444' : ($project->slippage > 0 ? '#22c55e' : '#9ca3af') }}; letter-spacing:-0.03em; line-height:1; position:relative; z-index:1;">
+                        {{ $project->slippage > 0 ? '+' : '' }}{{ $project->slippage }}<span style="font-size:1rem;">%</span>
                     </p>
-                    <p style="font-size:0.72rem; margin-top:0.5rem; font-weight:600; color:{{ $project->slippage < 0 ? '#dc2626' : ($project->slippage > 0 ? '#16a34a' : '#9ca3af') }}">
-                        @if($project->slippage < 0) <i class="fas fa-arrow-down"></i> Behind
-                        @elseif($project->slippage > 0) <i class="fas fa-arrow-up"></i> Ahead
-                        @else <i class="fas fa-minus"></i> On track @endif
+                    <p style="font-size:0.75rem; margin-top:0.75rem; font-weight:600; color:{{ $project->slippage < 0 ? '#ef4444' : ($project->slippage > 0 ? '#22c55e' : '#9ca3af') }}; position:relative; z-index:1;">
+                        @if($project->slippage < 0) <i class="fas fa-triangle-exclamation" style="margin-right:0.3rem;"></i>Behind Schedule
+                        @elseif($project->slippage > 0) <i class="fas fa-star" style="margin-right:0.3rem;"></i>Ahead of Schedule
+                        @else <i class="fas fa-check" style="margin-right:0.3rem;"></i>On Track @endif
                     </p>
                 </div>
             </div>

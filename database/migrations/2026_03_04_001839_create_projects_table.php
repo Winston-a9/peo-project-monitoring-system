@@ -15,6 +15,7 @@ return new class extends Migration
             $table->string('location');
             $table->string('contractor');
             $table->date('date_started');
+            $table->integer('contract_days')->nullable();
             $table->date('original_contract_expiry');
             $table->date('revised_contract_expiry')->nullable();
             $table->enum('status', ['ongoing', 'completed', 'expired'])->default('ongoing');
@@ -24,24 +25,38 @@ return new class extends Migration
             $table->decimal('work_done', 5, 2)->default(0);
             $table->decimal('slippage', 5, 2)->default(0);
             $table->text('remarks_recommendation')->nullable();
+
+            // Documents & Extensions
             $table->json('issuances')->nullable();
             $table->json('documents_pressed')->nullable();
             $table->string('time_extension')->nullable();
             $table->json('extension_days')->nullable();
+            $table->json('cost_involved')->nullable();
+            $table->integer('suspension_days')->nullable();
+
+            // Liquidated Damages
+            $table->decimal('ld_accomplished', 5, 2)->nullable();
+            $table->decimal('ld_unworked', 5, 2)->nullable();
+            $table->decimal('ld_per_day', 15, 2)->nullable();
+            $table->decimal('total_ld', 15, 2)->nullable();
+            $table->date('ld_days_overdue')->nullable();
+
             $table->timestamps();
         });
+
         Schema::create('project_logs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('project_id')->constrained()->onDelete('cascade');
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
-            $table->string('action');        // 'updated', 'created', 'status_changed', etc.
-            $table->json('changes');         // what changed: old vs new values
+            $table->string('action');
+            $table->json('changes');
             $table->timestamps();
         });
     }
 
     public function down(): void
     {
+        Schema::dropIfExists('project_logs');
         Schema::dropIfExists('projects');
     }
 };

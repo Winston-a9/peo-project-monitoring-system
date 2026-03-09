@@ -276,14 +276,20 @@
                 <div class="section-body" style="display:flex; flex-direction:column; gap:1.1rem;">
                     <div>
                         <label class="field-label">Date Started</label>
-                        <input type="date" name="date_started" class="field-input {{ $errors->has('date_started') ? 'has-error' : '' }}"
-                            value="{{ old('date_started') }}" required>
+                        <input type="date" id="date_started" name="date_started" class="field-input {{ $errors->has('date_started') ? 'has-error' : '' }}"
+                            value="{{ old('date_started') }}" required oninput="calculateOriginalExpiry()">
                         @error('date_started')<p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
                     </div>
                     <div>
-                        <label class="field-label">Original Expiry</label>
-                        <input type="date" name="original_contract_expiry" class="field-input {{ $errors->has('original_contract_expiry') ? 'has-error' : '' }}"
-                            value="{{ old('original_contract_expiry') }}" required>
+                        <label class="field-label">Contract Days</label>
+                        <input type="number" id="contract_days" name="contract_days" class="field-input {{ $errors->has('contract_days') ? 'has-error' : '' }}"
+                            placeholder="Enter number of days" value="{{ old('contract_days') }}" min="0" step="1" required oninput="calculateOriginalExpiry()">
+                        @error('contract_days')<p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
+                    </div>
+                    <div>
+                        <label class="field-label">Original Expiry <span style="font-weight:400; text-transform:none; letter-spacing:0; color:#9ca3af;">(auto-calculated)</span></label>
+                        <input type="date" id="original_contract_expiry" name="original_contract_expiry" class="field-input {{ $errors->has('original_contract_expiry') ? 'has-error' : '' }}"
+                            value="{{ old('original_contract_expiry') }}" readonly style="background:rgba(249,115,22,0.08); cursor:not-allowed;">
                         @error('original_contract_expiry')<p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
                     </div>
                 </div>
@@ -420,6 +426,36 @@
     }
 
     valEl.textContent = (sl > 0 ? '+' : '') + sl + '%';
+}
+
+function calculateOriginalExpiry() {
+    const dateStartedInput = document.getElementById('date_started').value;
+    const contractDaysInput = document.getElementById('contract_days').value;
+    const originalExpiryInput = document.getElementById('original_contract_expiry');
+
+    if (!dateStartedInput || !contractDaysInput) {
+        originalExpiryInput.value = '';
+        return;
+    }
+
+    const dateStarted = new Date(dateStartedInput);
+    const contractDays = parseInt(contractDaysInput);
+
+    if (isNaN(dateStarted.getTime()) || isNaN(contractDays)) {
+        originalExpiryInput.value = '';
+        return;
+    }
+
+    // Add days to the date
+    const originalExpiry = new Date(dateStarted);
+    originalExpiry.setDate(originalExpiry.getDate() + contractDays);
+
+    // Format the date as YYYY-MM-DD for the date input
+    const year = originalExpiry.getFullYear();
+    const month = String(originalExpiry.getMonth() + 1).padStart(2, '0');
+    const day = String(originalExpiry.getDate()).padStart(2, '0');
+    
+    originalExpiryInput.value = `${year}-${month}-${day}`;
 }
 </script>
 </x-app-layout>
