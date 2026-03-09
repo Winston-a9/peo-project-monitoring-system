@@ -145,5 +145,35 @@
 
         <!-- Sidebar Overlay for Mobile -->
         <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 md:hidden hidden z-30" onclick="toggleSidebar()"></div>
+    <script>
+        function openModal(id) {
+            const backdrop = document.getElementById(id + '-backdrop');
+            const panel    = document.getElementById(id + '-panel');
+            if (!backdrop || !panel) { console.error('Modal not found:', id); return; }
+            backdrop.style.display = 'block';
+            panel.style.display    = 'block';
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                backdrop.style.opacity = '1';
+                panel.style.opacity    = '1';
+                panel.style.transform  = 'translate(-50%, -50%) scale(1)';
+            }));
+            window._escHandler = (e) => { if (e.key === 'Escape') closeModal(id); };
+            document.addEventListener('keydown', window._escHandler);
+        }
+        function closeModal(id) {
+            const backdrop = document.getElementById(id + '-backdrop');
+            const panel    = document.getElementById(id + '-panel');
+            if (!backdrop || !panel) return;
+            backdrop.style.opacity = '0';
+            panel.style.opacity    = '0';
+            panel.style.transform  = 'translate(-50%, -50%) scale(0.95)';
+            setTimeout(() => {
+                backdrop.style.display = 'none';
+                panel.style.display    = 'none';
+            }, 220);
+            if (window._escHandler) document.removeEventListener('keydown', window._escHandler);
+        }
+        </script>
+        @stack('scripts')
     </body>
 </html>

@@ -633,17 +633,19 @@
     @endif
 
     {{-- Remarks --}}
-    @if($hasRemarks)
-    <div class="card fade-up delay-3">
-        <div class="card-header">
-            <i class="fas fa-comment-dots" style="color:var(--orange-500); font-size:0.8rem;"></i>
-            <span class="card-title">Remarks / Recommendation</span>
+        @if($hasRemarks)
+        <div class="card fade-up delay-3">
+            <div class="card-header">
+                <i class="fas fa-comment-dots" style="color:var(--orange-500); font-size:0.8rem;"></i>
+                <span class="card-title">Remarks / Recommendation</span>
+            </div>
+            <div style="padding:1.1rem 1.25rem;">
+                <p style="font-size:0.875rem; color:var(--text-primary); line-height:1.8; margin:0; white-space:pre-wrap;">
+                    {!! nl2br(e($project->remarks_recommendation)) !!}
+                </p>
+            </div>
         </div>
-        <div style="padding:1.1rem 1.25rem;">
-            <p style="font-size:0.875rem; color:var(--text-primary); line-height:1.8; white-space:pre-line;">{{ $project->remarks_recommendation }}</p>
-        </div>
-    </div>
-    @endif
+        @endif
 
     {{-- Activity Log --}}
     @php $logs = $project->logs()->with('user')->latest()->get(); @endphp

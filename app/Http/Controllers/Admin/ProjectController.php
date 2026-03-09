@@ -485,6 +485,216 @@ class ProjectController extends Controller
         exit;
     }
 
+    public function updateEntry(Request $request, Project $project)
+    {
+        $request->validate([
+            'edit_entry_type'     => 'required|in:te,vo',
+            'edit_entry_index'    => 'required|integer|min:0',
+            'edit_days'           => 'required|integer|min:1|max:9999',
+            'edit_cost'           => 'nullable|numeric|min:0',
+            'edit_date_requested' => 'nullable|date',
+        ]);
+
+        $fresh = $project->fresh();
+        $type  = $request->input('edit_entry_type');
+        $index = (int) $request->input('edit_entry_index');
+        $days  = (int) $request->input('edit_days');
+        $cost  = $request->input('edit_cost');
+        $date  = $request->input('edit_date_requested');
+
+        $data = [];
+
+        if ($type === 'te') {
+            // ── Edit Time Extension entry ──
+            $extensionDays = is_array($fresh->extension_days) ? array_map('intval', $fresh->extension_days) : [];
+            $costInvolved  = is_array($fresh->cost_involved)  ? $fresh->cost_involved : [];
+            $dateRequested = is_array($fresh->date_requested) ? $fresh->date_requested : [];
+
+            if (!isset($extensionDays[$index])) {
+                return back()->with('error', 'Time Extension entry not found.');
+            }
+
+            $extensionDays[$index] = $days;
+            $costInvolved[$index]  = ($cost !== null && $cost !== '') ? (float) $cost : null;
+
+            // date_requested: TE dates are at indices 0..teCount-1
+            $dateRequested[$index] = $date ?: null;
+
+            $data['extension_days'] = array_values($extensionDays);
+            $data['cost_involved']  = array_values($costInvolved);
+            $data['date_requested'] = array_values($dateRequested);
+
+        } else {
+            // ── Edit Variation Order entry ──
+            $voDays        = is_array($fresh->vo_days)       ? array_map('intval', array_filter((array) $fresh->vo_days)) : [];
+            $voCosts       = is_array($fresh->vo_cost)       ? $fresh->vo_cost : [];
+            $dateRequested = is_array($fresh->date_requested) ? $fresh->date_requested : [];
+
+            // Count TE entries to find VO date offset
+            $existingDocs = is_array($fresh->documents_pressed) ? $fresh->documents_pressed : [];
+            $teCount = collect($existingDocs)
+                ->filter(fn($d) => str_starts_with((string) $d, 'Time Extension'))
+                ->count();
+
+            if (!isset($voDays[$index])) {
+                return back()->with('error', 'Variation Order entry not found.');
+            }
+
+            $voDays[$index]  = $days;
+            $voCosts[$index] = ($cost !== null && $cost !== '') ? (float) $cost : null;
+
+            // VO dates start after TE dates in the shared array
+            $dateRequested[$teCount + $index] = $date ?: null;
+
+            $data['vo_days']       = array_values($voDays);
+            $data['vo_cost']       = array_values($voCosts);
+            $data['date_requested'] = array_values($dateRequested);
+        }
+
+        // Recompute revised_contract_expiry from updated arrays
+        $allExtDays = array_sum(array_map('intval', $data['extension_days'] ?? $fresh->extension_days ?? []));
+        $allVODays  = array_sum(array_map('intval', $data['vo_days']        ?? $fresh->vo_days        ?? []));
+        $sodays     = (int) ($fresh->suspension_days ?? 0);
+        $hasSO      = collect($existingDocs ?? [])->contains('Suspension Order');
+        $total      = $allExtDays + $allVODays + ($hasSO ? $sodays : 0);
+
+        $data['revised_contract_expiry'] = $total > 0
+            ? Carbon::parse($fresh->original_contract_expiry)->addDays($total)->toDateString()
+            : null;
+
+        $project->update($data);
+
+        return redirect()
+            ->route('admin.projects.edit', $project)
+            ->with('success', ucfirst($type === 'te' ? 'Time Extension' : 'Variation Order') . ' updated successfully.');
+    }
+    public function destroyEntry(Request $request, Project $project)
+{
+    $request->validate([
+        'entry_type'    => 'required|in:te,vo',
+        'entry_index'   => 'required|integer|min:0',
+        'delete_reason' => 'required|string|max:1000',
+    ]);
+
+    $fresh  = $project->fresh();
+    $type   = $request->input('entry_type');
+    $index  = (int) $request->input('entry_index');
+    $reason = trim($request->input('delete_reason'));
+
+    $existingDocs    = is_array($fresh->documents_pressed) ? $fresh->documents_pressed : [];
+    $existingDays    = is_array($fresh->extension_days)    ? array_map('intval', $fresh->extension_days) : [];
+    $existingCosts   = is_array($fresh->cost_involved)     ? $fresh->cost_involved : [];
+    $existingDates   = is_array($fresh->date_requested)    ? $fresh->date_requested : [];
+    $existingVoDays  = is_array($fresh->vo_days) ? array_map('intval', array_filter((array) $fresh->vo_days)) : [];
+    $existingVoCosts = is_array($fresh->vo_cost) ? $fresh->vo_cost : [];
+
+    $teCount = collect($existingDocs)
+        ->filter(fn($d) => str_starts_with((string) $d, 'Time Extension'))
+        ->count();
+
+    if ($type === 'te') {
+        // Find the doc-array index for this TE
+        $tesSeen = 0;
+        $docIndexToRemove = null;
+        foreach ($existingDocs as $di => $doc) {
+            if (str_starts_with((string) $doc, 'Time Extension')) {
+                if ($tesSeen === $index) { $docIndexToRemove = $di; break; }
+                $tesSeen++;
+            }
+        }
+        if ($docIndexToRemove === null) {
+            return back()->with('error', 'Time Extension entry not found.');
+        }
+        $deletedLabel = $existingDocs[$docIndexToRemove];
+
+        array_splice($existingDocs,  $docIndexToRemove, 1);
+        array_splice($existingDays,  $index, 1);
+        array_splice($existingCosts, $index, 1);
+        array_splice($existingDates, $index, 1);
+
+        // Re-number remaining TEs
+        $teNum = 1;
+        foreach ($existingDocs as &$doc) {
+            if (str_starts_with((string) $doc, 'Time Extension')) {
+                $doc = "Time Extension {$teNum}";
+                $teNum++;
+            }
+        } unset($doc);
+
+    } else {
+        // VO delete
+        $vosSeen = 0;
+        $docIndexToRemove = null;
+        foreach ($existingDocs as $di => $doc) {
+            if (str_starts_with((string) $doc, 'Variation Order')) {
+                if ($vosSeen === $index) { $docIndexToRemove = $di; break; }
+                $vosSeen++;
+            }
+        }
+        if ($docIndexToRemove === null) {
+            return back()->with('error', 'Variation Order entry not found.');
+        }
+        $deletedLabel = $existingDocs[$docIndexToRemove];
+
+        array_splice($existingDocs,    $docIndexToRemove, 1);
+        array_splice($existingVoDays,  $index, 1);
+        array_splice($existingVoCosts, $index, 1);
+        array_splice($existingDates,   $teCount + $index, 1);
+
+        // Re-number remaining VOs
+        $voNum = 1;
+        foreach ($existingDocs as &$doc) {
+            if (str_starts_with((string) $doc, 'Variation Order')) {
+                $doc = "Variation Order {$voNum}";
+                $voNum++;
+            }
+        } unset($doc);
+    }
+
+    $data = [
+        'documents_pressed' => array_values($existingDocs),
+        'extension_days'    => array_values($existingDays),
+        'cost_involved'     => array_values($existingCosts),
+        'date_requested'    => array_values($existingDates),
+        'vo_days'           => array_values($existingVoDays),
+        'vo_cost'           => array_values($existingVoCosts),
+    ];
+
+    $data['time_extension'] = collect($data['documents_pressed'])
+        ->filter(fn($v) => str_starts_with($v ?? '', 'Time Extension'))
+        ->count();
+
+    $data['variation_order'] = collect($data['documents_pressed'])
+        ->filter(fn($v) => str_starts_with($v ?? '', 'Variation Order'))
+        ->count();
+
+    // Recompute revised_contract_expiry
+    $totalTE = (int) array_sum($data['extension_days']);
+    $totalVO = (int) array_sum(array_map('intval', array_filter((array) ($data['vo_days'] ?? []))));
+    $totalSO = (int) ($fresh->suspension_days ?? 0);
+    $hasSO   = collect($data['documents_pressed'])->contains('Suspension Order');
+    $total   = $totalTE + $totalVO + ($hasSO ? $totalSO : 0);
+
+    $data['revised_contract_expiry'] = $total > 0
+        ? \Carbon\Carbon::parse($fresh->original_contract_expiry)->addDays($total)->toDateString()
+        : null;
+
+    // Append deletion reason to remarks_recommendation
+    $existing  = trim($fresh->remarks_recommendation ?? '');
+    $timestamp = now()->format('F d, Y \a\t h:i A');
+    $note      = "[{$timestamp}] {$deletedLabel} deleted — Reason: {$reason}";
+
+    $data['remarks_recommendation'] = $existing !== ''
+        ? $existing . "\n\n" . $note
+        : $note;
+
+    $project->update($data);
+
+    return redirect()
+        ->route('admin.projects.edit', $project)
+        ->with('success', "{$deletedLabel} deleted. Reason logged to remarks.");
+}
+
     public function destroy(Project $project)
     {
         $project->delete();
