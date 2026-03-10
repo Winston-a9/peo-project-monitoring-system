@@ -3,217 +3,299 @@
 namespace Database\Factories;
 
 use App\Models\Project;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-/**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Project>
- */
 class ProjectFactory extends Factory
 {
     protected $model = Project::class;
 
-    public function definition(): array
+    // ── Helpers ────────────────────────────────────────────────────────────────
+
+    private function randomContractAmount(): float
     {
-        $inChargeList = [
-            'Engr. Santos', 'Engr. Reyes', 'Engr. Cruz', 'Engr. Dela Torre',
-            'Engr. Villanueva', 'Engr. Mendoza', 'Engr. Bautista', 'Engr. Garcia',
-        ];
+        return round($this->faker->randomElement([
+            $this->faker->numberBetween(500_000,  5_000_000),
+            $this->faker->numberBetween(5_000_000, 50_000_000),
+            $this->faker->numberBetween(50_000_000, 200_000_000),
+        ]), 2);
+    }
 
-        $locationList = [
-            'Cagayan de Oro City', 'Iligan City', 'Bukidnon', 'Misamis Oriental',
-            'Lanao del Norte', 'Camiguin', 'Misamis Occidental', 'Davao del Norte',
+    private function inChargeOptions(): array
+    {
+        return [
+            'Engr. Santos',
+            'Engr. Reyes',
+            'Engr. Cruz',
+            'Engr. Dela Torre',
+            'Engr. Villanueva',
+            'Engr. Mendoza',
+            'Engr. Garcia',
         ];
+    }
 
-        $contractorList = [
+    private function locationOptions(): array
+    {
+        return [
+            'Cagayan de Oro City',
+            'Iligan City',
+            'Bukidnon',
+            'Misamis Oriental',
+            'Misamis Occidental',
+            'Lanao del Norte',
+            'Camiguin',
+        ];
+    }
+
+    private function contractorOptions(): array
+    {
+        return [
             'ABC Construction Corp.',
             'XYZ Builders Inc.',
-            'Prime Infrastructure Co.',
-            'Delta Engineering Works',
-            'Sunrise Constructions',
-            'Apex Development Group',
-            'Metro Builders Corp.',
-            'Golden Gate Construction',
+            'Prime Infra Solutions',
+            'Cornerstone Development Co.',
+            'Apex Contracting Services',
+            'Meridian Engineering Works',
+            'Summit Construction Group',
+            'Horizon Civil Works Corp.',
         ];
+    }
 
-        $projectTypes = [
-            'Construction of Road', 'Rehabilitation of Bridge', 'Installation of Drainage System',
-            'Construction of Multi-Purpose Building', 'Improvement of Farm-to-Market Road',
-            'Construction of Seawall', 'Rehabilitation of Public Market',
-            'Construction of School Building', 'Flood Control Project',
-            'Construction of Water Supply System',
+    private function projectTitles(): array
+    {
+        return [
+            'Construction of Road and Drainage Improvement',
+            'Rehabilitation of Multi-Purpose Building',
+            'Installation of Solar Street Lights',
+            'Construction of Flood Control Structure',
+            'Repair of School Building Facilities',
+            'Construction of Barangay Health Center',
+            'Upgrading of Water Supply System',
+            'Construction of Box Culvert',
+            'Concreting of Barangay Roads',
+            'Construction of Community Center',
+            'Slope Protection and Retaining Wall',
+            'Rehabilitation of Public Market',
+            'Construction of Bridge Structure',
+            'Installation of CCTV System',
+            'Construction of Evacuation Center',
         ];
+    }
 
-        $barangays = [
-            'Brgy. Lapasan', 'Brgy. Macabalan', 'Brgy. Nazareth', 'Brgy. Carmen',
-            'Brgy. Agusan', 'Brgy. Bulua', 'Brgy. Canitoan', 'Brgy. Iponan',
-        ];
+    // ── Definition ─────────────────────────────────────────────────────────────
 
-        $issuanceOptions = [
-            'Notice to Proceed', 'Suspension Order', 'Resume Order',
-            'Notice of Default', 'Show Cause Letter', 'Warning Letter',
-        ];
+    public function definition(): array
+    {
+        $dateStarted     = $this->faker->dateTimeBetween('-2 years', '-3 months');
+        $contractDays    = $this->faker->randomElement([90, 120, 150, 180, 240, 270, 365]);
+        $originalExpiry  = (clone $dateStarted)->modify("+{$contractDays} days");
 
-        $documentOptions = [
-            'Time Extension 1', 'Time Extension 2', 'Time Extension 3',
-            'Variation Order 1', 'Variation Order 2',
-            'Notice to Proceed', 'Certificate of Completion',
-        ];
-
-        // Date logic
-        $dateStarted      = $this->faker->dateTimeBetween('-2 years', '-3 months');
-        $originalExpiry   = (clone $dateStarted)->modify('+' . $this->faker->numberBetween(6, 18) . ' months');
-        $hasExtension     = $this->faker->boolean(35);
-        $extensionDays    = [];
-        $revisedExpiry    = null;
-        $timeExtension    = 0;
-
-        if ($hasExtension) {
-            $numExtensions = $this->faker->numberBetween(1, 3);
-            $totalDays     = 0;
-            for ($i = 0; $i < $numExtensions; $i++) {
-                $days           = $this->faker->numberBetween(15, 60);
-                $extensionDays[] = $days;
-                $totalDays      += $days;
-            }
-            $timeExtension = $numExtensions;
-            $revisedExpiry = (clone $originalExpiry)->modify("+{$totalDays} days");
-        }
-
-        $effectiveExpiry = $revisedExpiry ?? $originalExpiry;
-        $isExpired       = $effectiveExpiry < now();
-
-        // Status
-        if ($isExpired && $this->faker->boolean(60)) {
-            $status      = 'completed';
-            $completedAt = $this->faker->dateTimeBetween($dateStarted, $effectiveExpiry);
-            $workDone    = 100;
-            $asPlanned   = 100;
-        } elseif ($isExpired) {
-            $status      = 'ongoing';
-            $completedAt = null;
-            $workDone    = $this->faker->numberBetween(60, 95);
-            $asPlanned   = 100;
-        } else {
-            $status      = 'ongoing';
-            $completedAt = null;
-            $asPlanned   = $this->faker->numberBetween(20, 95);
-            $workDone    = $asPlanned + $this->faker->numberBetween(-15, 15);
-            $workDone    = max(0, min(100, $workDone));
-        }
-
-        $slippage = round($workDone - $asPlanned, 2);
-
-        // Documents & issuances
-        $numDocs      = $this->faker->numberBetween(0, count($extensionDays) + 2);
-        $docs         = [];
-        $docDays      = [];
-        $teIndex      = 0;
-
-        for ($i = 0; $i < $numDocs; $i++) {
-            $doc = $this->faker->randomElement($documentOptions);
-            $docs[] = $doc;
-            if (str_starts_with($doc, 'Time Extension') && isset($extensionDays[$teIndex])) {
-                $docDays[] = $extensionDays[$teIndex];
-                $teIndex++;
-            } else {
-                $docDays[] = null;
-            }
-        }
-
-        $numIssuances = $this->faker->numberBetween(0, 3);
-        $issuances    = $numIssuances > 0
-            ? $this->faker->randomElements($issuanceOptions, $numIssuances)
-            : [];
+        $asPlanned = $this->faker->randomFloat(2, 10, 100);
+        $workDone  = $this->faker->randomFloat(2, max(0, $asPlanned - 20), min(100, $asPlanned + 20));
+        $slippage  = round($workDone - $asPlanned, 2);
 
         return [
-            'in_charge'                => $this->faker->randomElement($inChargeList),
-            'project_title'            => $this->faker->randomElement($projectTypes) . ' at ' . $this->faker->randomElement($barangays) . ', ' . $this->faker->randomElement($locationList),
-            'location'                 => $this->faker->randomElement($locationList),
-            'contractor'               => $this->faker->randomElement($contractorList),
-            'contract_amount'          => $this->faker->randomFloat(2, 500_000, 50_000_000),
+            'in_charge'                => $this->faker->randomElement($this->inChargeOptions()),
+            'project_title'            => $this->faker->randomElement($this->projectTitles()),
+            'location'                 => $this->faker->randomElement($this->locationOptions()),
+            'contractor'               => $this->faker->randomElement($this->contractorOptions()),
+            'contract_amount'          => $this->randomContractAmount(),
             'date_started'             => $dateStarted->format('Y-m-d'),
+            'contract_days'            => $contractDays,
             'original_contract_expiry' => $originalExpiry->format('Y-m-d'),
-            'revised_contract_expiry'  => $revisedExpiry?->format('Y-m-d'),
+            'revised_contract_expiry'  => null,
+            'status'                   => 'ongoing',
+            'completed_at'             => null,
             'as_planned'               => $asPlanned,
             'work_done'                => $workDone,
             'slippage'                 => $slippage,
-            'status'                   => $status,
-            'completed_at'             => $completedAt ?? null,
-            'time_extension'           => (string) $timeExtension,
-            'extension_days'           => json_encode($extensionDays ?: []),
-            'documents_pressed'        => json_encode($docs ?: []),
-            'issuances'                => json_encode($issuances ?: []),
-            'remarks_recommendation'   => $this->faker->boolean(50)
-                ? $this->faker->sentence($this->faker->numberBetween(10, 30))
-                : null,
+            'remarks_recommendation'   => $this->faker->optional(0.3)->sentence(),
+
+            // Documents & Extensions (empty by default)
+            'issuances'                => null,
+            'documents_pressed'        => null,
+            'time_extension'           => null,
+            'extension_days'           => null,
+            'cost_involved'            => null,
+            'suspension_days'          => null,
+            'variation_order'          => null,
+            'date_requested'           => null,
+            'vo_days'                  => null,
+            'vo_cost'                  => null,
+
+            // Liquidated Damages (empty by default)
+            'ld_accomplished'          => null,
+            'ld_unworked'              => null,
+            'ld_per_day'               => null,
+            'total_ld'                 => null,
+            'ld_days_overdue'          => null,
         ];
     }
 
-    // ── States ──
-
-    public function completed(): static
-    {
-        return $this->state(fn(array $attr) => [
-            'status'      => 'completed',
-            'work_done'   => 100,
-            'as_planned'  => 100,
-            'slippage'    => 0,
-            'completed_at'=> now()->subDays(rand(1, 90))->format('Y-m-d'),
-        ]);
-    }
+    // ── States ──────────────────────────────────────────────────────────────────
 
     public function ongoing(): static
     {
-        return $this->state(function (array $attr) {
-            $asPlanned = $this->faker->numberBetween(20, 90);
-            $workDone  = max(0, min(100, $asPlanned + $this->faker->numberBetween(-10, 10)));
+        return $this->state(function () {
+            $dateStarted  = $this->faker->dateTimeBetween('-1 year', '-2 months');
+            $contractDays = $this->faker->randomElement([120, 150, 180, 240, 365]);
+            $expiry       = (clone $dateStarted)->modify("+{$contractDays} days");
+
+            // Make sure expiry is in the future (more than 31 days away)
+            if ($expiry <= now()->modify('+31 days')->toDateTime()) {
+                $expiry = now()->modify('+60 days')->toDateTime();
+            }
+
+            $asPlanned = $this->faker->randomFloat(2, 20, 85);
+            $workDone  = $this->faker->randomFloat(2, max(0, $asPlanned - 15), min(100, $asPlanned + 10));
+
             return [
-                'status'       => 'ongoing',
-                'as_planned'   => $asPlanned,
-                'work_done'    => $workDone,
-                'slippage'     => round($workDone - $asPlanned, 2),
-                'completed_at' => null,
-                'original_contract_expiry' => now()->addMonths(rand(2, 12))->format('Y-m-d'),
+                'date_started'             => $dateStarted->format('Y-m-d'),
+                'contract_days'            => $contractDays,
+                'original_contract_expiry' => $expiry->format('Y-m-d'),
+                'revised_contract_expiry'  => null,
+                'status'                   => 'ongoing',
+                'completed_at'             => null,
+                'as_planned'               => $asPlanned,
+                'work_done'                => $workDone,
+                'slippage'                 => round($workDone - $asPlanned, 2),
+            ];
+        });
+    }
+
+    public function completed(): static
+    {
+        return $this->state(function () {
+            $dateStarted  = $this->faker->dateTimeBetween('-2 years', '-8 months');
+            $contractDays = $this->faker->randomElement([90, 120, 150, 180, 240]);
+            $expiry       = (clone $dateStarted)->modify("+{$contractDays} days");
+            $completedAt  = $this->faker->dateTimeBetween($dateStarted, $expiry);
+
+            return [
+                'date_started'             => $dateStarted->format('Y-m-d'),
+                'contract_days'            => $contractDays,
+                'original_contract_expiry' => $expiry->format('Y-m-d'),
+                'revised_contract_expiry'  => null,
+                'status'                   => 'completed',
+                'completed_at'             => $completedAt->format('Y-m-d'),
+                'as_planned'               => 100.00,
+                'work_done'                => 100.00,
+                'slippage'                 => 0.00,
             ];
         });
     }
 
     public function expiring(): static
     {
-        return $this->state(fn(array $attr) => [
-            'status'                   => 'ongoing',
-            'original_contract_expiry' => now()->addDays(rand(1, 29))->format('Y-m-d'),
-            'revised_contract_expiry'  => null,
-            'completed_at'             => null,
-        ]);
+        return $this->state(function () {
+            $dateStarted  = $this->faker->dateTimeBetween('-1 year', '-2 months');
+            $contractDays = $this->faker->randomElement([120, 150, 180, 240]);
+            // Expiry within the next 1–30 days
+            $daysUntil    = $this->faker->numberBetween(1, 30);
+            $expiry       = now()->modify("+{$daysUntil} days");
+
+            $asPlanned = $this->faker->randomFloat(2, 60, 95);
+            $workDone  = $this->faker->randomFloat(2, max(0, $asPlanned - 20), min(100, $asPlanned + 5));
+
+            return [
+                'date_started'             => $dateStarted->format('Y-m-d'),
+                'contract_days'            => $contractDays,
+                'original_contract_expiry' => $expiry->format('Y-m-d'),
+                'revised_contract_expiry'  => null,
+                'status'                   => 'ongoing',
+                'completed_at'             => null,
+                'as_planned'               => $asPlanned,
+                'work_done'                => $workDone,
+                'slippage'                 => round($workDone - $asPlanned, 2),
+            ];
+        });
     }
 
     public function expired(): static
     {
-        return $this->state(fn(array $attr) => [
-            'status'                   => 'ongoing',
-            'original_contract_expiry' => now()->subMonths(rand(1, 6))->format('Y-m-d'),
-            'revised_contract_expiry'  => null,
-            'completed_at'             => null,
-        ]);
+        return $this->state(function () {
+            $dateStarted  = $this->faker->dateTimeBetween('-2 years', '-6 months');
+            $contractDays = $this->faker->randomElement([90, 120, 150, 180]);
+            $expiry       = $this->faker->dateTimeBetween('-5 months', '-1 month');
+
+            $asPlanned = $this->faker->randomFloat(2, 50, 100);
+            $workDone  = $this->faker->randomFloat(2, 30, min(99, $asPlanned + 5));
+
+            return [
+                'date_started'             => $dateStarted->format('Y-m-d'),
+                'contract_days'            => $contractDays,
+                'original_contract_expiry' => $expiry->format('Y-m-d'),
+                'revised_contract_expiry'  => null,
+                'status'                   => 'expired',
+                'completed_at'             => null,
+                'as_planned'               => $asPlanned,
+                'work_done'                => $workDone,
+                'slippage'                 => round($workDone - $asPlanned, 2),
+            ];
+        });
     }
 
-    public function withExtension(int $extensions = 1): static
+    /**
+     * withExtension($count) — adds $count Time Extension entries.
+     * Automatically recomputes contract_days and revised_contract_expiry.
+     */
+    public function withExtension(int $count = 1): static
     {
-        return $this->state(function (array $attr) use ($extensions) {
-            $days  = [];
-            $total = 0;
-            for ($i = 0; $i < $extensions; $i++) {
-                $d     = rand(15, 60);
-                $days[]= $d;
-                $total+= $d;
+        return $this->state(function (array $attributes) use ($count) {
+            $faker = $this->faker;
+
+            $dateStarted    = $attributes['date_started']             ?? now()->subYear()->format('Y-m-d');
+            $originalExpiry = $attributes['original_contract_expiry'] ?? now()->subMonths(3)->format('Y-m-d');
+            $contractDays   = $attributes['contract_days']            ?? 180;
+
+            $docs          = [];
+            $teDays        = [];
+            $teCosts       = [];
+            $dateRequested = [];
+            $totalTEDays   = 0;
+
+            for ($i = 1; $i <= $count; $i++) {
+                $days          = $faker->randomElement([30, 45, 60, 90, 120]);
+                $cost          = $faker->optional(0.6)->randomFloat(2, 50_000, 500_000);
+                $requestDate   = Carbon::parse($originalExpiry)
+                    ->subDays($faker->numberBetween(10, 60))
+                    ->format('Y-m-d');
+
+                $docs[]          = "Time Extension {$i}";
+                $teDays[]        = $days;
+                $teCosts[]       = $cost;
+                $dateRequested[] = $requestDate;
+                $totalTEDays    += $days;
             }
-            $base    = \Carbon\Carbon::parse($attr['original_contract_expiry']);
-            $revised = $base->copy()->addDays($total);
+
+            // Original base days = date_started → original_contract_expiry
+            $originalDays    = (int) Carbon::parse($dateStarted)->diffInDays(Carbon::parse($originalExpiry));
+            $newContractDays = $originalDays + $totalTEDays;
+            $revisedExpiry   = Carbon::parse($originalExpiry)->addDays($totalTEDays)->format('Y-m-d');
+
+            // Add a random issuance on some projects with extensions
+            $issuances = null;
+            if ($count >= 2 && $faker->boolean(40)) {
+                $issuances = [$faker->randomElement([
+                    '1st Notice of Negative Slippage',
+                    '2nd Notice of Negative Slippage',
+                    'Notice of Expiry',
+                ])];
+            }
+
             return [
-                'time_extension'          => $extensions,
-                'extension_days'          => $days,
-                'revised_contract_expiry' => $revised->format('Y-m-d'),
+                'documents_pressed'       => $docs,
+                'time_extension'          => $count,
+                'extension_days'          => $teDays,
+                'cost_involved'           => $teCosts,
+                'date_requested'          => $dateRequested,
+                'contract_days'           => $newContractDays,
+                'revised_contract_expiry' => $revisedExpiry,
+                'issuances'               => $issuances,
+                'variation_order'         => null,
+                'vo_days'                 => null,
+                'vo_cost'                 => null,
+                'suspension_days'         => null,
             ];
         });
     }

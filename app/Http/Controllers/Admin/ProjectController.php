@@ -90,9 +90,9 @@ class ProjectController extends Controller
         foreach ($existingDocs as $doc) {
             if (str_starts_with((string) $doc, 'Time Extension')) {
                 $teHistory[] = [
-                    'label'         => $doc,
-                    'days'          => $existingDays[$teIndex]  ?? 0,
-                    'cost'          => $existingCosts[$teIndex] ?? null,
+                    'label'          => $doc,
+                    'days'           => $existingDays[$teIndex]  ?? 0,
+                    'cost'           => $existingCosts[$teIndex] ?? null,
                     'date_requested' => $existingDates[$teIndex] ?? null,
                 ];
                 $teIndex++;
@@ -109,16 +109,15 @@ class ProjectController extends Controller
         $existingVoDays  = array_map('intval', array_filter((array) $existingVoDays));
         $existingVoCosts = array_map(fn($v) => $v !== null ? (float) $v : null, $existingVoCosts);
 
-        // VO dates start after all TE dates in the shared date_requested array
         $voHistory = [];
         $voIndex   = 0;
-        $voDateOffset = $teCount; // VO dates are appended after TE dates
+        $voDateOffset = $teCount;
         foreach ($existingDocs as $doc) {
             if (str_starts_with((string) $doc, 'Variation Order')) {
                 $voHistory[] = [
-                    'label'         => $doc,
-                    'days'          => $existingVoDays[$voIndex]  ?? 0,
-                    'cost'          => $existingVoCosts[$voIndex] ?? null,
+                    'label'          => $doc,
+                    'days'           => $existingVoDays[$voIndex]  ?? 0,
+                    'cost'           => $existingVoCosts[$voIndex] ?? null,
                     'date_requested' => $existingDates[$voDateOffset + $voIndex] ?? null,
                 ];
                 $voIndex++;
@@ -164,13 +163,12 @@ class ProjectController extends Controller
             'issuances.*'              => 'nullable|string|in:1st Notice of Negative Slippage,2nd Notice of Negative Slippage,3rd Notice of Negative Slippage,Liquidated Damages,Notice to Terminate,Notice of Expiry',
             'new_te_days'              => 'nullable|integer|min:1|max:9999',
             'new_te_cost'              => 'nullable|numeric|min:0',
-            'new_te_date'              => 'nullable|date',       // ← NEW
+            'new_te_date'              => 'nullable|date',
             'new_vo_days'              => 'nullable|integer|min:1|max:9999',
             'new_vo_cost'              => 'nullable|numeric|min:0',
-            'new_vo_date'              => 'nullable|date',       // ← NEW
+            'new_vo_date'              => 'nullable|date',
             'new_so_days'              => 'nullable|integer|min:1|max:9999',
             'ld_accomplished'          => 'nullable|numeric|min:0|max:100',
-            'ld_per_day'               => 'nullable|numeric|min:0',
             'ld_days_overdue'          => 'nullable|integer|min:0',
         ]);
 
@@ -182,10 +180,10 @@ class ProjectController extends Controller
             'as_planned', 'work_done',
             'remarks_recommendation',
             'status', 'completed_at',
-            'ld_accomplished', 'ld_per_day',
+            'ld_accomplished',
         ]);
 
-        $data['slippage'] = $request->work_done - $request->as_planned;
+        $data['slippage'] = (float) $request->work_done - (float) $request->as_planned;
 
         if ($request->status === 'ongoing') {
             $data['completed_at'] = null;
@@ -196,7 +194,7 @@ class ProjectController extends Controller
             array_filter($request->input('issuances', []), fn($v) => !empty($v))
         );
 
-        // ── Step 3: Carry forward existing arrays ──
+        // ── Step 3: Carry forward existing arrays (always read fresh from DB) ──
         $fresh = $project->fresh();
 
         $existingDocs  = $fresh->documents_pressed ?? [];
@@ -204,7 +202,7 @@ class ProjectController extends Controller
         $existingCosts = $fresh->cost_involved     ?? [];
 
         $existingDocs  = is_array($existingDocs)  ? $existingDocs  : [];
-        $existingDays  = is_array($existingDays)  ? array_map('intval', $existingDays)  : [];
+        $existingDays  = is_array($existingDays)  ? array_map('intval', $existingDays) : [];
         $existingCosts = is_array($existingCosts) ? array_map(fn($v) => $v !== null ? (float) $v : null, $existingCosts) : [];
 
         $existingSuspDay = (int) ($fresh->suspension_days ?? 0);
@@ -214,7 +212,6 @@ class ProjectController extends Controller
         $existingVoDays  = is_array($existingVoDays)  ? array_map('intval', array_filter((array) $existingVoDays))  : [];
         $existingVoCosts = is_array($existingVoCosts) ? array_map(fn($v) => $v !== null ? (float) $v : null, $existingVoCosts) : [];
 
-        // ── Date requested parallel array ──
         $existingDates = $fresh->date_requested ?? [];
         $existingDates = is_array($existingDates) ? $existingDates : [];
 
@@ -232,12 +229,9 @@ class ProjectController extends Controller
             $existingDocs[]  = "Time Extension {$nextNumber}";
             $existingDays[]  = $newTEDays;
             $existingCosts[] = ($newTECost !== null && $newTECost !== '') ? (float) $newTECost : null;
-            // Insert the new TE date at the correct position (after existing TE dates, before VO dates)
-            // We rebuild: [all TE dates..., all VO dates...]
-            // Split existing dates into TE portion and VO portion
-            $existingTECount = $currentTECount; // before adding new one
-            $teDates = array_slice($existingDates, 0, $existingTECount);
-            $voDates = array_slice($existingDates, $existingTECount);
+            // Insert TE date before VO dates
+            $teDates = array_slice($existingDates, 0, $currentTECount);
+            $voDates = array_slice($existingDates, $currentTECount);
             $teDates[] = $newTEDate ?: null;
             $existingDates = array_merge($teDates, $voDates);
         }
@@ -255,7 +249,7 @@ class ProjectController extends Controller
             $existingDocs[]    = "Variation Order {$nextVONumber}";
             $existingVoDays[]  = $newVoDays;
             $existingVoCosts[] = ($newVoCost !== null && $newVoCost !== '') ? (float) $newVoCost : null;
-            $existingDates[]   = $newVODate ?: null;  // VO dates appended at end
+            $existingDates[]   = $newVODate ?: null;
         }
 
         $data['vo_days']        = array_values($existingVoDays);
@@ -263,6 +257,7 @@ class ProjectController extends Controller
         $data['date_requested'] = empty($existingDates)
             ? null
             : array_values(array_map(fn($d) => ($d !== '' ? $d : null), $existingDates));
+
         // ── Step 5: Handle Suspension Order ──
         $newSODays = (int) $request->input('new_so_days', 0);
         $hasSO     = collect($existingDocs)->contains('Suspension Order');
@@ -290,14 +285,13 @@ class ProjectController extends Controller
             ->filter(fn($v) => str_starts_with($v ?? '', 'Variation Order'))
             ->count();
 
-        // ── Step 7: Recompute revised_contract_expiry ──
+        // ── Step 7: Recompute revised_contract_expiry and contract_days ──
         $totalTEDays  = (int) array_sum($data['extension_days']);
         $totalVODays  = (int) array_sum(array_map('intval', array_filter((array) ($data['vo_days'] ?? []))));
         $totalSODays  = (int) ($data['suspension_days'] ?? 0);
         $baseExpiry   = Carbon::parse($request->original_contract_expiry);
         $totalExtDays = $totalTEDays + $totalVODays;
 
-        // Recompute contract_days = original contract days + all TE days + all VO days
         $originalContractDays  = (int) Carbon::parse($request->date_started)
             ->diffInDays(Carbon::parse($request->original_contract_expiry));
         $data['contract_days'] = $originalContractDays + $totalTEDays + $totalVODays;
@@ -315,27 +309,41 @@ class ProjectController extends Controller
             $data['revised_contract_expiry'] = null;
         }
 
-        // ── Step 8: LD calculations ──
-        $ldPerDay    = (float) ($data['ld_per_day'] ?? 0);
-        $daysOverdue = (int) $request->input('ld_days_overdue', 0);
-        $data['ld_days_overdue'] = $daysOverdue ?: null;
-        $data['ld_unworked']     = $ldPerDay > 0
-            ? max(0, 100 - (float) ($data['ld_accomplished'] ?? 0))
+        // ── Step 8: LD calculations (all computed server-side) ──
+        $ldAccomplished = isset($data['ld_accomplished']) && $data['ld_accomplished'] !== null
+            ? (float) $data['ld_accomplished']
+            : 0.0;
+        $contractAmount = (float) ($data['contract_amount'] ?? 0);
+        $daysOverdue    = (int) $request->input('ld_days_overdue', 0);
+
+        // ld_per_day = (ld_unworked / 100) * contract_amount * 0.001
+        // i.e. (100 - ld_accomplished) / 100 * contract_amount * 0.001
+        $ldUnworked = max(0, 100 - $ldAccomplished);
+        $ldPerDay = ($ldUnworked / 100) * $contractAmount * 0.001;
+
+        $data['ld_per_day']      = $ldPerDay > 0 ? round($ldPerDay, 2) : null;
+        $data['ld_unworked']     = $ldPerDay > 0 ? round($ldUnworked, 2) : null;
+        $data['ld_days_overdue'] = $daysOverdue > 0 ? $daysOverdue : null;
+        $data['total_ld']        = ($ldPerDay > 0 && $daysOverdue > 0)
+            ? round($ldPerDay * $daysOverdue, 2)
             : null;
 
-        if ($ldPerDay > 0 && $daysOverdue > 0) {
-            $data['total_ld'] = round($ldPerDay * $daysOverdue, 2);
-        } else {
-            $data['total_ld'] = null;
-        }
-
-        // ── Step 9: Clear LD if not in issuances ──
-        if (!in_array('Liquidated Damages', $data['issuances'])) {
-            $data['ld_accomplished'] = null;
-            $data['ld_unworked']     = null;
-            $data['ld_per_day']      = null;
-            $data['total_ld']        = null;
-            $data['ld_days_overdue'] = null;
+        // ── Step 9: Clear LD fields only if ld_accomplished is empty ──
+        // LD fields are independent of issuances — do not wipe based on notification list.
+        if ($ldAccomplished <= 0 || $daysOverdue <= 0) {
+            // Only clear computed fields if inputs are blank; preserve ld_accomplished if set
+            if ($ldAccomplished <= 0) {
+                $data['ld_accomplished'] = null;
+                $data['ld_unworked']     = null;
+                $data['ld_per_day']      = null;
+                $data['total_ld']        = null;
+            }
+            if ($daysOverdue <= 0) {
+                $data['ld_days_overdue'] = null;
+                if ($ldAccomplished <= 0) {
+                    $data['total_ld'] = null;
+                }
+            }
         }
 
         $project->update($data);
@@ -508,39 +516,34 @@ class ProjectController extends Controller
         $cost  = $request->input('edit_cost');
         $date  = $request->input('edit_date_requested');
 
+        $existingDocs  = is_array($fresh->documents_pressed) ? $fresh->documents_pressed : [];
+        $dateRequested = is_array($fresh->date_requested)    ? $fresh->date_requested    : [];
+
+        $teCount = collect($existingDocs)
+            ->filter(fn($d) => str_starts_with((string) $d, 'Time Extension'))
+            ->count();
+
         $data = [];
 
         if ($type === 'te') {
-            // ── Edit Time Extension entry ──
             $extensionDays = is_array($fresh->extension_days) ? array_map('intval', $fresh->extension_days) : [];
             $costInvolved  = is_array($fresh->cost_involved)  ? $fresh->cost_involved : [];
-            $dateRequested = is_array($fresh->date_requested) ? $fresh->date_requested : [];
 
             if (!isset($extensionDays[$index])) {
                 return back()->with('error', 'Time Extension entry not found.');
             }
 
-            $extensionDays[$index] = $days;
-            $costInvolved[$index]  = ($cost !== null && $cost !== '') ? (float) $cost : null;
-
-            // date_requested: TE dates are at indices 0..teCount-1
-            $dateRequested[$index] = $date ?: null;
+            $extensionDays[$index]  = $days;
+            $costInvolved[$index]   = ($cost !== null && $cost !== '') ? (float) $cost : null;
+            $dateRequested[$index]  = $date ?: null;
 
             $data['extension_days'] = array_values($extensionDays);
             $data['cost_involved']  = array_values($costInvolved);
             $data['date_requested'] = array_values($dateRequested);
 
         } else {
-            // ── Edit Variation Order entry ──
-            $voDays        = is_array($fresh->vo_days)       ? array_map('intval', array_filter((array) $fresh->vo_days)) : [];
-            $voCosts       = is_array($fresh->vo_cost)       ? $fresh->vo_cost : [];
-            $dateRequested = is_array($fresh->date_requested) ? $fresh->date_requested : [];
-
-            // Count TE entries to find VO date offset
-            $existingDocs = is_array($fresh->documents_pressed) ? $fresh->documents_pressed : [];
-            $teCount = collect($existingDocs)
-                ->filter(fn($d) => str_starts_with((string) $d, 'Time Extension'))
-                ->count();
+            $voDays  = is_array($fresh->vo_days) ? array_map('intval', array_filter((array) $fresh->vo_days)) : [];
+            $voCosts = is_array($fresh->vo_cost) ? $fresh->vo_cost : [];
 
             if (!isset($voDays[$index])) {
                 return back()->with('error', 'Variation Order entry not found.');
@@ -548,33 +551,31 @@ class ProjectController extends Controller
 
             $voDays[$index]  = $days;
             $voCosts[$index] = ($cost !== null && $cost !== '') ? (float) $cost : null;
-
-            // VO dates start after TE dates in the shared array
             $dateRequested[$teCount + $index] = $date ?: null;
 
-            $data['vo_days']       = array_values($voDays);
-            $data['vo_cost']       = array_values($voCosts);
+            $data['vo_days']        = array_values($voDays);
+            $data['vo_cost']        = array_values($voCosts);
             $data['date_requested'] = array_values($dateRequested);
         }
 
-        // Recompute revised_contract_expiry from updated arrays
+        // Recompute revised_contract_expiry
         $allExtDays = array_sum(array_map('intval', $data['extension_days'] ?? $fresh->extension_days ?? []));
         $allVODays  = array_sum(array_map('intval', $data['vo_days']        ?? $fresh->vo_days        ?? []));
         $sodays     = (int) ($fresh->suspension_days ?? 0);
-        $hasSO      = collect($existingDocs ?? [])->contains('Suspension Order');
+        $hasSO      = collect($existingDocs)->contains('Suspension Order');
         $total      = $allExtDays + $allVODays + ($hasSO ? $sodays : 0);
 
         $data['revised_contract_expiry'] = $total > 0
-            ? \Carbon\Carbon::parse($fresh->original_contract_expiry)->addDays($total)->toDateString()
+            ? Carbon::parse($fresh->original_contract_expiry)->addDays($total)->toDateString()
             : null;
 
         // Recompute contract_days
-            $previousTEDays        = (int) array_sum(array_map('intval', $fresh->extension_days ?? []));
-            $previousVODays        = (int) array_sum(array_map('intval', array_filter((array)($fresh->vo_days ?? []))));
-            $originalContractDays  = (int) ($fresh->contract_days ?? 0) - $previousTEDays - $previousVODays;
-            $currentTEDays         = (int) array_sum(array_map('intval', $data['extension_days'] ?? $fresh->extension_days ?? []));
-            $currentVODays         = (int) array_sum(array_map('intval', $data['vo_days']        ?? $fresh->vo_days        ?? []));
-            $data['contract_days'] = $originalContractDays + $currentTEDays + $currentVODays;
+        $previousTEDays        = (int) array_sum(array_map('intval', $fresh->extension_days ?? []));
+        $previousVODays        = (int) array_sum(array_map('intval', array_filter((array) ($fresh->vo_days ?? []))));
+        $originalContractDays  = (int) ($fresh->contract_days ?? 0) - $previousTEDays - $previousVODays;
+        $currentTEDays         = (int) array_sum(array_map('intval', $data['extension_days'] ?? $fresh->extension_days ?? []));
+        $currentVODays         = (int) array_sum(array_map('intval', $data['vo_days']        ?? $fresh->vo_days        ?? []));
+        $data['contract_days'] = $originalContractDays + $currentTEDays + $currentVODays;
 
         $project->update($data);
 
@@ -582,139 +583,134 @@ class ProjectController extends Controller
             ->route('admin.projects.edit', $project)
             ->with('success', ucfirst($type === 'te' ? 'Time Extension' : 'Variation Order') . ' updated successfully.');
     }
+
     public function destroyEntry(Request $request, Project $project)
-{
-    $request->validate([
-        'entry_type'    => 'required|in:te,vo',
-        'entry_index'   => 'required|integer|min:0',
-        'delete_reason' => 'required|string|max:1000',
-    ]);
+    {
+        $request->validate([
+            'entry_type'    => 'required|in:te,vo',
+            'entry_index'   => 'required|integer|min:0',
+            'delete_reason' => 'required|string|max:1000',
+        ]);
 
-    $fresh  = $project->fresh();
-    $type   = $request->input('entry_type');
-    $index  = (int) $request->input('entry_index');
-    $reason = trim($request->input('delete_reason'));
+        $fresh  = $project->fresh();
+        $type   = $request->input('entry_type');
+        $index  = (int) $request->input('entry_index');
+        $reason = trim($request->input('delete_reason'));
 
-    $existingDocs    = is_array($fresh->documents_pressed) ? $fresh->documents_pressed : [];
-    $existingDays    = is_array($fresh->extension_days)    ? array_map('intval', $fresh->extension_days) : [];
-    $existingCosts   = is_array($fresh->cost_involved)     ? $fresh->cost_involved : [];
-    $existingDates   = is_array($fresh->date_requested)    ? $fresh->date_requested : [];
-    $existingVoDays  = is_array($fresh->vo_days) ? array_map('intval', array_filter((array) $fresh->vo_days)) : [];
-    $existingVoCosts = is_array($fresh->vo_cost) ? $fresh->vo_cost : [];
+        $existingDocs    = is_array($fresh->documents_pressed) ? $fresh->documents_pressed : [];
+        $existingDays    = is_array($fresh->extension_days)    ? array_map('intval', $fresh->extension_days) : [];
+        $existingCosts   = is_array($fresh->cost_involved)     ? $fresh->cost_involved : [];
+        $existingDates   = is_array($fresh->date_requested)    ? $fresh->date_requested : [];
+        $existingVoDays  = is_array($fresh->vo_days) ? array_map('intval', array_filter((array) $fresh->vo_days)) : [];
+        $existingVoCosts = is_array($fresh->vo_cost) ? $fresh->vo_cost : [];
 
-    $teCount = collect($existingDocs)
-        ->filter(fn($d) => str_starts_with((string) $d, 'Time Extension'))
-        ->count();
+        $teCount = collect($existingDocs)
+            ->filter(fn($d) => str_starts_with((string) $d, 'Time Extension'))
+            ->count();
 
-    if ($type === 'te') {
-        // Find the doc-array index for this TE
-        $tesSeen = 0;
-        $docIndexToRemove = null;
-        foreach ($existingDocs as $di => $doc) {
-            if (str_starts_with((string) $doc, 'Time Extension')) {
-                if ($tesSeen === $index) { $docIndexToRemove = $di; break; }
-                $tesSeen++;
+        if ($type === 'te') {
+            $tesSeen = 0;
+            $docIndexToRemove = null;
+            foreach ($existingDocs as $di => $doc) {
+                if (str_starts_with((string) $doc, 'Time Extension')) {
+                    if ($tesSeen === $index) { $docIndexToRemove = $di; break; }
+                    $tesSeen++;
+                }
             }
-        }
-        if ($docIndexToRemove === null) {
-            return back()->with('error', 'Time Extension entry not found.');
-        }
-        $deletedLabel = $existingDocs[$docIndexToRemove];
-
-        array_splice($existingDocs,  $docIndexToRemove, 1);
-        array_splice($existingDays,  $index, 1);
-        array_splice($existingCosts, $index, 1);
-        array_splice($existingDates, $index, 1);
-
-        // Re-number remaining TEs
-        $teNum = 1;
-        foreach ($existingDocs as &$doc) {
-            if (str_starts_with((string) $doc, 'Time Extension')) {
-                $doc = "Time Extension {$teNum}";
-                $teNum++;
+            if ($docIndexToRemove === null) {
+                return back()->with('error', 'Time Extension entry not found.');
             }
-        } unset($doc);
+            $deletedLabel = $existingDocs[$docIndexToRemove];
 
-    } else {
-        // VO delete
-        $vosSeen = 0;
-        $docIndexToRemove = null;
-        foreach ($existingDocs as $di => $doc) {
-            if (str_starts_with((string) $doc, 'Variation Order')) {
-                if ($vosSeen === $index) { $docIndexToRemove = $di; break; }
-                $vosSeen++;
+            array_splice($existingDocs,  $docIndexToRemove, 1);
+            array_splice($existingDays,  $index, 1);
+            array_splice($existingCosts, $index, 1);
+            array_splice($existingDates, $index, 1);
+
+            $teNum = 1;
+            foreach ($existingDocs as &$doc) {
+                if (str_starts_with((string) $doc, 'Time Extension')) {
+                    $doc = "Time Extension {$teNum}";
+                    $teNum++;
+                }
+            } unset($doc);
+
+        } else {
+            $vosSeen = 0;
+            $docIndexToRemove = null;
+            foreach ($existingDocs as $di => $doc) {
+                if (str_starts_with((string) $doc, 'Variation Order')) {
+                    if ($vosSeen === $index) { $docIndexToRemove = $di; break; }
+                    $vosSeen++;
+                }
             }
-        }
-        if ($docIndexToRemove === null) {
-            return back()->with('error', 'Variation Order entry not found.');
-        }
-        $deletedLabel = $existingDocs[$docIndexToRemove];
-
-        array_splice($existingDocs,    $docIndexToRemove, 1);
-        array_splice($existingVoDays,  $index, 1);
-        array_splice($existingVoCosts, $index, 1);
-        array_splice($existingDates,   $teCount + $index, 1);
-
-        // Re-number remaining VOs
-        $voNum = 1;
-        foreach ($existingDocs as &$doc) {
-            if (str_starts_with((string) $doc, 'Variation Order')) {
-                $doc = "Variation Order {$voNum}";
-                $voNum++;
+            if ($docIndexToRemove === null) {
+                return back()->with('error', 'Variation Order entry not found.');
             }
-        } unset($doc);
-    }
+            $deletedLabel = $existingDocs[$docIndexToRemove];
 
-    $data = [
-        'documents_pressed' => array_values($existingDocs),
-        'extension_days'    => array_values($existingDays),
-        'cost_involved'     => array_values($existingCosts),
-        'date_requested'    => empty($existingDates)
-            ? null
-            : array_values(array_map(fn($d) => ($d !== '' ? $d : null), $existingDates)),        'vo_days'           => array_values($existingVoDays),
-        'vo_cost'           => array_values($existingVoCosts),
-    ];
+            array_splice($existingDocs,    $docIndexToRemove, 1);
+            array_splice($existingVoDays,  $index, 1);
+            array_splice($existingVoCosts, $index, 1);
+            array_splice($existingDates,   $teCount + $index, 1);
 
-    $data['time_extension'] = collect($data['documents_pressed'])
-        ->filter(fn($v) => str_starts_with($v ?? '', 'Time Extension'))
-        ->count();
+            $voNum = 1;
+            foreach ($existingDocs as &$doc) {
+                if (str_starts_with((string) $doc, 'Variation Order')) {
+                    $doc = "Variation Order {$voNum}";
+                    $voNum++;
+                }
+            } unset($doc);
+        }
 
-    $data['variation_order'] = collect($data['documents_pressed'])
-        ->filter(fn($v) => str_starts_with($v ?? '', 'Variation Order'))
-        ->count();
+        $data = [
+            'documents_pressed' => array_values($existingDocs),
+            'extension_days'    => array_values($existingDays),
+            'cost_involved'     => array_values($existingCosts),
+            'date_requested'    => empty($existingDates)
+                ? null
+                : array_values(array_map(fn($d) => ($d !== '' ? $d : null), $existingDates)),
+            'vo_days'           => array_values($existingVoDays),
+            'vo_cost'           => array_values($existingVoCosts),
+        ];
 
-    // Recompute revised_contract_expiry
-    $totalTE = (int) array_sum($data['extension_days']);
-    $totalVO = (int) array_sum(array_map('intval', array_filter((array) ($data['vo_days'] ?? []))));
-    $totalSO = (int) ($fresh->suspension_days ?? 0);
-    $hasSO   = collect($data['documents_pressed'])->contains('Suspension Order');
-    $total   = $totalTE + $totalVO + ($hasSO ? $totalSO : 0);
+        $data['time_extension'] = collect($data['documents_pressed'])
+            ->filter(fn($v) => str_starts_with($v ?? '', 'Time Extension'))
+            ->count();
 
-    $data['revised_contract_expiry'] = $total > 0
-    ? \Carbon\Carbon::parse($fresh->original_contract_expiry)->addDays($total)->toDateString()
-    : null;
+        $data['variation_order'] = collect($data['documents_pressed'])
+            ->filter(fn($v) => str_starts_with($v ?? '', 'Variation Order'))
+            ->count();
 
-        // Recompute contract_days
+        $totalTE = (int) array_sum($data['extension_days']);
+        $totalVO = (int) array_sum(array_map('intval', array_filter((array) ($data['vo_days'] ?? []))));
+        $totalSO = (int) ($fresh->suspension_days ?? 0);
+        $hasSO   = collect($data['documents_pressed'])->contains('Suspension Order');
+        $total   = $totalTE + $totalVO + ($hasSO ? $totalSO : 0);
+
+        $data['revised_contract_expiry'] = $total > 0
+            ? Carbon::parse($fresh->original_contract_expiry)->addDays($total)->toDateString()
+            : null;
+
         $previousTEDays        = (int) array_sum(array_map('intval', $fresh->extension_days ?? []));
-        $previousVODays        = (int) array_sum(array_map('intval', array_filter((array)($fresh->vo_days ?? []))));
+        $previousVODays        = (int) array_sum(array_map('intval', array_filter((array) ($fresh->vo_days ?? []))));
         $originalContractDays  = (int) ($fresh->contract_days ?? 0) - $previousTEDays - $previousVODays;
         $data['contract_days'] = $originalContractDays + $totalTE + $totalVO;
 
-    // Append deletion reason to remarks_recommendation
-    $existing  = trim($fresh->remarks_recommendation ?? '');
-    $timestamp = now()->format('F d, Y \a\t h:i A');
-    $note      = "[{$timestamp}] {$deletedLabel} deleted — Reason: {$reason}";
+        $existing  = trim($fresh->remarks_recommendation ?? '');
+        $timestamp = now()->format('F d, Y \a\t h:i A');
+        $note      = "[{$timestamp}] {$deletedLabel} deleted — Reason: {$reason}";
 
-    $data['remarks_recommendation'] = $existing !== ''
-        ? $existing . "\n\n" . $note
-        : $note;
+        $data['remarks_recommendation'] = $existing !== ''
+            ? $existing . "\n\n" . $note
+            : $note;
 
-    $project->update($data);
+        $project->update($data);
 
-    return redirect()
-        ->route('admin.projects.edit', $project)
-        ->with('success', "{$deletedLabel} deleted. Reason logged to remarks.");
-}
+        return redirect()
+            ->route('admin.projects.edit', $project)
+            ->with('success', "{$deletedLabel} deleted. Reason logged to remarks.");
+    }
 
     public function destroy(Project $project)
     {
