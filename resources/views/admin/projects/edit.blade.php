@@ -93,8 +93,8 @@
     /* History timeline (shared by TE and VO) */
     .history-timeline { display:flex; flex-direction:column; gap:0; }
     .history-entry { display:grid; gap:0 1rem; align-items:stretch; }
-    .history-entry.te-entry { grid-template-columns:18px 1fr 7rem 7rem; }
-    .history-entry.vo-entry { grid-template-columns:18px 1fr 7rem 7rem; }
+    .history-entry.te-entry { grid-template-columns:18px 1fr 5rem 5rem 5rem; }
+    .history-entry.vo-entry { grid-template-columns:18px 1fr 5rem 5rem 5rem; }
     .h-spine { display:flex; flex-direction:column; align-items:center; padding-top:3px; }
     .h-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
     .h-dot-orange { background:#f97316; box-shadow:0 0 0 3px rgba(249,115,22,0.18); }
@@ -122,7 +122,12 @@
     @keyframes slideIn { from{opacity:0;transform:translateY(-6px);} to{opacity:1;transform:translateY(0);} }
     @keyframes fadeUp  { from{opacity:0;transform:translateY(14px);} to{opacity:1;transform:translateY(0);} }
     .fade-up { animation:fadeUp 0.45s ease both; }
-    @media (max-width:640px) { .grid-2col { grid-template-columns:1fr; } }
+    @media (max-width:768px) { .tab-btn { padding:0.75rem 1rem; font-size:0.8rem; } }
+    @media (max-width:640px) { 
+        .grid-2col { grid-template-columns:1fr; }
+        .tab-btn { padding:0.65rem 0.8rem; font-size:0.75rem; }
+        .tab-btn span { display:none; }
+    }
 </style>
 
 @php
@@ -188,102 +193,145 @@
     </div>
     @endif
 
-    <div class="info-box" style="margin-bottom:1.5rem;">
-        <i class="fas fa-clock"></i>
-        <p style="margin:0; color:var(--text-secondary);">
-            Last updated: <span style="font-weight:700; color:var(--text-primary);">{{ $project->updated_at->format('F d, Y \a\t h:i A') }}</span>
-        </p>
-    </div>
-
     <form method="POST" action="{{ route('admin.projects.update', $project) }}">
         @csrf
         @method('PATCH')
 
-        {{-- PROJECT OVERVIEW --}}
-        <div class="form-card" style="margin-bottom:1.5rem;">
-            <div class="section-header">
-                <i class="fas fa-info-circle"></i>
-                <span>Project Overview</span>
-                <span style="margin-left:auto; font-size:0.7rem; color:#9ca3af; font-weight:400;">Read-only information</span>
+        <!-- TAB NAVIGATION -->
+        <div style="display:flex; gap:0.5rem; margin-bottom:1.5rem; border-bottom:1px solid var(--border); padding-bottom:0;">
+            <button type="button" class="tab-btn tab-active" data-tab="tab-overview" onclick="switchTab('tab-overview', this)">
+                <i class="fas fa-info-circle" style="font-size:0.8rem;"></i>
+                <span>Overview</span>
+            </button>
+            <button type="button" class="tab-btn" data-tab="tab-progress" onclick="switchTab('tab-progress', this)">
+                <i class="fas fa-chart-line" style="font-size:0.8rem;"></i>
+                <span>Performance</span>
+            </button>
+            <button type="button" class="tab-btn" data-tab="tab-extensions" onclick="switchTab('tab-extensions', this)">
+                <i class="fas fa-file-alt" style="font-size:0.8rem;"></i>
+                <span>Extensions</span>
+            </button>
+            <button type="button" class="tab-btn" data-tab="tab-admin" onclick="switchTab('tab-admin', this)">
+                <i class="fas fa-cog" style="font-size:0.8rem;"></i>
+                <span>Admin</span>
+            </button>
+        </div>
+
+        <style>
+            .tab-btn {
+                padding:0.85rem 1.25rem; border:none; background:transparent; cursor:pointer;
+                display:flex; align-items:center; gap:0.5rem; color:var(--text-secondary);
+                font-weight:600; font-size:0.85rem; font-family:'Instrument Sans',sans-serif;
+                border-bottom:3px solid transparent; transition:all 0.2s;
+                position:relative; bottom:-1.5px;
+            }
+            .tab-btn:hover { color:var(--text-primary); }
+            .tab-btn.tab-active {
+                color:var(--orange-500); border-bottom-color:var(--orange-500);
+            }
+            .tab-content { display:none; }
+            .tab-content.active { display:block; }
+        </style>
+
+        {{-- TAB 1: OVERVIEW --}}
+        <div id="tab-overview" class="tab-content active">
+            <!-- Last Updated Info -->
+            <div class="info-box" style="margin-bottom:1.5rem;">
+                <i class="fas fa-clock"></i>
+                <p style="margin:0; color:var(--text-secondary);">
+                    Last updated: <span style="font-weight:700; color:var(--text-primary);">{{ $project->updated_at->format('F d, Y \a\t h:i A') }}</span>
+                </p>
             </div>
-            <div class="section-body">
-                <div class="grid-2col">
-                    <div class="field-group">
-                        <label class="field-label">In Charge</label>
-                        <input type="hidden" name="in_charge" value="{{ $project->in_charge }}">
-                        <input type="text" class="field-input readonly-field" readonly value="{{ $project->in_charge }}">
-                    </div>
-                    <div class="field-group">
-                        <label class="field-label">Project Title</label>
-                        <input type="hidden" name="project_title" value="{{ $project->project_title }}">
-                        <input type="text" class="field-input readonly-field" readonly value="{{ $project->project_title }}">
-                    </div>
-                    <div class="field-group">
-                        <label class="field-label">Location</label>
-                        <input type="hidden" name="location" value="{{ $project->location }}">
-                        <input type="text" class="field-input readonly-field" readonly value="{{ $project->location }}">
-                    </div>
-                    <div class="field-group">
-                        <label class="field-label">Contractor</label>
-                        <input type="hidden" name="contractor" value="{{ $project->contractor }}">
-                        <input type="text" class="field-input readonly-field" readonly value="{{ $project->contractor }}">
-                    </div>
-                    <div class="field-group">
-                        <label class="field-label">Contract Amount</label>
-                        <div style="position:relative;">
-                            <span style="position:absolute; left:1rem; top:50%; transform:translateY(-50%); color:var(--ink-muted); font-weight:600; pointer-events:none;">₱</span>
-                            <input type="hidden" name="contract_amount" value="{{ $project->contract_amount }}">
-                            <input type="number" id="contract_amount" class="field-input readonly-field" readonly value="{{ $project->contract_amount }}" style="padding-left:1.75rem;">
+
+            <!-- Project Information (Read-Only) -->
+            <div class="form-card" style="margin-bottom:1.5rem;">
+                <div class="section-header">
+                    <i class="fas fa-box"></i>
+                    <span>Project Information</span>
+                    <span style="margin-left:auto; font-size:0.7rem; color:#9ca3af; font-weight:400;">Read-only</span>
+                </div>
+                <div class="section-body">
+                    <div class="grid-2col">
+                        <div class="field-group">
+                            <label class="field-label">In Charge</label>
+                            <input type="hidden" name="in_charge" value="{{ $project->in_charge }}">
+                            <input type="text" class="field-input readonly-field" readonly value="{{ $project->in_charge }}">
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">Project Title</label>
+                            <input type="hidden" name="project_title" value="{{ $project->project_title }}">
+                            <input type="text" class="field-input readonly-field" readonly value="{{ $project->project_title }}">
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">Location</label>
+                            <input type="hidden" name="location" value="{{ $project->location }}">
+                            <input type="text" class="field-input readonly-field" readonly value="{{ $project->location }}">
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">Contractor</label>
+                            <input type="hidden" name="contractor" value="{{ $project->contractor }}">
+                            <input type="text" class="field-input readonly-field" readonly value="{{ $project->contractor }}">
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">Contract Amount</label>
+                            <div style="position:relative;">
+                                <span style="position:absolute; left:1rem; top:50%; transform:translateY(-50%); color:var(--ink-muted); font-weight:600; pointer-events:none;">₱</span>
+                                <input type="hidden" name="contract_amount" value="{{ $project->contract_amount }}">
+                                <input type="number" id="contract_amount" class="field-input readonly-field" readonly value="{{ number_format($project->contract_amount, 2, '.', '') }}" style="padding-left:1.75rem;">
+                            </div>
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">Status</label>
+                            <select name="status" id="status_sel" class="field-input" onchange="toggleCompletedAt()" style="appearance:none; padding-right:2rem; background-image:url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%236b4f35%22 stroke-width=%222%22%3E%3Cpath d=%22M6 9l6 6 6-6%22/%3E%3C/svg%3E'); background-position:right 0.6rem center; background-repeat:no-repeat; background-size:1.1em; cursor:pointer;">
+                                <option value="ongoing"   {{ old('status',$project->status)=='ongoing'   ? 'selected':'' }}>Ongoing</option>
+                                <option value="completed" {{ old('status',$project->status)=='completed' ? 'selected':'' }}>Completed</option>
+                                <option value="expired"   {{ old('status',$project->status)=='expired'   ? 'selected':'' }}>Expired</option>
+                            </select>
                         </div>
                     </div>
-                    <div class="field-group">
-                        <label class="field-label">Original Expiry</label>
-                        <input type="hidden" name="original_contract_expiry" value="{{ $project->original_contract_expiry->format('Y-m-d') }}">
-                        <input type="date" class="field-input readonly-field" readonly value="{{ $project->original_contract_expiry->format('Y-m-d') }}">
+                </div>
+            </div>
+
+            <!-- Contract Dates -->
+            <div class="form-card" style="margin-bottom:1.5rem;">
+                <div class="section-header">
+                    <i class="fas fa-calendar-days"></i>
+                    <span>Contract Dates</span>
+                    <span style="margin-left:auto; font-size:0.7rem; color:#9ca3af; font-weight:400;">Key milestones</span>
+                </div>
+                <div class="section-body">
+                    <div class="grid-2col">
+                        <div class="field-group">
+                            <label class="field-label">Date Started</label>
+                            <input type="hidden" name="date_started" value="{{ $project->date_started->format('Y-m-d') }}">
+                            <input type="date" class="field-input readonly-field" readonly value="{{ $project->date_started->format('Y-m-d') }}">
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">Original Expiry</label>
+                            <input type="hidden" name="original_contract_expiry" value="{{ $project->original_contract_expiry->format('Y-m-d') }}">
+                            <input type="date" class="field-input readonly-field" readonly value="{{ $project->original_contract_expiry->format('Y-m-d') }}">
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">Revised Expiry</label>
+                            <input type="date" class="field-input readonly-field" readonly value="{{ $project->revised_contract_expiry?->format('Y-m-d') }}">
+                        </div>
+                        <div id="completed_at_field" class="field-group {{ old('status',$project->status)=='completed' ? '' : 'hidden' }}">
+                            <label class="field-label">Date Completed</label>
+                            <input type="date" name="completed_at" class="field-input {{ $errors->has('completed_at') ? 'has-error':'' }}" value="{{ old('completed_at', $project->completed_at?->format('Y-m-d')) }}">
+                            @error('completed_at')<p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        {{-- STATUS & DATES --}}
-        <div class="form-card" style="margin-bottom:1.5rem;">
-            <div class="section-header">
-                <i class="fas fa-calendar-days"></i>
-                <span>Status & Key Dates</span>
-            </div>
-            <div class="section-body">
-                <div class="grid-2col">
-                    <div class="field-group">
-                        <label class="field-label">Start Date</label>
-                        <input type="hidden" name="date_started" value="{{ $project->date_started->format('Y-m-d') }}">
-                        <input type="date" class="field-input readonly-field" readonly value="{{ $project->date_started->format('Y-m-d') }}">
-                    </div>
-                    <div class="field-group">
-                        <label class="field-label">Status</label>
-                        <select name="status" id="status_sel" class="field-input" onchange="toggleCompletedAt()" style="appearance:none; padding-right:2rem; background-image:url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%236b4f35%22 stroke-width=%222%22%3E%3Cpath d=%22M6 9l6 6 6-6%22/%3E%3C/svg%3E'); background-position:right 0.6rem center; background-repeat:no-repeat; background-size:1.1em; cursor:pointer;">
-                            <option value="ongoing"   {{ old('status',$project->status)=='ongoing'   ? 'selected':'' }}>Ongoing</option>
-                            <option value="completed" {{ old('status',$project->status)=='completed' ? 'selected':'' }}>Completed</option>
-                            <option value="expired"   {{ old('status',$project->status)=='expired'   ? 'selected':'' }}>Expired</option>
-                        </select>
-                    </div>
-                    <div class="field-group">
-                        <label class="field-label">Revised Expiry</label>
-                        <input type="date" class="field-input readonly-field" readonly value="{{ $project->revised_contract_expiry?->format('Y-m-d') }}">
-                    </div>
-                    <div id="completed_at_field" class="field-group {{ old('status',$project->status)=='completed' ? '' : 'hidden' }}">
-                        <label class="field-label">Date Completed</label>
-                        <input type="date" name="completed_at" class="field-input {{ $errors->has('completed_at') ? 'has-error':'' }}" value="{{ old('completed_at', $project->completed_at?->format('Y-m-d')) }}">
-                        @error('completed_at')<p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {{-- PROGRESS --}}
+        {{-- TAB 2: PERFORMANCE --}}
+        {{-- TAB 2: PERFORMANCE --}}
+        <div id="tab-progress" class="tab-content">
         <div class="form-card" style="margin-bottom:1.5rem;">
             <div class="section-header">
                 <i class="fas fa-chart-bar"></i>
-                <span>Progress Tracking</span>
+                <span>Work Progress</span>
             </div>
             <div class="section-body">
                 <div class="grid-2col">
@@ -317,41 +365,6 @@
             </div>
         </div>
 
-        {{-- CONTRACTOR NOTIFICATIONS --}}
-        @php
-            $issuanceOptions = ['1st Notice of Negative Slippage','2nd Notice of Negative Slippage','3rd Notice of Negative Slippage','Liquidated Damages','Notice to Terminate','Notice of Expiry'];
-            $savedIssuances  = old('issuances', $project->issuances ?? []);
-            if (is_string($savedIssuances)) $savedIssuances = json_decode($savedIssuances, true) ?? [];
-            if (empty($savedIssuances)) $savedIssuances = [''];
-        @endphp
-        <div class="form-card" style="margin-bottom:1.5rem;">
-            <div class="section-header">
-                <i class="fas fa-bell"></i>
-                <span>Contractor Notifications</span>
-                <span class="tag-chip" id="issuance-count" style="margin-left:auto;">0</span>
-            </div>
-            <div class="section-body">
-                <p class="field-hint" style="margin-bottom:1rem;">Notices and formal documents issued to the contractor</p>
-                <div id="issuances-list" style="display:flex; flex-direction:column; gap:0.75rem;">
-                    @foreach($savedIssuances as $val)
-                    <div class="dynamic-row">
-                        <select name="issuances[]" class="dynamic-select" onchange="updateCount('issuances-list','issuance-count')">
-                            <option value="">— Select Notification —</option>
-                            @foreach($issuanceOptions as $opt)
-                                <option value="{{ $opt }}" {{ $val===$opt ? 'selected':'' }}>{{ $opt }}</option>
-                            @endforeach
-                        </select>
-                        <button type="button" class="remove-btn" onclick="removeIssuanceRow(this)"><i class="fas fa-trash-alt"></i></button>
-                    </div>
-                    @endforeach
-                </div>
-                <button type="button" class="add-row-btn" onclick="addIssuanceRow()">
-                    <i class="fas fa-plus"></i> Add Notification
-                </button>
-            </div>
-        </div>
-
-        {{-- LIQUIDATED DAMAGES --}}
         <div class="form-card" style="margin-bottom:1.5rem;">
             <div class="section-header">
                 <i class="fas fa-calculator"></i>
@@ -399,46 +412,15 @@
                 </div>
             </div>
         </div>
-
-        {{-- ADDITIONAL DOCUMENT ACTIONS --}}
-        <div class="form-card" style="margin-bottom:1.5rem;">
-            <div class="section-header">
-                <i class="fas fa-plus-square"></i>
-                <span>Additional Document Actions</span>
-            </div>
-            <div class="section-body">
-                <p class="field-hint" style="margin-bottom:1.25rem;">Manage time extensions, variation orders, and suspension orders</p>
-                <div class="feature-grid">
-                    <button type="button" class="feature-btn" id="btn-time-extension" onclick="toggleFeature('time-extension')">
-                        <i class="fas fa-clock"></i>
-                        <span>Time Extension</span>
-                        @if($teCount > 0)
-                            <span class="feature-btn-badge">{{ $teCount }}</span>
-                        @endif
-                    </button>
-                    <button type="button" class="feature-btn" id="btn-variation-order" onclick="toggleFeature('variation-order')">
-                        <i class="fas fa-file-signature"></i>
-                        <span>Variation Order</span>
-                        @if($voCount > 0)
-                            <span class="feature-btn-badge" style="background:rgba(99,102,241,0.12); color:#6366f1;">{{ $voCount }}</span>
-                        @endif
-                    </button>
-                    <button type="button" class="feature-btn" id="btn-suspension-order" onclick="toggleFeature('suspension-order')">
-                        <i class="fas fa-pause-circle"></i>
-                        <span>{{ $hasSO ? 'Suspension Order' : 'Suspension' }}</span>
-                        @if($hasSO)
-                            <span class="feature-btn-badge">{{ $project->suspension_days }}d</span>
-                        @endif
-                    </button>
-                </div>
-            </div>
         </div>
 
-        {{-- ═══ TIME EXTENSION PANEL ═══ --}}
-        <div class="form-card feature-section" id="section-time-extension" style="margin-bottom:1.5rem; display:none;">
+        {{-- TAB 3: EXTENSIONS --}}
+        <div id="tab-extensions" class="tab-content">
+        {{-- TIME EXTENSION SECTION --}}
+        <div class="form-card" style="margin-bottom:1.5rem;">
             <div class="section-header">
                 <i class="fas fa-clock" style="color:var(--orange-500);"></i>
-                <span>Time Extension</span>
+                <span>Time Extensions</span>
                 @if($teCount > 0)
                     <span class="tag-chip" style="margin-left:auto;">{{ $teCount }} recorded</span>
                 @else
@@ -455,9 +437,10 @@
                     </p>
 
                     {{-- Column headers --}}
-                    <div style="display:grid; grid-template-columns:18px 1fr 7rem 7rem; gap:0 1rem; padding:0 0.25rem; margin-bottom:0.4rem;">
+                    <div style="display:grid; grid-template-columns:18px 1fr 5rem 5rem 5rem; gap:0 0.75rem; padding:0 0.25rem; margin-bottom:0.4rem;">
                         <span></span>
                         <p class="h-col-hdr">Extension</p>
+                        <p class="h-col-hdr" style="text-align:center;">Action</p>
                         <p class="h-col-hdr" style="text-align:center;">Days Added</p>
                         <p class="h-col-hdr" style="text-align:center;">Cumulative</p>
                     </div>
@@ -471,17 +454,22 @@
                                 <div class="h-dot h-dot-orange"></div>
                                 @if(!$teIsLast)<div class="h-line h-line-orange"></div>@endif
                             </div>
-                            <div class="h-label {{ $teIsLast ? 'last' : '' }}" style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+                            <div class="h-label {{ $teIsLast ? 'last' : '' }}" style="display:flex; align-items:flex-start; flex-direction:column; gap:0.2rem;">
                                 <span>{{ $entry['label'] }}</span>
-                                @if($entry['date_requested']) <span style="font-size:0.72rem; font-weight:500; color:#9ca3af;">· {{ \Carbon\Carbon::parse($entry['date_requested'])->format('M d, Y') }}</span>@endif
-                                @if($entry['cost']) <span style="font-size:0.72rem; font-weight:500; color:#16a34a;">· ₱{{ number_format($entry['cost'],2) }}</span>@endif
-                               <button type="button"
+                                <span style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+                                    @if($entry['date_requested']) <span style="font-size:0.72rem; font-weight:500; color:#9ca3af;">{{ \Carbon\Carbon::parse($entry['date_requested'])->format('M d, Y') }}</span>@endif
+                                    @if($entry['cost']) <span style="font-size:0.72rem; font-weight:500; color:#16a34a;">₱{{ number_format($entry['cost'],2) }}</span>@endif
+                                </span>
+                            </div>
+                            {{-- Action column --}}
+                            <div style="display:flex; align-items:flex-start; justify-content:center; padding-top:2px;">
+                                <button type="button"
                                     onclick="openDeleteModal('te', {{ $ti }}, '{{ addslashes($entry['label']) }}', {{ $entry['days'] }})"
-                                    style="margin-left:auto; display:inline-flex; align-items:center; gap:0.3rem;
-                                        padding:2px 9px; border-radius:6px; border:1.5px solid rgba(239,68,68,0.25);
+                                    style="display:inline-flex; align-items:center; gap:0.3rem;
+                                        padding:3px 10px; border-radius:6px; border:1.5px solid rgba(239,68,68,0.25);
                                         background:rgba(239,68,68,0.06); color:#dc2626; font-size:0.68rem;
                                         font-weight:700; cursor:pointer; font-family:'Instrument Sans',sans-serif;
-                                        transition:all 0.15s; flex-shrink:0;"
+                                        transition:all 0.15s; white-space:nowrap;"
                                     onmouseover="this.style.background='rgba(239,68,68,0.15)';this.style.borderColor='rgba(239,68,68,0.45)'"
                                     onmouseout="this.style.background='rgba(239,68,68,0.06)';this.style.borderColor='rgba(239,68,68,0.25)'">
                                     <i class="fas fa-trash-alt" style="font-size:0.55rem;"></i> Delete
@@ -546,10 +534,10 @@
         </div>
 
         {{-- ═══ VARIATION ORDER PANEL ═══ --}}
-        <div class="form-card feature-section" id="section-variation-order" style="margin-bottom:1.5rem; display:none; border-color:rgba(99,102,241,0.2);">
+        <div class="form-card" style="margin-bottom:1.5rem;">
             <div class="section-header" style="border-color:rgba(99,102,241,0.15);">
                 <i class="fas fa-file-signature" style="color:#6366f1;"></i>
-                <span>Variation Order</span>
+                <span>Variation Orders</span>
                 @if($voCount > 0)
                     <span class="tag-chip tag-chip-indigo" style="margin-left:auto;">{{ $voCount }} recorded</span>
                 @else
@@ -566,9 +554,10 @@
                     </p>
 
                     {{-- Column headers --}}
-                    <div style="display:grid; grid-template-columns:18px 1fr 7rem 7rem; gap:0 1rem; padding:0 0.25rem; margin-bottom:0.4rem;">
+                    <div style="display:grid; grid-template-columns:18px 1fr 5rem 5rem 5rem; gap:0 0.75rem; padding:0 0.25rem; margin-bottom:0.4rem;">
                         <span></span>
                         <p class="h-col-hdr">Order</p>
+                        <p class="h-col-hdr" style="text-align:center;">Action</p>
                         <p class="h-col-hdr" style="text-align:center;">Days Added</p>
                         <p class="h-col-hdr" style="text-align:center;">VO Cumulative</p>
                     </div>
@@ -582,17 +571,22 @@
                                 <div class="h-dot h-dot-indigo"></div>
                                 @if(!$voIsLast)<div class="h-line h-line-indigo"></div>@endif
                             </div>
-                            <div class="h-label {{ $voIsLast ? 'last' : '' }}" style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+                           <div class="h-label {{ $voIsLast ? 'last' : '' }}" style="display:flex; align-items:flex-start; flex-direction:column; gap:0.2rem;">
                                 <span>{{ $entry['label'] }}</span>
-                                @if($entry['date_requested']) <span style="font-size:0.72rem; font-weight:500; color:#9ca3af;">· {{ \Carbon\Carbon::parse($entry['date_requested'])->format('M d, Y') }}</span>@endif
-                                @if($entry['cost']) <span style="font-size:0.72rem; font-weight:500; color:#16a34a;">· ₱{{ number_format($entry['cost'],2) }}</span>@endif
+                                <span style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+                                    @if($entry['date_requested']) <span style="font-size:0.72rem; font-weight:500; color:#9ca3af;">{{ \Carbon\Carbon::parse($entry['date_requested'])->format('M d, Y') }}</span>@endif
+                                    @if($entry['cost']) <span style="font-size:0.72rem; font-weight:500; color:#16a34a;">₱{{ number_format($entry['cost'],2) }}</span>@endif
+                                </span>
+                            </div>
+                            {{-- Action column --}}
+                            <div style="display:flex; align-items:flex-start; justify-content:center; padding-top:2px;">
                                 <button type="button"
                                     onclick="openDeleteModal('vo', {{ $vi }}, '{{ addslashes($entry['label']) }}', {{ $entry['days'] }})"
-                                    style="margin-left:auto; display:inline-flex; align-items:center; gap:0.3rem;
-                                        padding:2px 9px; border-radius:6px; border:1.5px solid rgba(239,68,68,0.25);
+                                    style="display:inline-flex; align-items:center; gap:0.3rem;
+                                        padding:3px 10px; border-radius:6px; border:1.5px solid rgba(239,68,68,0.25);
                                         background:rgba(239,68,68,0.06); color:#dc2626; font-size:0.68rem;
                                         font-weight:700; cursor:pointer; font-family:'Instrument Sans',sans-serif;
-                                        transition:all 0.15s; flex-shrink:0;"
+                                        transition:all 0.15s; white-space:nowrap;"
                                     onmouseover="this.style.background='rgba(239,68,68,0.15)';this.style.borderColor='rgba(239,68,68,0.45)'"
                                     onmouseout="this.style.background='rgba(239,68,68,0.06)';this.style.borderColor='rgba(239,68,68,0.25)'">
                                     <i class="fas fa-trash-alt" style="font-size:0.55rem;"></i> Delete
@@ -669,10 +663,10 @@
         </div>
 
         {{-- SUSPENSION ORDER PANEL --}}
-        <div class="form-card feature-section" id="section-suspension-order" style="margin-bottom:1.5rem; display:none;">
+        <div class="form-card" style="margin-bottom:1.5rem;">
             <div class="section-header">
                 <i class="fas fa-pause-circle"></i>
-                <span>{{ $hasSO ? 'Add More Suspension Days' : 'Suspension Order' }}</span>
+                <span>{{ $hasSO ? 'Suspension Order' : 'Add Suspension' }}</span>
                 @if($hasSO)
                     <span style="margin-left:auto; font-size:0.7rem; color:#9ca3af; font-weight:400;">
                         Currently <strong>{{ $project->suspension_days }} days</strong> suspended
@@ -708,6 +702,45 @@
             </div>
         </div>
 
+        </div>
+        </div>
+
+        {{-- TAB 4: ADMIN --}}
+        <div id="tab-admin" class="tab-content">
+
+        @php
+            $issuanceOptions = ['1st Notice of Negative Slippage','2nd Notice of Negative Slippage','3rd Notice of Negative Slippage','Liquidated Damages','Notice to Terminate','Notice of Expiry'];
+            $savedIssuances  = old('issuances', $project->issuances ?? []);
+            if (is_string($savedIssuances)) $savedIssuances = json_decode($savedIssuances, true) ?? [];
+            if (empty($savedIssuances)) $savedIssuances = [''];
+        @endphp
+        <div class="form-card" style="margin-bottom:1.5rem;">
+            <div class="section-header">
+                <i class="fas fa-bell"></i>
+                <span>Contractor Notifications</span>
+                <span class="tag-chip" id="issuance-count" style="margin-left:auto;">0</span>
+            </div>
+            <div class="section-body">
+                <p class="field-hint" style="margin-bottom:1rem;">Notices and formal documents issued to the contractor</p>
+                <div id="issuances-list" style="display:flex; flex-direction:column; gap:0.75rem;">
+                    @foreach($savedIssuances as $val)
+                    <div class="dynamic-row">
+                        <select name="issuances[]" class="dynamic-select" onchange="updateCount('issuances-list','issuance-count')">
+                            <option value="">— Select Notification —</option>
+                            @foreach($issuanceOptions as $opt)
+                                <option value="{{ $opt }}" {{ $val===$opt ? 'selected':'' }}>{{ $opt }}</option>
+                            @endforeach
+                        </select>
+                        <button type="button" class="remove-btn" onclick="removeIssuanceRow(this)"><i class="fas fa-trash-alt"></i></button>
+                    </div>
+                    @endforeach
+                </div>
+                <button type="button" class="add-row-btn" onclick="addIssuanceRow()">
+                    <i class="fas fa-plus"></i> Add Notification
+                </button>
+            </div>
+        </div>
+
         {{-- REMARKS --}}
         <div class="form-card" style="margin-bottom:2rem;">
             <div class="section-header">
@@ -719,6 +752,7 @@
                 <textarea name="remarks_recommendation" rows="5" class="field-input" style="resize:none; font-family:'Instrument Sans',sans-serif;" placeholder="Add any remarks, notes, or observations about this project…">{{ old('remarks_recommendation', $project->remarks_recommendation) }}</textarea>
                 <p class="field-hint">This field is for project notes and observations</p>
             </div>
+        </div>
         </div>
 
         <div class="form-actions">
@@ -733,7 +767,22 @@
 </div>
 
 <script>
-// ── Theme ──
+// ──────────────────────────────────────────────────────────────────────────────
+// TAB SWITCHING
+// ──────────────────────────────────────────────────────────────────────────────
+function switchTab(tabId, btnElement) {
+    // Hide all tabs
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    // Remove active class from all buttons
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('tab-active'));
+    // Show selected tab
+    document.getElementById(tabId).classList.add('active');
+    // Mark button as active
+    btnElement.classList.add('tab-active');
+}
+
+// ────────────────────────────────────────────────────────────────────────────────
+// THEME ──
 function initTheme() {
     const saved = localStorage.getItem('theme-mode');
     if (saved === 'dark') { document.documentElement.classList.add('dark'); document.body.classList.add('dark'); }
@@ -771,32 +820,6 @@ function computeSlippage() {
     else if (+sl < 0) { lbl.style.color='#dc2626'; lbl.innerHTML='<i class="fas fa-arrow-down"></i> Behind';    valEl.style.color='#dc2626'; }
     else              { lbl.style.color='#9ca3af'; lbl.innerHTML='<i class="fas fa-minus"></i> On schedule';    valEl.style.color='#9ca3af'; }
     valEl.textContent = (+sl > 0 ? '+' : '') + sl + '%';
-}
-
-// ── Feature Toggle ──
-function toggleFeature(name) {
-    document.querySelectorAll('.feature-section').forEach(s => s.style.display = 'none');
-    document.querySelectorAll('.feature-btn').forEach(b => {
-        b.classList.remove('feature-btn-active');
-        b.style.borderColor = 'rgba(249,115,22,0.15)';
-        b.style.background  = 'transparent';
-        b.style.color       = 'var(--text-secondary)';
-    });
-    const sec = document.getElementById('section-' + name);
-    if (sec) sec.style.display = 'grid';
-    const btn = document.getElementById('btn-' + name);
-    if (btn) {
-        btn.classList.add('feature-btn-active');
-        if (name === 'variation-order') {
-            btn.style.borderColor = 'rgba(99,102,241,0.35)';
-            btn.style.background  = 'rgba(99,102,241,0.08)';
-            btn.style.color       = '#6366f1';
-        } else {
-            btn.style.borderColor = 'rgba(249,115,22,0.35)';
-            btn.style.background  = 'rgba(249,115,22,0.08)';
-            btn.style.color       = 'var(--orange-600)';
-        }
-    }
 }
 
 // ── LD ──

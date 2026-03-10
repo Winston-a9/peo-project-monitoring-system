@@ -34,7 +34,7 @@ return new class extends Migration
             $table->json('cost_involved')->nullable();          // parallel TE cost array
             $table->integer('suspension_days')->nullable();     // total SO days (single accumulating int)
             $table->integer('variation_order')->nullable();     // count of VO entries
-            $table->integer('date_requested')->nullable();     // count of DR entries
+            $table->json('date_requested')->nullable();        // parallel array of request dates for TE/VO entries
             $table->json('vo_days')->nullable();                // parallel VO days array
             $table->json('vo_cost')->nullable();                // parallel VO cost array
 

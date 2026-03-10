@@ -521,7 +521,9 @@
 
                         {{-- Cost Involved --}}
                         <td style="padding:0.75rem 1rem; text-align:right;">
-                            @if($row['cost'])
+                            @if($row['type'] === 'vo')
+                                <span style="color:#9ca3af;">—</span>
+                            @elseif($row['cost'])
                                 <span style="font-weight:700; color:#16a34a; white-space:nowrap;">₱{{ number_format((float)$row['cost'], 2) }}</span>
                             @else
                                 <span style="color:#9ca3af;">—</span>

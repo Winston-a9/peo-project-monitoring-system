@@ -285,6 +285,8 @@
     $search     = request('search','');
     $inCharge   = request('in_charge','');
     $slipFilter = request('slip','');
+    $dateFrom   = request('date_from','');
+    $dateTo     = request('date_to','');
     $status     = request('status','all');
     $sortCol    = request('sort','updated_at');
     $sortDir    = request('dir','desc') === 'asc' ? 'asc' : 'desc';
@@ -301,6 +303,8 @@
     if ($slipFilter === 'ahead')  $q->where('slippage','>',0);
     if ($slipFilter === 'behind') $q->where('slippage','<',0);
     if ($slipFilter === 'on')     $q->where('slippage',0);
+    if ($dateFrom) $q->where('date_started', '>=', $dateFrom);
+    if ($dateTo) $q->where('date_started', '<=', $dateTo);
 
     if ($status === 'completed') {
         $q->where('status','completed');
@@ -323,6 +327,8 @@
     if ($slipFilter === 'ahead')  $base->where('slippage','>',0);
     if ($slipFilter === 'behind') $base->where('slippage','<',0);
     if ($slipFilter === 'on')     $base->where('slippage',0);
+    if ($dateFrom) $base->where('date_started', '>=', $dateFrom);
+    if ($dateTo) $base->where('date_started', '<=', $dateTo);
 
     $counts = [
         'all'       => (clone $base)->count(),
@@ -361,9 +367,9 @@
                 color:{{ $status===$val ? 'white':'#ea580c' }};">{{ $counts[$val] }}</span>
         </a>
         @endforeach
-        @if($search || $inCharge || $slipFilter)
+        @if($search || $inCharge || $slipFilter || $dateFrom || $dateTo)
             <span style="font-size:0.72rem; color:#9ca3af; padding:0 0.25rem;">·</span>
-            <a href="{{ request()->fullUrlWithQuery(['search'=>'','in_charge'=>'','slip'=>'','page'=>1]) }}"
+            <a href="{{ request()->fullUrlWithQuery(['search'=>'','in_charge'=>'','slip'=>'','date_from'=>'','date_to'=>'','page'=>1]) }}"
                style="display:inline-flex; align-items:center; gap:0.3rem; font-size:0.72rem; font-weight:600; color:#dc2626; text-decoration:none;">
                 <i class="fas fa-times" style="font-size:0.6rem;"></i> Clear filters
             </a>
@@ -380,7 +386,7 @@
                 <input type="hidden" name="sort"     value="{{ $sortCol }}">
                 <input type="hidden" name="dir"      value="{{ $sortDir }}">
                 <input type="hidden" name="per_page" value="{{ $perPage }}">
-                <div style="display:grid; grid-template-columns:1fr auto auto auto; gap:0.65rem; align-items:end;">
+                <div style="display:grid; grid-template-columns:1fr auto auto auto auto auto; gap:0.65rem; align-items:end;">
 
                     <div style="position:relative;">
                         <i class="fas fa-search" style="position:absolute; left:0.72rem; top:50%; transform:translateY(-50%); color:#9ca3af; font-size:0.7rem; pointer-events:none;"></i>
@@ -400,6 +406,12 @@
                         <option value="behind" {{ $slipFilter==='behind'?'selected':'' }}>Behind</option>
                         <option value="on"     {{ $slipFilter==='on'    ?'selected':'' }}>On Schedule</option>
                     </select>
+
+                    <div style="display:flex; align-items:center; gap:0.3rem;">
+                        <input type="date" name="date_from" value="{{ $dateFrom }}" class="filter-input" style="width:140px;" placeholder="From date" title="Filter by start date from...">
+                        <span style="color:#9ca3af; font-size:0.75rem; font-weight:600;">to</span>
+                        <input type="date" name="date_to" value="{{ $dateTo }}" class="filter-input" style="width:140px;" placeholder="To date" title="Filter by start date to...">
+                    </div>
 
                     <button type="submit"
                         style="display:inline-flex; align-items:center; gap:0.35rem; padding:0.575rem 1.1rem; background:var(--orange-500); color:white; border:none; border-radius:9px; font-size:0.83rem; font-weight:600; cursor:pointer; font-family:'Instrument Sans',sans-serif; transition:background 0.18s; white-space:nowrap;"

@@ -258,10 +258,11 @@ class ProjectController extends Controller
             $existingDates[]   = $newVODate ?: null;  // VO dates appended at end
         }
 
-        $data['vo_days']       = array_values($existingVoDays);
-        $data['vo_cost']       = array_values($existingVoCosts);
-        $data['date_requested'] = array_values($existingDates);  // ← NEW
-
+        $data['vo_days']        = array_values($existingVoDays);
+        $data['vo_cost']        = array_values($existingVoCosts);
+        $data['date_requested'] = empty($existingDates)
+            ? null
+            : array_values(array_map(fn($d) => ($d !== '' ? $d : null), $existingDates));
         // ── Step 5: Handle Suspension Order ──
         $newSODays = (int) $request->input('new_so_days', 0);
         $hasSO     = collect($existingDocs)->contains('Suspension Order');
@@ -295,6 +296,11 @@ class ProjectController extends Controller
         $totalSODays  = (int) ($data['suspension_days'] ?? 0);
         $baseExpiry   = Carbon::parse($request->original_contract_expiry);
         $totalExtDays = $totalTEDays + $totalVODays;
+
+        // Recompute contract_days = original contract days + all TE days + all VO days
+        $originalContractDays  = (int) Carbon::parse($request->date_started)
+            ->diffInDays(Carbon::parse($request->original_contract_expiry));
+        $data['contract_days'] = $originalContractDays + $totalTEDays + $totalVODays;
 
         if ($totalExtDays > 0) {
             $extra = $hasSO ? $totalSODays : 0;
@@ -334,7 +340,7 @@ class ProjectController extends Controller
 
         $project->update($data);
 
-        return redirect()->route('admin.projects.edit', $project)
+        return redirect()->route('admin.projects.show', $project)
             ->with('success', 'Project updated successfully.');
     }
 
@@ -559,8 +565,16 @@ class ProjectController extends Controller
         $total      = $allExtDays + $allVODays + ($hasSO ? $sodays : 0);
 
         $data['revised_contract_expiry'] = $total > 0
-            ? Carbon::parse($fresh->original_contract_expiry)->addDays($total)->toDateString()
+            ? \Carbon\Carbon::parse($fresh->original_contract_expiry)->addDays($total)->toDateString()
             : null;
+
+        // Recompute contract_days
+            $previousTEDays        = (int) array_sum(array_map('intval', $fresh->extension_days ?? []));
+            $previousVODays        = (int) array_sum(array_map('intval', array_filter((array)($fresh->vo_days ?? []))));
+            $originalContractDays  = (int) ($fresh->contract_days ?? 0) - $previousTEDays - $previousVODays;
+            $currentTEDays         = (int) array_sum(array_map('intval', $data['extension_days'] ?? $fresh->extension_days ?? []));
+            $currentVODays         = (int) array_sum(array_map('intval', $data['vo_days']        ?? $fresh->vo_days        ?? []));
+            $data['contract_days'] = $originalContractDays + $currentTEDays + $currentVODays;
 
         $project->update($data);
 
@@ -655,8 +669,9 @@ class ProjectController extends Controller
         'documents_pressed' => array_values($existingDocs),
         'extension_days'    => array_values($existingDays),
         'cost_involved'     => array_values($existingCosts),
-        'date_requested'    => array_values($existingDates),
-        'vo_days'           => array_values($existingVoDays),
+        'date_requested'    => empty($existingDates)
+            ? null
+            : array_values(array_map(fn($d) => ($d !== '' ? $d : null), $existingDates)),        'vo_days'           => array_values($existingVoDays),
         'vo_cost'           => array_values($existingVoCosts),
     ];
 
@@ -676,8 +691,14 @@ class ProjectController extends Controller
     $total   = $totalTE + $totalVO + ($hasSO ? $totalSO : 0);
 
     $data['revised_contract_expiry'] = $total > 0
-        ? \Carbon\Carbon::parse($fresh->original_contract_expiry)->addDays($total)->toDateString()
-        : null;
+    ? \Carbon\Carbon::parse($fresh->original_contract_expiry)->addDays($total)->toDateString()
+    : null;
+
+        // Recompute contract_days
+        $previousTEDays        = (int) array_sum(array_map('intval', $fresh->extension_days ?? []));
+        $previousVODays        = (int) array_sum(array_map('intval', array_filter((array)($fresh->vo_days ?? []))));
+        $originalContractDays  = (int) ($fresh->contract_days ?? 0) - $previousTEDays - $previousVODays;
+        $data['contract_days'] = $originalContractDays + $totalTE + $totalVO;
 
     // Append deletion reason to remarks_recommendation
     $existing  = trim($fresh->remarks_recommendation ?? '');
