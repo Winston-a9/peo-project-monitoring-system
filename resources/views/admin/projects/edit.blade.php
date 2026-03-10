@@ -348,7 +348,7 @@
                     <div class="field-group">
                         <label class="field-label">Accomplished (%)</label>
                         <div style="position:relative;">
-                            <input type="number" id="ld_accomplished" name="ld_accomplished" class="field-input" value="{{ old('ld_accomplished', $project->ld_accomplished ?? '') }}" min="0" max="100" step="0.01" oninput="calculateLDPerDay()" style="padding-right:2.5rem;">
+                            <input type="number" id="ld_accomplished" name="ld_accomplished" class="field-input" value="{{ old('ld_accomplished', $project->ld_accomplished ?? '') }}" min="0" max="100" step="0.001" oninput="calculateLDPerDay()" style="padding-right:2.5rem;">
                             <span style="position:absolute; right:1rem; top:50%; transform:translateY(-50%); color:var(--ink-muted); font-weight:600;">%</span>
                         </div>
                         <p class="field-hint">Percentage of work completed</p>

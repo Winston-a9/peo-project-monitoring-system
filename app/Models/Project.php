@@ -59,7 +59,7 @@ class Project extends Model
             'suspension_days'          => 'integer',
             'time_extension'           => 'integer',
             'variation_order'          => 'integer',
-            'ld_accomplished'          => 'decimal:2',
+            'ld_accomplished'          => 'decimal:3',
             'ld_unworked'              => 'decimal:2',
             'ld_per_day'               => 'decimal:2',
             'total_ld'                 => 'decimal:2',

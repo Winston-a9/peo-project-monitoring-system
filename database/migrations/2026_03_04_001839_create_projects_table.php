@@ -39,7 +39,7 @@ return new class extends Migration
             $table->json('vo_cost')->nullable();                // parallel VO cost array
 
             // Liquidated Damages
-            $table->decimal('ld_accomplished', 5, 2)->nullable();
+            $table->decimal('ld_accomplished', 5, 3)->nullable();
             $table->decimal('ld_unworked', 5, 2)->nullable();
             $table->decimal('ld_per_day', 15, 2)->nullable();
             $table->decimal('total_ld', 15, 2)->nullable();
