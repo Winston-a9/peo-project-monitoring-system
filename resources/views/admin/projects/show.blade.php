@@ -18,10 +18,6 @@
             <a href="{{ route('admin.projects.index') }}" class="app-btn-secondary">
                 <i class="fas fa-arrow-left"></i> Back
             </a>
-            <button id="themeToggle" type="button" aria-label="Toggle dark mode" class="app-btn-theme" onclick="toggleTheme()">
-                <i class="fas" id="themeIcon"></i>
-                <span id="themeLabel">Light</span>
-            </button>
         </div>
     </div>
 </x-slot>
@@ -793,21 +789,6 @@
 </div>
 
 <script>
-function initTheme() {
-    const saved = localStorage.getItem('theme-mode');
-    if (saved === 'dark') { document.documentElement.classList.add('dark'); document.body.classList.add('dark'); }
-    updateThemeBtn(document.documentElement.classList.contains('dark') ? 'dark' : 'light');
-}
-function updateThemeBtn(t) {
-    document.getElementById('themeIcon').className = 'fas '+(t==='dark'?'fa-moon':'fa-sun');
-    document.getElementById('themeLabel').textContent = t==='dark'?'Dark':'Light';
-}
-function toggleTheme() {
-    const isDark = document.documentElement.classList.toggle('dark');
-    document.body.classList.toggle('dark', isDark);
-    localStorage.setItem('theme-mode', isDark?'dark':'light');
-    updateThemeBtn(isDark?'dark':'light');
-}
 function toggleLog(id) {
     const el = document.getElementById(id);
     const ch = document.getElementById(id+'-chevron');
@@ -815,6 +796,5 @@ function toggleLog(id) {
     el.style.display = open ? 'none' : 'flex';
     ch.style.transform = open ? 'rotate(0deg)' : 'rotate(180deg)';
 }
-initTheme();
 </script>
 </x-app-layout>

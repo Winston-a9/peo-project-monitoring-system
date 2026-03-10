@@ -617,6 +617,11 @@
 
         <div class="sb-divider"></div>
 
+        <button type="button" id="themeToggle" class="sb-footer-link" data-tooltip="Toggle theme" onclick="toggleTheme()" title="Toggle dark mode">
+            <span class="sb-footer-link-icon"><i class="fas" id="themeIcon"></i></span>
+            <span class="sb-footer-link-label" id="themeLabel">Light</span>
+        </button>
+
         <a href="{{ route('profile.edit') }}" class="sb-footer-link" data-tooltip="Profile">
             <span class="sb-footer-link-icon"><i class="fas fa-user-cog"></i></span>
             <span class="sb-footer-link-label">Profile Settings</span>
@@ -683,5 +688,50 @@
         sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
     };
 
+    /* Theme Toggle */
+    function initTheme() {
+        const html = document.documentElement;
+        const currentTheme = html.classList.contains('dark') ? 'dark' : 'light';
+        updateThemeButton(currentTheme);
+    }
 
+    function updateThemeButton(theme) {
+        const icon = document.getElementById('themeIcon');
+        const label = document.getElementById('themeLabel');
+        
+        if (theme === 'dark') {
+            icon.className = 'fas fa-moon';
+            label.textContent = 'Dark';
+        } else {
+            icon.className = 'fas fa-sun';
+            label.textContent = 'Light';
+        }
+    }
+
+    function toggleTheme() {
+        const html = document.documentElement;
+        const body = document.body;
+        const currentTheme = html.classList.contains('dark') ? 'dark' : 'light';
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+        // Update DOM
+        html.classList.remove(currentTheme);
+        html.classList.add(newTheme);
+        
+        if (newTheme === 'dark') {
+            body.classList.add('dark');
+        } else {
+            body.classList.remove('dark');
+        }
+
+        // Save preference
+        localStorage.setItem('theme-mode', newTheme);
+        
+        // Update button
+        updateThemeButton(newTheme);
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', initTheme);
+    initTheme();
 </script>

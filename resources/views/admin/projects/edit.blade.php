@@ -17,10 +17,6 @@
             <a href="{{ route('admin.projects.index') }}" class="app-btn-secondary">
                 <i class="fas fa-arrow-left"></i> Back
             </a>
-            <button id="themeToggle" type="button" aria-label="Toggle dark mode" class="app-btn-theme" onclick="toggleTheme()">
-                <i class="fas" id="themeIcon"></i>
-                <span id="themeLabel">Light</span>
-            </button>
         </div>
     </div>
 </x-slot>
@@ -780,25 +776,6 @@ function switchTab(tabId, btnElement) {
     // Mark button as active
     btnElement.classList.add('tab-active');
 }
-
-// ────────────────────────────────────────────────────────────────────────────────
-// THEME ──
-function initTheme() {
-    const saved = localStorage.getItem('theme-mode');
-    if (saved === 'dark') { document.documentElement.classList.add('dark'); document.body.classList.add('dark'); }
-    updateThemeButton(document.documentElement.classList.contains('dark') ? 'dark' : 'light');
-}
-function updateThemeButton(t) {
-    document.getElementById('themeIcon').className  = 'fas ' + (t === 'dark' ? 'fa-moon' : 'fa-sun');
-    document.getElementById('themeLabel').textContent = t === 'dark' ? 'Dark' : 'Light';
-}
-function toggleTheme() {
-    const isDark = document.documentElement.classList.toggle('dark');
-    document.body.classList.toggle('dark', isDark);
-    localStorage.setItem('theme-mode', isDark ? 'dark' : 'light');
-    updateThemeButton(isDark ? 'dark' : 'light');
-}
-initTheme();
 
 // ── Status ──
 function toggleCompletedAt() {

@@ -5,7 +5,7 @@
                 <p style="font-size:0.68rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#9a6030; margin-bottom:0.3rem;">
                     Administration
                 </p>
-                <h2 style="font-family:'Syne',sans-serif; font-weight:800; font-size:1.75rem; letter-spacing:-0.03em; color:#1a0f00; display:flex; align-items:center; gap:0.65rem; line-height:1.1;">
+                <h2 style="font-family:'Syne',sans-serif; font-weight:800; font-size:1.75rem; letter-spacing:-0.03em; color:var(--text-primary); display:flex; align-items:center; gap:0.65rem; line-height:1.1;">
                     <span style="background:linear-gradient(135deg,#f97316,#ea580c); width:36px; height:36px; border-radius:10px; display:inline-flex; align-items:center; justify-content:center; box-shadow:0 4px 12px rgba(249,115,22,0.4); flex-shrink:0;">
                         <i class="fas fa-chart-pie" style="color:white; font-size:0.8rem;"></i>
                     </span>
@@ -19,79 +19,6 @@
                         {{ now()->format('l, F j, Y') }}
                     </span>
                 </div>
-                <!-- Theme Toggle Button -->
-                <button id="themeToggle" type="button" aria-label="Toggle dark mode" style="
-                    background: var(--bg-secondary);
-                    border: 1.5px solid var(--border);
-                    border-radius: 10px;
-                    padding: 0.5rem 0.95rem;
-                    cursor: pointer;
-                    display: flex;
-                    align-items: center;
-                    gap: 0.5rem;
-                    color: var(--text-primary);
-                    font-size: 0.9rem;
-                    font-weight: 500;
-                    white-space: nowrap;
-                    position: relative;
-                    z-index: 50;
-                    font-family: 'Instrument Sans', sans-serif;
-                    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-                    transition: all 0.3s ease;
-                " onmouseover="this.style.background='rgba(249,115,22,0.12)'; this.style.borderColor='rgba(249,115,22,0.4)'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)'"
-                   onmouseout="this.style.background='var(--bg-secondary)'; this.style.borderColor='var(--border)'; this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.05)'"
-                   onclick="toggleTheme()">
-                    <i class="fas" id="themeIcon" style="color:#f97316; font-size: 0.95rem;"></i>
-                    <span id="themeLabel" style="font-weight: 600;">Light</span>
-                </button>
-
-                <script>
-                    function initTheme() {
-                        const html = document.documentElement;
-                        const currentTheme = html.classList.contains('dark') ? 'dark' : 'light';
-                        updateThemeButton(currentTheme);
-                    }
-
-                    function updateThemeButton(theme) {
-                        const icon = document.getElementById('themeIcon');
-                        const label = document.getElementById('themeLabel');
-                        
-                        if (theme === 'dark') {
-                            icon.className = 'fas fa-moon';
-                            label.textContent = 'Dark';
-                        } else {
-                            icon.className = 'fas fa-sun';
-                            label.textContent = 'Light';
-                        }
-                    }
-
-                    function toggleTheme() {
-                        const html = document.documentElement;
-                        const body = document.body;
-                        const currentTheme = html.classList.contains('dark') ? 'dark' : 'light';
-                        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-
-                        // Update DOM
-                        html.classList.remove(currentTheme);
-                        html.classList.add(newTheme);
-                        
-                        if (newTheme === 'dark') {
-                            body.classList.add('dark');
-                        } else {
-                            body.classList.remove('dark');
-                        }
-
-                        // Save preference
-                        localStorage.setItem('theme-mode', newTheme);
-                        
-                        // Update button
-                        updateThemeButton(newTheme);
-                    }
-
-                    // Initialize on page load
-                    document.addEventListener('DOMContentLoaded', initTheme);
-                    initTheme();
-                </script>
             </div>
         </div>
     </x-slot>
