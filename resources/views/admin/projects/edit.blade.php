@@ -76,7 +76,7 @@
     .tag-chip { display:inline-flex; align-items:center; padding:4px 12px; border-radius:99px; font-size:0.68rem; font-weight:700; background:rgba(249,115,22,0.1); color:var(--orange-600); border:1px solid rgba(249,115,22,0.2); }
     .tag-chip-indigo { background:rgba(99,102,241,0.1); color:#6366f1; border:1px solid rgba(99,102,241,0.2); }
 
-    /* History timeline (shared by TE and VO) */
+    /* History timeline */
     .history-timeline { display:flex; flex-direction:column; gap:0; }
     .history-entry { display:grid; gap:0 1rem; align-items:stretch; }
     .history-entry.te-entry { grid-template-columns:18px 1fr 5rem 5rem 5rem; }
@@ -105,14 +105,81 @@
     .btn-cancel:hover { border-color:var(--orange-500); background:rgba(249,115,22,0.05); }
 
     .grid-2col { display:grid; grid-template-columns:1fr 1fr; gap:1.25rem; }
-    @keyframes slideIn { from{opacity:0;transform:translateY(-6px);} to{opacity:1;transform:translateY(0);} }
-    @keyframes fadeUp  { from{opacity:0;transform:translateY(14px);} to{opacity:1;transform:translateY(0);} }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(14px);} to{opacity:1;transform:translateY(0);} }
     .fade-up { animation:fadeUp 0.45s ease both; }
     @media (max-width:768px) { .tab-btn { padding:0.75rem 1rem; font-size:0.8rem; } }
     @media (max-width:640px) {
         .grid-2col { grid-template-columns:1fr; }
         .tab-btn { padding:0.65rem 0.8rem; font-size:0.75rem; }
         .tab-btn span { display:none; }
+    }
+
+    /* ══ ACCORDION STYLES ══ */
+    .acc-header {
+        padding: 1.1rem 1.5rem;
+        background: var(--bg-secondary);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+        user-select: none;
+        transition: background 0.2s;
+        border-bottom: 1px solid transparent;
+    }
+    .acc-header:hover { background: rgba(249,115,22,0.06); }
+    .acc-header.acc-indigo:hover { background: rgba(99,102,241,0.06); }
+    .acc-header.acc-yellow:hover { background: rgba(234,179,8,0.06); }
+    .acc-header.is-open { border-bottom-color: var(--border); }
+    .acc-header .acc-title {
+        font-family: 'Syne', sans-serif;
+        font-weight: 700;
+        font-size: 0.875rem;
+        color: var(--ink);
+    }
+    .acc-chevron {
+        width: 28px; height: 28px;
+        border-radius: 7px;
+        border: 1.5px solid var(--border);
+        background: var(--bg-primary);
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+        transition: transform 0.3s ease, background 0.2s, border-color 0.2s, color 0.2s;
+        color: var(--text-secondary);
+        font-size: 0.65rem;
+    }
+    .acc-header.is-open .acc-chevron {
+        transform: rotate(180deg);
+        background: rgba(249,115,22,0.08);
+        border-color: rgba(249,115,22,0.3);
+        color: var(--orange-500);
+    }
+    .acc-header.acc-indigo.is-open .acc-chevron {
+        background: rgba(99,102,241,0.08);
+        border-color: rgba(99,102,241,0.3);
+        color: #6366f1;
+    }
+    .acc-header.acc-yellow.is-open .acc-chevron {
+        background: rgba(234,179,8,0.08);
+        border-color: rgba(234,179,8,0.3);
+        color: #d97706;
+    }
+    .acc-body {
+        display: grid;
+        grid-template-rows: 1fr;
+        transition: grid-template-rows 0.35s cubic-bezier(0.4,0,0.2,1);
+    }
+    .acc-body.is-collapsed {
+        grid-template-rows: 0fr;
+    }
+    .acc-body-inner {
+        overflow: hidden;
+    }
+    .acc-status-dot {
+        width: 7px; height: 7px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        margin-left: auto;
+        margin-right: 0.4rem;
     }
 </style>
 
@@ -387,18 +454,24 @@
         </div>
         </div>
 
-        {{-- TAB 3: EXTENSIONS --}}
+        {{-- TAB 3: EXTENSIONS — with accordion panels --}}
         <div id="tab-extensions" class="tab-content">
+
+        {{-- ══ TIME EXTENSIONS ACCORDION ══ --}}
         <div class="form-card" style="margin-bottom:1.5rem;">
-            <div class="section-header">
-                <i class="fas fa-clock" style="color:var(--orange-500);"></i>
-                <span>Time Extensions</span>
+            <div class="acc-header is-open" id="acc-te-hdr" onclick="toggleAcc('te')" role="button" aria-expanded="true" aria-controls="acc-te-bdy">
+                <i class="fas fa-clock" style="color:var(--orange-500); font-size:0.85rem; flex-shrink:0;"></i>
+                <span class="acc-title">Time Extensions</span>
                 @if($teCount > 0)
-                    <span class="tag-chip" style="margin-left:auto;">{{ $teCount }} recorded</span>
+                    <span class="tag-chip" style="margin-left:0.4rem;">{{ $teCount }} recorded</span>
                 @else
-                    <span style="margin-left:auto; font-size:0.7rem; color:#9ca3af;">No entries yet</span>
+                    <span style="font-size:0.7rem; color:#9ca3af; margin-left:0.4rem; font-weight:400;">No entries yet</span>
                 @endif
+                <div class="acc-status-dot" style="background:{{ $teCount > 0 ? '#16a34a' : '#d1d5db' }};"></div>
+                <div class="acc-chevron"><i class="fas fa-chevron-down"></i></div>
             </div>
+            <div class="acc-body" id="acc-te-bdy">
+            <div class="acc-body-inner">
             <div class="section-body">
                 @if($teCount > 0)
                 <div style="margin-bottom:1.5rem;">
@@ -490,19 +563,25 @@
                     </div>
                 </div>
             </div>
+            </div>
+            </div>
         </div>
 
-        {{-- VARIATION ORDER PANEL --}}
-        <div class="form-card" style="margin-bottom:1.5rem;">
-            <div class="section-header" style="border-color:rgba(99,102,241,0.15);">
-                <i class="fas fa-file-signature" style="color:#6366f1;"></i>
-                <span>Variation Orders</span>
+        {{-- ══ VARIATION ORDERS ACCORDION ══ --}}
+        <div class="form-card" style="margin-bottom:1.5rem; border-color:rgba(99,102,241,0.18);">
+            <div class="acc-header acc-indigo is-open" id="acc-vo-hdr" onclick="toggleAcc('vo')" role="button" aria-expanded="true" aria-controls="acc-vo-bdy" style="border-bottom-color:rgba(99,102,241,0.15);">
+                <i class="fas fa-file-signature" style="color:#6366f1; font-size:0.85rem; flex-shrink:0;"></i>
+                <span class="acc-title">Variation Orders</span>
                 @if($voCount > 0)
-                    <span class="tag-chip tag-chip-indigo" style="margin-left:auto;">{{ $voCount }} recorded</span>
+                    <span class="tag-chip tag-chip-indigo" style="margin-left:0.4rem;">{{ $voCount }} recorded</span>
                 @else
-                    <span style="margin-left:auto; font-size:0.7rem; color:#9ca3af;">No entries yet</span>
+                    <span style="font-size:0.7rem; color:#9ca3af; margin-left:0.4rem; font-weight:400;">No entries yet</span>
                 @endif
+                <div class="acc-status-dot" style="background:{{ $voCount > 0 ? '#6366f1' : '#d1d5db' }};"></div>
+                <div class="acc-chevron" style="border-color:rgba(99,102,241,0.2);"><i class="fas fa-chevron-down"></i></div>
             </div>
+            <div class="acc-body" id="acc-vo-bdy">
+            <div class="acc-body-inner">
             <div class="section-body">
                 @if($voCount > 0)
                 <div style="margin-bottom:1.5rem;">
@@ -605,19 +684,25 @@
                     </div>
                 </div>
             </div>
+            </div>
+            </div>
         </div>
 
-        {{-- SUSPENSION ORDER PANEL --}}
-        <div class="form-card" style="margin-bottom:1.5rem;">
-            <div class="section-header">
-                <i class="fas fa-pause-circle"></i>
-                <span>{{ $hasSO ? 'Suspension Order' : 'Add Suspension' }}</span>
+        {{-- ══ SUSPENSION ORDER ACCORDION ══ --}}
+        <div class="form-card" style="margin-bottom:1.5rem; border-color:rgba(234,179,8,0.2);">
+            <div class="acc-header acc-yellow is-open" id="acc-so-hdr" onclick="toggleAcc('so')" role="button" aria-expanded="true" aria-controls="acc-so-bdy" style="border-bottom-color:rgba(234,179,8,0.18);">
+                <i class="fas fa-pause-circle" style="color:#d97706; font-size:0.85rem; flex-shrink:0;"></i>
+                <span class="acc-title">{{ $hasSO ? 'Suspension Order' : 'Add Suspension' }}</span>
                 @if($hasSO)
-                    <span style="margin-left:auto; font-size:0.7rem; color:#9ca3af; font-weight:400;">
-                        Currently <strong>{{ $project->suspension_days }} days</strong> suspended
+                    <span style="margin-left:0.4rem; font-size:0.7rem; color:#9ca3af; font-weight:400;">
+                        Currently <strong style="color:#d97706;">{{ $project->suspension_days }} days</strong> suspended
                     </span>
                 @endif
+                <div class="acc-status-dot" style="background:{{ $hasSO ? '#d97706' : '#d1d5db' }};"></div>
+                <div class="acc-chevron" style="border-color:rgba(234,179,8,0.25);"><i class="fas fa-chevron-down"></i></div>
             </div>
+            <div class="acc-body" id="acc-so-bdy">
+            <div class="acc-body-inner">
             <div class="section-body">
                 <div class="grid-2col">
                     <div class="field-group">
@@ -645,13 +730,17 @@
                     </div>
                 </div>
             </div>
+            </div>
+            </div>
         </div>
-        </div>
+
+        </div>{{-- end tab-extensions --}}
 
         {{-- TAB 4: ADMIN --}}
         <div id="tab-admin" class="tab-content">
         @php
-            $issuanceOptions = ['1st Notice of Negative Slippage','2nd Notice of Negative Slippage','3rd Notice of Negative Slippage','Liquidated Damages','Notice to Terminate','Notice of Expiry','Performance Bond'];            $savedIssuances  = old('issuances', $project->issuances ?? []);
+            $issuanceOptions = ['1st Notice of Negative Slippage','2nd Notice of Negative Slippage','3rd Notice of Negative Slippage','Liquidated Damages','Notice to Terminate','Notice of Expiry','Performance Bond'];
+            $savedIssuances  = old('issuances', $project->issuances ?? []);
             if (is_string($savedIssuances)) $savedIssuances = json_decode($savedIssuances, true) ?? [];
             if (empty($savedIssuances)) $savedIssuances = [''];
         @endphp
@@ -679,7 +768,8 @@
                 <div style="margin-top:1.25rem; padding-top:1.25rem; border-top:1px dashed var(--border);">
                     <label class="field-label">Performance Bond Expiry Date</label>
                     <input type="date" name="performance_bond_date" class="field-input"
-                    value="{{ old('performance_bond_date', $project->performance_bond_date?->format('Y-m-d') ?? '') }}"                    <p class="field-hint">Date when the performance bond expires</p>
+                    value="{{ old('performance_bond_date', $project->performance_bond_date?->format('Y-m-d') ?? '') }}">
+                    <p class="field-hint">Date when the performance bond expires</p>
                 </div>
             </div>
         </div>
@@ -709,11 +799,28 @@
 </div>
 
 <script>
+// ── Tab switching ──
 function switchTab(tabId, btnElement) {
     document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('tab-active'));
     document.getElementById(tabId).classList.add('active');
     btnElement.classList.add('tab-active');
+}
+
+// ── Accordion toggle ──
+function toggleAcc(id) {
+    const hdr  = document.getElementById('acc-' + id + '-hdr');
+    const body = document.getElementById('acc-' + id + '-bdy');
+    const open = hdr.classList.contains('is-open');
+    if (open) {
+        hdr.classList.remove('is-open');
+        body.classList.add('is-collapsed');
+        hdr.setAttribute('aria-expanded', 'false');
+    } else {
+        hdr.classList.add('is-open');
+        body.classList.remove('is-collapsed');
+        hdr.setAttribute('aria-expanded', 'true');
+    }
 }
 
 function toggleCompletedAt() {
@@ -736,7 +843,7 @@ function computeSlippage() {
     valEl.textContent = (+sl > 0 ? '+' : '') + sl + '%';
 }
 
-// ── LD — FIXED: uses unworked % not accomplished % ──
+// ── LD — uses unworked % not accomplished % ──
 function calculateLDPerDay() {
     const acc      = parseFloat(document.getElementById('ld_accomplished').value) || 0;
     const amt      = parseFloat(document.getElementById('contract_amount').value.replace(/,/g, '')) || 0;
