@@ -21,6 +21,7 @@ return new class extends Migration
             $table->enum('status', ['ongoing', 'completed', 'expired'])->default('ongoing');
             $table->date('completed_at')->nullable();
             $table->decimal('contract_amount', 15, 2)->default(0);
+            $table->decimal('original_contract_amount', 15, 2)->nullable();
             $table->decimal('as_planned', 5, 2)->default(0);
             $table->decimal('work_done', 5, 2)->default(0);
             $table->decimal('slippage', 5, 2)->default(0);
@@ -37,6 +38,7 @@ return new class extends Migration
             $table->json('date_requested')->nullable();        // parallel array of request dates for TE/VO entries
             $table->json('vo_days')->nullable();                // parallel VO days array
             $table->json('vo_cost')->nullable();                // parallel VO cost array
+            $table->date('performance_bond_date')->nullable();  // new field for performance bond expiry date
 
             // Liquidated Damages
             $table->decimal('ld_accomplished', 5, 3)->nullable();

@@ -15,6 +15,7 @@ class Project extends Model
         'location',
         'contractor',
         'contract_amount',
+        'original_contract_amount',
         'date_started',
         'contract_days',
         'original_contract_expiry',
@@ -36,6 +37,7 @@ class Project extends Model
         'vo_days',
         'vo_cost',
         'date_requested',
+        'performance_bond_date',
         // Liquidated Damages
         'ld_accomplished',
         'ld_unworked',
@@ -52,6 +54,7 @@ class Project extends Model
             'revised_contract_expiry'  => 'date',
             'completed_at'             => 'date',
             'contract_amount'          => 'decimal:2',
+            'original_contract_amount'  => 'decimal:2',
             'as_planned'               => 'decimal:2',
             'work_done'                => 'decimal:2',
             'slippage'                 => 'decimal:2',
@@ -71,6 +74,7 @@ class Project extends Model
             'vo_days'                  => 'array',
             'vo_cost'                  => 'array',
             'date_requested'           => 'array',
+            'performance_bond_date'     => 'date',
         ];
     }
 

@@ -430,11 +430,11 @@
                             </div>
                             <div style="display:flex; align-items:flex-start; justify-content:center; padding-top:2px;">
                                 <button type="button"
-                                    onclick="openDeleteModal('te', {{ $ti }}, '{{ addslashes($entry['label']) }}', {{ $entry['days'] }})"
-                                    style="display:inline-flex; align-items:center; gap:0.3rem; padding:3px 10px; border-radius:6px; border:1.5px solid rgba(239,68,68,0.25); background:rgba(239,68,68,0.06); color:#dc2626; font-size:0.68rem; font-weight:700; cursor:pointer; font-family:'Instrument Sans',sans-serif; transition:all 0.15s; white-space:nowrap;"
-                                    onmouseover="this.style.background='rgba(239,68,68,0.15)';this.style.borderColor='rgba(239,68,68,0.45)'"
-                                    onmouseout="this.style.background='rgba(239,68,68,0.06)';this.style.borderColor='rgba(239,68,68,0.25)'">
-                                    <i class="fas fa-trash-alt" style="font-size:0.55rem;"></i> Delete
+                                    onclick="openEditModal('te', {{ $ti }}, '{{ addslashes($entry['label']) }}', {{ $entry['days'] }}, '{{ $entry['cost'] ?? '' }}', '{{ $entry['date_requested'] ?? '' }}')"
+                                    style="display:inline-flex; align-items:center; gap:0.3rem; padding:3px 10px; border-radius:6px; border:1.5px solid rgba(249,115,22,0.25); background:rgba(249,115,22,0.06); color:#ea580c; font-size:0.68rem; font-weight:700; cursor:pointer; font-family:'Instrument Sans',sans-serif; transition:all 0.15s; white-space:nowrap;"
+                                    onmouseover="this.style.background='rgba(249,115,22,0.15)';this.style.borderColor='rgba(249,115,22,0.45)'"
+                                    onmouseout="this.style.background='rgba(249,115,22,0.06)';this.style.borderColor='rgba(249,115,22,0.25)'">
+                                    <i class="fas fa-pen" style="font-size:0.55rem;"></i> Edit
                                 </button>
                             </div>
                             <div style="display:flex; align-items:flex-start; justify-content:center; padding-top:2px;">
@@ -472,7 +472,7 @@
                         <label class="field-label">Cost Involved (₱)</label>
                         <div style="position:relative;">
                             <span style="position:absolute; left:1rem; top:50%; transform:translateY(-50%); color:var(--ink-muted); font-weight:600; pointer-events:none;">₱</span>
-                            <input type="number" name="new_te_cost" class="field-input" min="0" step="0.01" placeholder="0.00" style="padding-left:1.75rem;">
+                            <input type="number" name="new_te_cost" class="field-input" min="-9999999999" step="0.01" placeholder="0.00" style="padding-left:1.75rem;">
                         </div>
                         <p class="field-hint">Optional cost for this extension</p>
                     </div>
@@ -534,11 +534,11 @@
                             </div>
                             <div style="display:flex; align-items:flex-start; justify-content:center; padding-top:2px;">
                                 <button type="button"
-                                    onclick="openDeleteModal('vo', {{ $vi }}, '{{ addslashes($entry['label']) }}', {{ $entry['days'] }})"
-                                    style="display:inline-flex; align-items:center; gap:0.3rem; padding:3px 10px; border-radius:6px; border:1.5px solid rgba(239,68,68,0.25); background:rgba(239,68,68,0.06); color:#dc2626; font-size:0.68rem; font-weight:700; cursor:pointer; font-family:'Instrument Sans',sans-serif; transition:all 0.15s; white-space:nowrap;"
-                                    onmouseover="this.style.background='rgba(239,68,68,0.15)';this.style.borderColor='rgba(239,68,68,0.45)'"
-                                    onmouseout="this.style.background='rgba(239,68,68,0.06)';this.style.borderColor='rgba(239,68,68,0.25)'">
-                                    <i class="fas fa-trash-alt" style="font-size:0.55rem;"></i> Delete
+                                    onclick="openEditModal('vo', {{ $vi }}, '{{ addslashes($entry['label']) }}', {{ $entry['days'] }}, '{{ $entry['cost'] ?? '' }}', '{{ $entry['date_requested'] ?? '' }}')"
+                                    style="display:inline-flex; align-items:center; gap:0.3rem; padding:3px 10px; border-radius:6px; border:1.5px solid rgba(99,102,241,0.25); background:rgba(99,102,241,0.06); color:#6366f1; font-size:0.68rem; font-weight:700; cursor:pointer; font-family:'Instrument Sans',sans-serif; transition:all 0.15s; white-space:nowrap;"
+                                    onmouseover="this.style.background='rgba(99,102,241,0.15)';this.style.borderColor='rgba(99,102,241,0.45)'"
+                                    onmouseout="this.style.background='rgba(99,102,241,0.06)';this.style.borderColor='rgba(99,102,241,0.25)'">
+                                    <i class="fas fa-pen" style="font-size:0.55rem;"></i> Edit
                                 </button>
                             </div>
                             <div style="display:flex; align-items:flex-start; justify-content:center; padding-top:2px;">
@@ -580,7 +580,7 @@
                         <label class="field-label">Cost Involved (₱)</label>
                         <div style="position:relative;">
                             <span style="position:absolute; left:1rem; top:50%; transform:translateY(-50%); color:var(--ink-muted); font-weight:600; pointer-events:none;">₱</span>
-                            <input type="number" name="new_vo_cost" class="field-input" min="0" step="0.01" placeholder="0.00" style="padding-left:1.75rem; border-color:rgba(99,102,241,0.25);">
+                            <input type="number" name="new_vo_cost" class="field-input" min="-9999999999" step="0.01" placeholder="0.00" style="padding-left:1.75rem; border-color:rgba(99,102,241,0.25);">
                         </div>
                         <p class="field-hint">Additional cost for this variation</p>
                     </div>
@@ -651,8 +651,7 @@
         {{-- TAB 4: ADMIN --}}
         <div id="tab-admin" class="tab-content">
         @php
-            $issuanceOptions = ['1st Notice of Negative Slippage','2nd Notice of Negative Slippage','3rd Notice of Negative Slippage','Liquidated Damages','Notice to Terminate','Notice of Expiry'];
-            $savedIssuances  = old('issuances', $project->issuances ?? []);
+            $issuanceOptions = ['1st Notice of Negative Slippage','2nd Notice of Negative Slippage','3rd Notice of Negative Slippage','Liquidated Damages','Notice to Terminate','Notice of Expiry','Performance Bond'];            $savedIssuances  = old('issuances', $project->issuances ?? []);
             if (is_string($savedIssuances)) $savedIssuances = json_decode($savedIssuances, true) ?? [];
             if (empty($savedIssuances)) $savedIssuances = [''];
         @endphp
@@ -677,9 +676,11 @@
                     </div>
                     @endforeach
                 </div>
-                <button type="button" class="add-row-btn" onclick="addIssuanceRow()">
-                    <i class="fas fa-plus"></i> Add Notification
-                </button>
+                <div style="margin-top:1.25rem; padding-top:1.25rem; border-top:1px dashed var(--border);">
+                    <label class="field-label">Performance Bond Expiry Date</label>
+                    <input type="date" name="performance_bond_date" class="field-input"
+                    value="{{ old('performance_bond_date', $project->performance_bond_date?->format('Y-m-d') ?? '') }}"                    <p class="field-hint">Date when the performance bond expires</p>
+                </div>
             </div>
         </div>
 
@@ -857,7 +858,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <label for="edit_cost" style="display:block; font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-muted); margin-bottom:0.4rem;">Cost Involved (₱)</label>
                 <div style="position:relative;">
                     <span style="position:absolute; left:1rem; top:50%; transform:translateY(-50%); color:var(--ink-muted); font-weight:600; pointer-events:none; font-size:0.9rem;">₱</span>
-                    <input type="number" id="edit_cost" name="edit_cost" min="0" step="0.01" placeholder="0.00"
+                    <input type="number" id="edit_cost" name="edit_cost" min="-9999999999" step="0.01" placeholder="0.00"
                            style="width:100%; padding:0.72rem 1rem 0.72rem 1.75rem; border:1.5px solid var(--border); border-radius:9px; font-size:0.875rem; color:var(--text-primary); background:var(--bg-primary); outline:none; font-family:'Instrument Sans',sans-serif; transition:border-color 0.2s,box-shadow 0.2s; box-sizing:border-box;"
                            onfocus="this.style.borderColor='var(--orange-500)';this.style.boxShadow='0 0 0 3px rgba(249,115,22,0.1)'"
                            onblur="this.style.borderColor='var(--border)';this.style.boxShadow='none'">

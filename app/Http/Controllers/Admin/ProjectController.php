@@ -48,7 +48,7 @@ class ProjectController extends Controller
             'status', 'completed_at',
         ]);
 
-        $data['slippage'] = $request->work_done - $request->as_planned;
+        $data['original_contract_amount'] = $request->contract_amount;
 
         if ($request->status === 'ongoing') {
             $data['completed_at'] = null;
@@ -160,16 +160,16 @@ class ProjectController extends Controller
             'remarks_recommendation'   => 'nullable|string',
             'completed_at'             => 'nullable|date',
             'issuances'                => 'nullable|array',
-            'issuances.*'              => 'nullable|string|in:1st Notice of Negative Slippage,2nd Notice of Negative Slippage,3rd Notice of Negative Slippage,Liquidated Damages,Notice to Terminate,Notice of Expiry',
-            'new_te_days'              => 'nullable|integer|min:1|max:9999',
-            'new_te_cost'              => 'nullable|numeric|min:0',
+            'issuances.*' => 'nullable|string|in:1st Notice of Negative Slippage,2nd Notice of Negative Slippage,3rd Notice of Negative Slippage,Liquidated Damages,Notice to Terminate,Notice of Expiry,Performance Bond',            'new_te_days'              => 'nullable|integer|min:1|max:9999',
+            'new_te_cost'              => 'nullable|numeric',
             'new_te_date'              => 'nullable|date',
             'new_vo_days'              => 'nullable|integer|min:1|max:9999',
-            'new_vo_cost'              => 'nullable|numeric|min:0',
+            'new_vo_cost'              => 'nullable|numeric',
             'new_vo_date'              => 'nullable|date',
             'new_so_days'              => 'nullable|integer|min:1|max:9999',
             'ld_accomplished'          => 'nullable|numeric|min:0|max:100',
             'ld_days_overdue'          => 'nullable|integer|min:0',
+            'performance_bond_date'     => 'nullable|date',
         ]);
 
         // ── Step 1: Basic scalar fields ──
@@ -180,7 +180,8 @@ class ProjectController extends Controller
             'as_planned', 'work_done',
             'remarks_recommendation',
             'status', 'completed_at',
-            'ld_accomplished',
+            'ld_accomplished', 'ld_days_overdue',
+            'performance_bond_date',
         ]);
 
         $data['slippage'] = (float) $request->work_done - (float) $request->as_planned;
@@ -293,7 +294,7 @@ class ProjectController extends Controller
         $totalExtDays = $totalTEDays + $totalVODays;
 
         $originalContractDays  = (int) Carbon::parse($request->date_started)
-            ->diffInDays(Carbon::parse($request->original_contract_expiry));
+            ->diffInDays(Carbon::parse($request->original_contract_expiry)) + 1;
         $data['contract_days'] = $originalContractDays + $totalTEDays + $totalVODays;
 
         if ($totalExtDays > 0) {
@@ -308,6 +309,23 @@ class ProjectController extends Controller
         } else {
             $data['revised_contract_expiry'] = null;
         }
+
+        // ── Step 7b: Adjust contract amount based on cost involved ──
+        $originalAmount = (float) ($fresh->original_contract_amount ?? $request->contract_amount);
+
+        $totalAdjustment = 0;
+        foreach ($data['cost_involved'] as $cost) {
+            if ($cost !== null && (float)$cost != 0) {
+                $totalAdjustment += (float)$cost;
+            }
+        }
+        foreach (($data['vo_cost'] ?? []) as $cost) {
+            if ($cost !== null && (float)$cost != 0) {
+                $totalAdjustment += (float)$cost;
+            }
+        }
+
+        $data['contract_amount'] = max(0, $originalAmount + $totalAdjustment);
 
         // ── Step 8: LD calculations (all computed server-side) ──
         $ldAccomplished = isset($data['ld_accomplished']) && $data['ld_accomplished'] !== null
@@ -498,6 +516,7 @@ class ProjectController extends Controller
         $pdf->Output('D', $filename);
         exit;
     }
+    
 
     public function updateEntry(Request $request, Project $project)
     {
@@ -505,7 +524,7 @@ class ProjectController extends Controller
             'edit_entry_type'     => 'required|in:te,vo',
             'edit_entry_index'    => 'required|integer|min:0',
             'edit_days'           => 'required|integer|min:1|max:9999',
-            'edit_cost'           => 'nullable|numeric|min:0',
+            'edit_cost'           => 'nullable|numeric',
             'edit_date_requested' => 'nullable|date',
         ]);
 
@@ -576,6 +595,14 @@ class ProjectController extends Controller
         $currentTEDays         = (int) array_sum(array_map('intval', $data['extension_days'] ?? $fresh->extension_days ?? []));
         $currentVODays         = (int) array_sum(array_map('intval', $data['vo_days']        ?? $fresh->vo_days        ?? []));
         $data['contract_days'] = $originalContractDays + $currentTEDays + $currentVODays;
+        // Recompute contract amount from original
+        $originalAmount = (float) ($fresh->original_contract_amount ?? (float) $fresh->contract_amount);
+        $allCosts = array_merge(
+            array_values($data['cost_involved'] ?? $fresh->cost_involved ?? []),
+            array_values($data['vo_cost']       ?? $fresh->vo_cost       ?? [])
+        );
+        $deduction = collect($allCosts)->filter(fn($c) => $c !== null && (float)$c < 0)->sum();
+        $data['contract_amount'] = max(0, $originalAmount + $deduction);
 
         $project->update($data);
 

@@ -256,7 +256,7 @@
             </div>
         </div>
     </div>
-
+    
     {{-- Contract Amount --}}
     <div class="acc-card" style="padding:1.25rem;display:flex;flex-direction:column;justify-content:center;gap:0.4rem;">
         <p class="section-eyebrow" style="margin:0;">Contract Amount</p>
@@ -300,8 +300,27 @@
                 <div><p class="data-value">{{ $project->updated_at->format('M d, Y') }}</p><p class="data-sub">{{ $project->updated_at->format('h:i A') }} &middot; {{ $project->updated_at->diffForHumans() }}</p></div>
             </div>
             <div class="data-row">
-                <span class="data-label"><i class="fas fa-calendar-plus"></i> Created</span>
-                <div><p class="data-value">{{ $project->created_at->format('M d, Y') }}</p><p class="data-sub">{{ $project->created_at->format('h:i A') }}</p></div>
+                <span class="data-label"><i class="fas fa-peso-sign"></i> Contract Amount</span>
+                <div style="text-align:right;">
+                    <p class="data-value">₱{{ number_format($project->contract_amount, 2) }}</p>
+                    @php
+                        $ciAll = array_merge(
+                            is_array($project->cost_involved ?? null) ? $project->cost_involved : [],
+                            is_array($project->vo_cost ?? null) ? $project->vo_cost : []
+                        );
+                        $tadd = collect($ciAll)->filter(fn($c) => $c !== null && (float)$c > 0)->sum();
+                        $tded = collect($ciAll)->filter(fn($c) => $c !== null && (float)$c < 0)->sum();
+                    @endphp
+                    @if($tadd > 0)
+                        <p class="data-sub" style="color:#16a34a;font-weight:700;"><i class="fas fa-arrow-up" style="font-size:0.55rem;"></i> +₱{{ number_format($tadd, 2) }} added</p>
+                    @endif
+                    @if($tded < 0)
+                        <p class="data-sub" style="color:#dc2626;font-weight:700;"><i class="fas fa-arrow-down" style="font-size:0.55rem;"></i> −₱{{ number_format(abs($tded), 2) }} deducted</p>
+                    @endif
+                    @if($tadd == 0 && $tded == 0)
+                        <p class="data-sub">No adjustments</p>
+                    @endif
+                </div>
             </div>
         </div>
     </div>
