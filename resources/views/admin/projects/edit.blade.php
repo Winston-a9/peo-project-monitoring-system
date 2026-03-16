@@ -286,41 +286,43 @@
                 </p>
             </div>
 
+            {{-- PROJECT INFORMATION — read-only fields shown as plain text --}}
             <div class="form-card" style="margin-bottom:1.5rem;">
                 <div class="section-header">
                     <i class="fas fa-box"></i>
                     <span>Project Information</span>
                     <span style="margin-left:auto; font-size:0.7rem; color:#9ca3af; font-weight:400;">Read-only</span>
                 </div>
+                {{-- Hidden inputs carry all values for form submission --}}
+                <input type="hidden" name="in_charge"       value="{{ $project->in_charge }}">
+                <input type="hidden" name="project_title"   value="{{ $project->project_title }}">
+                <input type="hidden" name="location"        value="{{ $project->location }}">
+                <input type="hidden" name="contractor"      value="{{ $project->contractor }}">
+                <input type="hidden" name="contract_amount" id="contract_amount" value="{{ $project->contract_amount }}">
                 <div class="section-body">
                     <div class="grid-2col">
                         <div class="field-group">
                             <label class="field-label">In Charge</label>
-                            <input type="hidden" name="in_charge" value="{{ $project->in_charge }}">
-                            <input type="text" class="field-input readonly-field" readonly value="{{ $project->in_charge }}">
+                            <p style="font-size:0.9rem;font-weight:600;color:var(--text-primary);margin:0;padding:0.1rem 0;">{{ $project->in_charge }}</p>
                         </div>
                         <div class="field-group">
                             <label class="field-label">Project Title</label>
-                            <input type="hidden" name="project_title" value="{{ $project->project_title }}">
-                            <input type="text" class="field-input readonly-field" readonly value="{{ $project->project_title }}">
+                            <p style="font-size:0.9rem;font-weight:600;color:var(--text-primary);margin:0;padding:0.1rem 0;">{{ $project->project_title }}</p>
                         </div>
                         <div class="field-group">
                             <label class="field-label">Location</label>
-                            <input type="hidden" name="location" value="{{ $project->location }}">
-                            <input type="text" class="field-input readonly-field" readonly value="{{ $project->location }}">
+                            <p style="font-size:0.9rem;font-weight:600;color:var(--text-primary);margin:0;padding:0.1rem 0;">{{ $project->location }}</p>
                         </div>
                         <div class="field-group">
                             <label class="field-label">Contractor</label>
-                            <input type="hidden" name="contractor" value="{{ $project->contractor }}">
-                            <input type="text" class="field-input readonly-field" readonly value="{{ $project->contractor }}">
+                            <p style="font-size:0.9rem;font-weight:600;color:var(--text-primary);margin:0;padding:0.1rem 0;">{{ $project->contractor }}</p>
                         </div>
                         <div class="field-group">
                             <label class="field-label">Contract Amount</label>
-                            <div style="position:relative;">
-                                <span style="position:absolute; left:1rem; top:50%; transform:translateY(-50%); color:var(--ink-muted); font-weight:600; pointer-events:none;">₱</span>
-                                <input type="hidden" name="contract_amount" value="{{ $project->contract_amount }}">
-                                <input type="number" id="contract_amount" class="field-input readonly-field" readonly value="{{ number_format($project->contract_amount, 2, '.', '') }}" style="padding-left:1.75rem;">
-                            </div>
+                            <p style="font-size:0.9rem;font-weight:700;color:var(--text-primary);margin:0;padding:0.1rem 0;font-family:'Syne',sans-serif;letter-spacing:-0.01em;">
+                                ₱{{ number_format($project->contract_amount, 2) }}
+                            </p>
+                            <p class="field-hint">Adjusted by TE / VO cost entries</p>
                         </div>
                         <div class="field-group">
                             <label class="field-label">Status</label>
@@ -334,27 +336,36 @@
                 </div>
             </div>
 
+            {{-- CONTRACT DATES — read-only fields shown as plain text --}}
             <div class="form-card" style="margin-bottom:1.5rem;">
                 <div class="section-header">
                     <i class="fas fa-calendar-days"></i>
                     <span>Contract Dates</span>
                     <span style="margin-left:auto; font-size:0.7rem; color:#9ca3af; font-weight:400;">Key milestones</span>
                 </div>
+                {{-- Hidden inputs carry values for form submission --}}
+                <input type="hidden" name="date_started"             value="{{ $project->date_started->format('Y-m-d') }}">
+                <input type="hidden" name="original_contract_expiry" value="{{ $project->original_contract_expiry->format('Y-m-d') }}">
                 <div class="section-body">
                     <div class="grid-2col">
                         <div class="field-group">
                             <label class="field-label">Date Started</label>
-                            <input type="hidden" name="date_started" value="{{ $project->date_started->format('Y-m-d') }}">
-                            <input type="date" class="field-input readonly-field" readonly value="{{ $project->date_started->format('Y-m-d') }}">
+                            <p style="font-size:0.9rem;font-weight:600;color:var(--text-primary);margin:0;padding:0.1rem 0;">{{ $project->date_started->format('F d, Y') }}</p>
+                            <p class="field-hint">{{ $project->date_started->format('l') }}</p>
                         </div>
                         <div class="field-group">
                             <label class="field-label">Original Expiry</label>
-                            <input type="hidden" name="original_contract_expiry" value="{{ $project->original_contract_expiry->format('Y-m-d') }}">
-                            <input type="date" class="field-input readonly-field" readonly value="{{ $project->original_contract_expiry->format('Y-m-d') }}">
+                            <p style="font-size:0.9rem;font-weight:600;color:var(--text-primary);margin:0;padding:0.1rem 0;">{{ $project->original_contract_expiry->format('F d, Y') }}</p>
+                            <p class="field-hint">{{ $project->original_contract_expiry->format('l') }}</p>
                         </div>
                         <div class="field-group">
                             <label class="field-label">Revised Expiry</label>
-                            <input type="date" class="field-input readonly-field" readonly value="{{ $project->revised_contract_expiry?->format('Y-m-d') }}">
+                            @if($project->revised_contract_expiry)
+                                <p style="font-size:0.9rem;font-weight:700;color:#f97316;margin:0;padding:0.1rem 0;font-family:'Syne',sans-serif;">{{ $project->revised_contract_expiry->format('F d, Y') }}</p>
+                                <p class="field-hint">{{ $project->revised_contract_expiry->format('l') }}</p>
+                            @else
+                                <p style="font-size:0.875rem;color:#9ca3af;margin:0;padding:0.1rem 0;font-style:italic;">Not yet set</p>
+                            @endif
                         </div>
                         <div id="completed_at_field" class="field-group {{ old('status',$project->status)=='completed' ? '' : 'hidden' }}">
                             <label class="field-label">Date Completed</label>
@@ -405,6 +416,7 @@
             </div>
         </div>
 
+        {{-- LIQUIDATED DAMAGES — auto fields shown as plain text with comma formatting --}}
         <div class="form-card" style="margin-bottom:1.5rem;">
             <div class="section-header">
                 <i class="fas fa-calculator"></i>
@@ -422,10 +434,11 @@
                     </div>
                     <div class="field-group">
                         <label class="field-label">Unworked (%) <span style="font-weight:400; text-transform:none; letter-spacing:0; color:#9ca3af;">(auto)</span></label>
-                        <div style="position:relative;">
-                            <input type="number" id="ld_unworked" name="ld_unworked" class="field-input readonly-field" readonly value="{{ old('ld_unworked', $project->ld_unworked ?? '') }}" style="padding-right:2.5rem;">
-                            <span style="position:absolute; right:1rem; top:50%; transform:translateY(-50%); color:var(--ink-muted); font-weight:600;">%</span>
-                        </div>
+                        <input type="hidden" id="ld_unworked" name="ld_unworked" value="{{ old('ld_unworked', $project->ld_unworked ?? '') }}">
+                        <p style="font-size:0.9rem;font-weight:600;color:var(--text-primary);margin:0;padding:0.1rem 0;">
+                            <span id="ld_unworked_display">{{ old('ld_unworked', $project->ld_unworked ?? '—') }}</span>
+                            <span style="color:var(--ink-muted);font-weight:500;margin-left:2px;">%</span>
+                        </p>
                         <p class="field-hint">Automatically calculated</p>
                     </div>
                     <div class="field-group">
@@ -435,18 +448,18 @@
                     </div>
                     <div class="field-group">
                         <label class="field-label">LD per Day (₱) <span style="font-weight:400; text-transform:none; letter-spacing:0; color:#9ca3af;">(auto)</span></label>
-                        <div style="position:relative;">
-                            <span style="position:absolute; left:1rem; top:50%; transform:translateY(-50%); color:var(--ink-muted); font-weight:600; pointer-events:none;">₱</span>
-                            <input type="number" id="ld_per_day" name="ld_per_day" class="field-input readonly-field" readonly value="{{ old('ld_per_day', $project->ld_per_day ?? '0.00') }}" step="0.01" style="padding-left:1.75rem;">
-                        </div>
+                        <input type="hidden" id="ld_per_day" name="ld_per_day" value="{{ old('ld_per_day', $project->ld_per_day ?? '0') }}">
+                        <p style="font-size:0.9rem;font-weight:700;color:var(--text-primary);margin:0;padding:0.1rem 0;font-family:'Syne',sans-serif;letter-spacing:-0.01em;">
+                            ₱<span id="ld_per_day_display">{{ number_format((float) old('ld_per_day', $project->ld_per_day ?? 0), 2) }}</span>
+                        </p>
                         <p class="field-hint">Formula: (Unworked % ÷ 100) × Contract Amount × 0.001</p>
                     </div>
                     <div class="field-group" style="grid-column:1/-1;">
                         <label class="field-label">Total LD (₱) <span style="font-weight:400; text-transform:none; letter-spacing:0; color:#9ca3af;">(auto)</span></label>
-                        <div style="position:relative;">
-                            <span style="position:absolute; left:1rem; top:50%; transform:translateY(-50%); color:#dc2626; font-weight:800; pointer-events:none;">₱</span>
-                            <input type="number" id="total_ld" name="total_ld" class="field-input readonly-field" readonly value="{{ old('total_ld', $project->total_ld ?? '0.00') }}" step="0.01" style="padding-left:1.75rem; background:rgba(239,68,68,0.05); border-color:rgba(239,68,68,0.2); color:#dc2626; font-weight:700;">
-                        </div>
+                        <input type="hidden" id="total_ld" name="total_ld" value="{{ old('total_ld', $project->total_ld ?? '0') }}">
+                        <p style="font-size:1.35rem;font-weight:800;color:#dc2626;margin:0;padding:0.1rem 0;font-family:'Syne',sans-serif;letter-spacing:-0.02em;">
+                            ₱<span id="total_ld_display">{{ number_format((float) old('total_ld', $project->total_ld ?? 0), 2) }}</span>
+                        </p>
                         <p class="field-hint">Formula: LD per Day × Days Overdue</p>
                     </div>
                 </div>
@@ -755,7 +768,7 @@
                 <div id="issuances-list" style="display:flex; flex-direction:column; gap:0.75rem;">
                     @foreach($savedIssuances as $val)
                     <div class="dynamic-row">
-                        <select name="issuances[]" class="dynamic-select" onchange="updateCount('issuances-list','issuance-count')">
+                        <select name="issuances[]" class="dynamic-select" onchange="updateCount('issuances-list','issuance-count'); checkPerformanceBond()">
                             <option value="">— Select Notification —</option>
                             @foreach($issuanceOptions as $opt)
                                 <option value="{{ $opt }}" {{ $val===$opt ? 'selected':'' }}>{{ $opt }}</option>
@@ -765,11 +778,18 @@
                     </div>
                     @endforeach
                 </div>
-                <div style="margin-top:1.25rem; padding-top:1.25rem; border-top:1px dashed var(--border);">
-                    <label class="field-label">Performance Bond Expiry Date</label>
+
+                {{-- Performance Bond date — only visible when Performance Bond is selected --}}
+                <div id="performance-bond-date-field" style="display:none; margin-top:1.25rem; padding:1rem 1.15rem; border-radius:10px; border:1.5px solid rgba(249,115,22,0.2); background:rgba(249,115,22,0.04);">
+                    <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.75rem;">
+                        <div style="width:26px; height:26px; background:rgba(249,115,22,0.1); border-radius:7px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                            <i class="fas fa-shield-halved" style="color:#f97316; font-size:0.7rem;"></i>
+                        </div>
+                        <label class="field-label" style="margin:0;">Performance Bond Expiry Date</label>
+                    </div>
                     <input type="date" name="performance_bond_date" class="field-input"
-                    value="{{ old('performance_bond_date', $project->performance_bond_date?->format('Y-m-d') ?? '') }}">
-                    <p class="field-hint">Date when the performance bond expires</p>
+                        value="{{ old('performance_bond_date', $project->performance_bond_date?->format('Y-m-d') ?? '') }}">
+                    <p class="field-hint" style="margin-top:0.4rem;">Date when the performance bond expires</p>
                 </div>
             </div>
         </div>
@@ -844,18 +864,30 @@ function computeSlippage() {
 }
 
 // ── LD — uses unworked % not accomplished % ──
+function fmtNum(n, decimals) {
+    return n.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+}
 function calculateLDPerDay() {
     const acc      = parseFloat(document.getElementById('ld_accomplished').value) || 0;
     const amt      = parseFloat(document.getElementById('contract_amount').value.replace(/,/g, '')) || 0;
     const unworked = Math.max(0, 100 - acc);
+    const perDay   = (unworked / 100) * amt * 0.001;
+
     document.getElementById('ld_unworked').value = unworked.toFixed(2);
-    document.getElementById('ld_per_day').value  = ((unworked / 100) * amt * 0.001).toFixed(2);
+    document.getElementById('ld_per_day').value  = perDay.toFixed(2);
+
+    document.getElementById('ld_unworked_display').textContent = fmtNum(unworked, 2);
+    document.getElementById('ld_per_day_display').textContent  = fmtNum(perDay, 2);
+
     calculateLDTotal();
 }
 function calculateLDTotal() {
     const perDay  = parseFloat(document.getElementById('ld_per_day').value)            || 0;
     const overdue = parseFloat(document.getElementById('ld_days_overdue_input').value) || 0;
-    document.getElementById('total_ld').value = (perDay * overdue).toFixed(2);
+    const total   = perDay * overdue;
+
+    document.getElementById('total_ld').value = total.toFixed(2);
+    document.getElementById('total_ld_display').textContent = fmtNum(total, 2);
 }
 
 // ── Date preview helpers ──
@@ -892,12 +924,19 @@ function updateSOPreview() {
 }
 
 // ── Issuances ──
+function checkPerformanceBond() {
+    const hasPerformanceBond = [...document.querySelectorAll('#issuances-list select')]
+        .some(s => s.value === 'Performance Bond');
+    const field = document.getElementById('performance-bond-date-field');
+    field.style.display = hasPerformanceBond ? 'block' : 'none';
+}
+
 const ISSUANCE_OPTS = ['1st Notice of Negative Slippage','2nd Notice of Negative Slippage','3rd Notice of Negative Slippage','Liquidated Damages','Notice to Terminate','Notice of Expiry'];
 function issuanceRowHTML(val = '') {
     let opts = '<option value="">— Select Issuance —</option>';
     ISSUANCE_OPTS.forEach(o => opts += `<option value="${o}" ${o===val?'selected':''}>${o}</option>`);
     return `<div class="dynamic-row">
-        <select name="issuances[]" class="dynamic-select" onchange="updateCount('issuances-list','issuance-count')">${opts}</select>
+        <select name="issuances[]" class="dynamic-select" onchange="updateCount('issuances-list','issuance-count'); checkPerformanceBond()">${opts}</select>
         <button type="button" class="remove-btn" onclick="removeIssuanceRow(this)"><i class="fas fa-times"></i></button>
     </div>`;
 }
@@ -910,10 +949,12 @@ function removeIssuanceRow(btn) {
     if (list.querySelectorAll('.dynamic-row').length <= 1) {
         list.querySelector('select').value = '';
         updateCount('issuances-list','issuance-count');
+        checkPerformanceBond();
         return;
     }
     btn.closest('.dynamic-row').remove();
     updateCount('issuances-list', 'issuance-count');
+    checkPerformanceBond();
 }
 function updateCount(listId, countId) {
     const filled = [...document.getElementById(listId).querySelectorAll('select')].filter(s => s.value !== '').length;
@@ -928,6 +969,7 @@ document.addEventListener('DOMContentLoaded', () => {
     computeSlippage();
     updateCount('issuances-list', 'issuance-count');
     calculateLDPerDay();
+    checkPerformanceBond();
 });
 </script>
 
