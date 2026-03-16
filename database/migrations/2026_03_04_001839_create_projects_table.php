@@ -39,14 +39,17 @@ return new class extends Migration
             $table->json('vo_days')->nullable();                // parallel VO days array
             $table->json('vo_cost')->nullable();                // parallel VO cost array
             $table->date('performance_bond_date')->nullable();  // new field for performance bond expiry date
+            $table->json('billing_amounts')->nullable();        // parallel array of billing update amounts
+            $table->json('billing_dates')->nullable();          // parallel array of billing update dates
+            $table->decimal('remaining_balance', 15, 2)->nullable();         // remaining contract balance after last billing update
+            $table->decimal('total_amount_billed', 15, 2)->nullable();      // total amount billed to date
 
             // Liquidated Damages
             $table->decimal('ld_accomplished', 5, 3)->nullable();
             $table->decimal('ld_unworked', 5, 2)->nullable();
             $table->decimal('ld_per_day', 15, 2)->nullable();
             $table->decimal('total_ld', 15, 2)->nullable();
-            $table->integer('ld_days_overdue')->nullable();     // integer, NOT date
-
+            $table->integer('ld_days_overdue')->nullable();     
             $table->timestamps();
         });
 

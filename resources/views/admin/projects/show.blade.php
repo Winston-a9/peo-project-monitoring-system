@@ -619,6 +619,162 @@
 </div>
 @endif
 
+{{-- ══════════ BILLING INFORMATION ══════════ --}}
+@php
+    $billingAmounts = is_array($project->billing_amounts) ? array_map('floatval', $project->billing_amounts) : [];
+    $billingDates   = is_array($project->billing_dates)   ? $project->billing_dates : [];
+    $billingCount   = count($billingAmounts);
+    $totalBilled    = array_sum($billingAmounts);
+    $remainingBal   = (float)$project->contract_amount - $totalBilled;
+    $hasBilling     = $billingCount > 0;
+@endphp
+@if($hasBilling)
+<div class="card fu d3" style="overflow:hidden;">
+
+    {{-- Tab header --}}
+    <div style="display:flex;align-items:center;border-bottom:1px solid var(--bd);background:var(--bg2);">
+        <button onclick="toggleBillingTab('summary')" id="billing-tab-summary"
+            style="flex:1;padding:0.875rem 1.25rem;background:transparent;border:none;cursor:pointer;font-size:0.825rem;font-weight:700;color:var(--tx);border-bottom:2px solid #16a34a;transition:all 0.2s;display:flex;align-items:center;gap:0.5rem;font-family:'Instrument Sans',sans-serif;">
+            <i class="fas fa-chart-bar" style="font-size:0.75rem;color:#16a34a;"></i> Summary
+        </button>
+        <button onclick="toggleBillingTab('table')" id="billing-tab-table"
+            style="flex:1;padding:0.875rem 1.25rem;background:transparent;border:none;cursor:pointer;font-size:0.825rem;font-weight:700;color:var(--tx2);border-bottom:2px solid transparent;transition:all 0.2s;display:flex;align-items:center;gap:0.5rem;font-family:'Instrument Sans',sans-serif;">
+            <i class="fas fa-table" style="font-size:0.75rem;"></i> Billing History
+        </button>
+        <div style="padding:0.875rem 1.25rem;display:flex;align-items:center;gap:0.5rem;border-left:1px solid var(--bd);flex-shrink:0;">
+            <i class="fas fa-file-invoice-dollar" style="color:#16a34a;font-size:0.8rem;"></i>
+            <span class="pill" style="background:rgba(34,197,94,0.1);color:#16a34a;border:1px solid rgba(34,197,94,0.22);">{{ $billingCount }} {{ $billingCount === 1 ? 'billing' : 'billings' }}</span>
+        </div>
+    </div>
+
+    {{-- SUMMARY TAB --}}
+    <div id="billing-tab-summary-content" style="display:block;">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid var(--bd);">
+
+            {{-- Contract Amount --}}
+            <div style="padding:1.25rem;border-right:1px solid var(--bd);">
+                <p class="ey" style="margin-bottom:0.5rem;">Contract Amount</p>
+                <p style="font-family:'Syne',sans-serif;font-size:1.35rem;font-weight:800;color:var(--tx);line-height:1;letter-spacing:-0.02em;">
+                    ₱{{ number_format($project->contract_amount, 2) }}
+                </p>
+                <p style="font-size:0.7rem;color:#9ca3af;margin-top:0.4rem;">Original contract value</p>
+            </div>
+
+            {{-- Total Billed --}}
+            <div style="padding:1.25rem;border-right:1px solid var(--bd);">
+                <p class="ey" style="margin-bottom:0.5rem;">Total Amount Billed</p>
+                <p style="font-family:'Syne',sans-serif;font-size:1.35rem;font-weight:800;color:#16a34a;line-height:1;letter-spacing:-0.02em;">
+                    ₱{{ number_format($totalBilled, 2) }}
+                </p>
+                @php $billedPct = $project->contract_amount > 0 ? round(($totalBilled / $project->contract_amount) * 100, 1) : 0; @endphp
+                <div style="height:4px;background:rgba(34,197,94,0.1);border-radius:99px;margin-top:0.6rem;overflow:hidden;">
+                    <div style="height:100%;width:{{ min($billedPct, 100) }}%;background:#16a34a;border-radius:99px;"></div>
+                </div>
+                <p style="font-size:0.7rem;color:#16a34a;margin-top:0.3rem;font-weight:600;">{{ $billedPct }}% of contract</p>
+            </div>
+
+            {{-- Remaining Balance --}}
+            <div style="padding:1.25rem;">
+                <p class="ey" style="margin-bottom:0.5rem;">Remaining Balance</p>
+                <p style="font-family:'Syne',sans-serif;font-size:1.35rem;font-weight:800;color:{{ $remainingBal >= 0 ? '#3b82f6' : '#dc2626' }};line-height:1;letter-spacing:-0.02em;">
+                    ₱{{ number_format(abs($remainingBal), 2) }}
+                    @if($remainingBal < 0)<span style="font-size:0.75rem;font-weight:700;color:#dc2626;"> (over)</span>@endif
+                </p>
+                @php $remainPct = $project->contract_amount > 0 ? round((abs($remainingBal) / $project->contract_amount) * 100, 1) : 0; @endphp
+                <div style="height:4px;background:{{ $remainingBal >= 0 ? 'rgba(59,130,246,0.1)' : 'rgba(239,68,68,0.1)' }};border-radius:99px;margin-top:0.6rem;overflow:hidden;">
+                    <div style="height:100%;width:{{ min($remainPct, 100) }}%;background:{{ $remainingBal >= 0 ? '#3b82f6' : '#dc2626' }};border-radius:99px;"></div>
+                </div>
+                <p style="font-size:0.7rem;color:{{ $remainingBal >= 0 ? '#3b82f6' : '#dc2626' }};margin-top:0.3rem;font-weight:600;">{{ $remainPct }}% {{ $remainingBal >= 0 ? 'remaining' : 'exceeded' }}</p>
+            </div>
+        </div>
+
+        {{-- Formula breakdown --}}
+        <div style="padding:1rem 1.25rem;background:rgba(34,197,94,0.02);display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;font-size:0.82rem;color:var(--tx2);">
+                <span style="font-weight:700;color:var(--tx);">₱{{ number_format($project->contract_amount, 2) }}</span>
+                <span style="color:#9ca3af;">−</span>
+                <span style="font-weight:700;color:#16a34a;">₱{{ number_format($totalBilled, 2) }}</span>
+                <span style="color:#9ca3af;">=</span>
+                <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:0.95rem;color:{{ $remainingBal >= 0 ? '#3b82f6' : '#dc2626' }};">₱{{ number_format($remainingBal, 2) }}</span>
+            </div>
+            <span style="font-size:0.68rem;color:#9ca3af;margin-left:auto;">Contract Amount − Total Billed = Remaining Balance</span>
+        </div>
+    </div>
+
+    {{-- BILLING HISTORY TAB --}}
+    <div id="billing-tab-table-content" style="display:none;">
+        <div style="overflow-x:auto;">
+            <table class="te-tbl">
+                <thead>
+                    <tr>
+                        <th style="text-align:left;">Billing No.</th>
+                        <th style="text-align:center;">Date</th>
+                        <th style="text-align:right;">Amount Billed</th>
+                        <th style="text-align:right;">Cumulative Total</th>
+                        <th style="text-align:right;">Remaining Balance</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @php $runningTotal = 0; @endphp
+                    @foreach($billingAmounts as $bi => $amount)
+                    @php
+                        $runningTotal += $amount;
+                        $runningRemain = (float)$project->contract_amount - $runningTotal;
+                        $isEven = $bi % 2 === 0;
+                        $isLast = $bi === $billingCount - 1;
+                    @endphp
+                    <tr style="background:{{ $isEven ? 'var(--bg)' : 'var(--bg2)' }};"
+                        onmouseover="this.style.background='rgba(34,197,94,0.03)'"
+                        onmouseout="this.style.background='{{ $isEven ? 'var(--bg)' : 'var(--bg2)' }}'">
+                        <td>
+                            <div style="display:flex;align-items:center;gap:0.5rem;">
+                                <div style="width:26px;height:26px;border-radius:7px;background:rgba(34,197,94,0.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                    <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:0.68rem;color:#16a34a;">{{ $bi + 1 }}</span>
+                                </div>
+                                <span style="font-weight:700;color:var(--tx);">Billing No. {{ $bi + 1 }}</span>
+                                @if($isLast)<span style="font-size:0.6rem;font-weight:700;background:rgba(34,197,94,0.1);color:#16a34a;border:1px solid rgba(34,197,94,0.22);border-radius:99px;padding:1px 7px;margin-left:4px;">Latest</span>@endif
+                            </div>
+                        </td>
+                        <td style="text-align:center;color:var(--tx2);font-size:0.8rem;">
+                            @if(!empty($billingDates[$bi]))
+                                <span style="font-weight:600;color:var(--tx);">{{ \Carbon\Carbon::parse($billingDates[$bi])->format('M d, Y') }}</span>
+                            @else
+                                <span style="color:#9ca3af;">—</span>
+                            @endif
+                        </td>
+                        <td style="text-align:right;">
+                            <span style="font-weight:700;color:#16a34a;font-family:'Syne',sans-serif;font-size:0.95rem;">+₱{{ number_format($amount, 2) }}</span>
+                        </td>
+                        <td style="text-align:right;">
+                            <span style="font-weight:700;color:{{ $isLast ? '#16a34a' : 'var(--tx)' }};">₱{{ number_format($runningTotal, 2) }}</span>
+                        </td>
+                        <td style="text-align:right;">
+                            <span style="font-weight:700;color:{{ $runningRemain >= 0 ? '#3b82f6' : '#dc2626' }};">₱{{ number_format($runningRemain, 2) }}</span>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="2" style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink2);">Total</td>
+                        <td style="text-align:right;">
+                            <span style="font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:800;color:#16a34a;">₱{{ number_format($totalBilled, 2) }}</span>
+                        </td>
+                        <td style="text-align:right;">
+                            <span style="font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:800;color:#16a34a;">₱{{ number_format($totalBilled, 2) }}</span>
+                        </td>
+                        <td style="text-align:right;">
+                            <span style="font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:800;color:{{ $remainingBal >= 0 ? '#3b82f6' : '#dc2626' }};">₱{{ number_format($remainingBal, 2) }}</span>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+</div>
+@endif
+
 {{-- ══════════ REMARKS ══════════ --}}
 @if($hasRemarks)
 <div class="card fu d3">

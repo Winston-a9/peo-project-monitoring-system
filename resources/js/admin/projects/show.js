@@ -20,24 +20,24 @@ function updateThemeBtn(t) {
     if (label) label.textContent = t === 'dark' ? 'Dark' : 'Light';
 }
 
-function toggleTheme() {
+window.toggleTheme = function () {
     const isDark = document.documentElement.classList.toggle('dark');
     document.body.classList.toggle('dark', isDark);
     localStorage.setItem('theme-mode', isDark ? 'dark' : 'light');
     updateThemeBtn(isDark ? 'dark' : 'light');
-}
+};
 
 /* ── Activity log toggle ── */
-function toggleLog(id) {
+window.toggleLog = function (id) {
     const el   = document.getElementById(id);
     const ch   = document.getElementById(id + '-chevron');
     const open = el.style.display === 'flex';
     el.style.display   = open ? 'none' : 'flex';
     ch.style.transform = open ? 'rotate(0deg)' : 'rotate(180deg)';
-}
+};
 
 /* ── LD tab toggle ── */
-function toggleLDTab(tab) {
+window.toggleLDTab = function (tab) {
     const viewContent   = document.getElementById('ld-tab-view-content');
     const updateContent = document.getElementById('ld-tab-update-content');
     const viewBtn       = document.getElementById('ld-tab-view');
@@ -59,7 +59,32 @@ function toggleLDTab(tab) {
         updateBtn.style.borderBottomColor = '#f97316';
         updateBtn.style.color             = 'var(--tx)';
     }
-}
+};
+
+/* ── Billing tab toggle ── */
+window.toggleBillingTab = function (tab) {
+    const summaryContent = document.getElementById('billing-tab-summary-content');
+    const tableContent   = document.getElementById('billing-tab-table-content');
+    const summaryBtn     = document.getElementById('billing-tab-summary');
+    const tableBtn       = document.getElementById('billing-tab-table');
+    if (!summaryContent) return;
+
+    if (tab === 'summary') {
+        summaryContent.style.display       = 'block';
+        tableContent.style.display         = 'none';
+        summaryBtn.style.borderBottomColor = '#16a34a';
+        summaryBtn.style.color             = 'var(--tx)';
+        tableBtn.style.borderBottomColor   = 'transparent';
+        tableBtn.style.color               = 'var(--tx2)';
+    } else {
+        summaryContent.style.display       = 'none';
+        tableContent.style.display         = 'block';
+        summaryBtn.style.borderBottomColor = 'transparent';
+        summaryBtn.style.color             = 'var(--tx2)';
+        tableBtn.style.borderBottomColor   = '#16a34a';
+        tableBtn.style.color               = 'var(--tx)';
+    }
+};
 
 /* ── Init on load ── */
 initTheme();

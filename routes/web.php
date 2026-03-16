@@ -31,6 +31,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     // Custom project entry routes — must come BEFORE resource
     Route::patch('/projects/{project}/entry', [ProjectController::class, 'updateEntry'])->name('projects.updateEntry');
     Route::delete('/projects/{project}/entry', [ProjectController::class, 'destroyEntry'])->name('projects.destroyEntry');
+    Route::patch('/projects/{project}/billing', [ProjectController::class, 'updateBilling'])->name('projects.updateBilling');
+
 
     Route::resource('projects', ProjectController::class);
 

@@ -224,6 +224,24 @@ window.delClearError = function () {
     document.getElementById('del-reason-error').style.display     = 'none';
     document.getElementById('del-reason-input').style.borderColor = 'var(--border)';
 };
+/* ── Billing preview ── */
+window.updateBillingPreview = function () {
+    const input       = document.getElementById('new_billing_amount');
+    const totalEl     = document.getElementById('billing_total_preview');
+    const remainingEl = document.getElementById('billing_remaining_val');
+    const previewP    = document.getElementById('billing_remaining_preview');
+    if (!input || !totalEl || !remainingEl) return;
+
+    const newAmt      = parseFloat(input.value) || 0;
+    const base        = parseFloat(totalEl.dataset.base) || 0;
+    const contractAmt = parseFloat(document.getElementById('contract_amount')?.value) || 0;
+    const newTotal    = base + newAmt;
+    const newRemain   = contractAmt - newTotal;
+
+    totalEl.textContent     = newTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    remainingEl.textContent = newRemain.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    if (previewP) previewP.style.color = newRemain >= 0 ? '#3b82f6' : '#dc2626';
+};
 
 /* ── Init on DOMContentLoaded ── */
 document.addEventListener('DOMContentLoaded', () => {
@@ -244,4 +262,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (ldAccomplished) window.calculateLDPerDay();
 
     window.checkPerformanceBond();
+    // Init billing preview base value
+    const billingTotalEl = document.getElementById('billing_total_preview');
+    if (billingTotalEl && !billingTotalEl.dataset.base) {
+        billingTotalEl.dataset.base = billingTotalEl.textContent.replace(/,/g, '');
+    }
 });

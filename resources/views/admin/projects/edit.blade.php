@@ -298,7 +298,7 @@
 
         {{-- TIME EXTENSIONS ACCORDION --}}
         <div class="form-card" style="margin-bottom:1.5rem;">
-            <div class="acc-header is-open" id="acc-te-hdr" onclick="toggleAcc('te')" role="button" aria-expanded="true" aria-controls="acc-te-bdy">
+            <div class="acc-header" id="acc-te-hdr" onclick="toggleAcc('te')" role="button" aria-expanded="true" aria-controls="acc-te-bdy">
                 <i class="fas fa-clock" style="color:var(--orange-500); font-size:0.85rem; flex-shrink:0;"></i>
                 <span class="acc-title">Time Extensions</span>
                 @if($teCount > 0)
@@ -309,7 +309,7 @@
                 <div class="acc-status-dot" style="background:{{ $teCount > 0 ? '#16a34a' : '#d1d5db' }};"></div>
                 <div class="acc-chevron"><i class="fas fa-chevron-down"></i></div>
             </div>
-            <div class="acc-body" id="acc-te-bdy">
+            <div class="acc-body is-collapsed" id="acc-te-bdy">
             <div class="acc-body-inner">
             <div class="section-body">
                 @if($teCount > 0)
@@ -408,7 +408,7 @@
 
         {{-- VARIATION ORDERS ACCORDION --}}
         <div class="form-card" style="margin-bottom:1.5rem; border-color:rgba(99,102,241,0.18);">
-            <div class="acc-header acc-indigo is-open" id="acc-vo-hdr" onclick="toggleAcc('vo')" role="button" aria-expanded="true" aria-controls="acc-vo-bdy" style="border-bottom-color:rgba(99,102,241,0.15);">
+            <div class="acc-header acc-indigo" id="acc-vo-hdr" onclick="toggleAcc('vo')" role="button" aria-expanded="true" aria-controls="acc-vo-bdy" style="border-bottom-color:rgba(99,102,241,0.15);">
                 <i class="fas fa-file-signature" style="color:#6366f1; font-size:0.85rem; flex-shrink:0;"></i>
                 <span class="acc-title">Variation Orders</span>
                 @if($voCount > 0)
@@ -419,7 +419,7 @@
                 <div class="acc-status-dot" style="background:{{ $voCount > 0 ? '#6366f1' : '#d1d5db' }};"></div>
                 <div class="acc-chevron" style="border-color:rgba(99,102,241,0.2);"><i class="fas fa-chevron-down"></i></div>
             </div>
-            <div class="acc-body" id="acc-vo-bdy">
+            <div class="acc-body is-collapsed" id="acc-vo-bdy">
             <div class="acc-body-inner">
             <div class="section-body">
                 @if($voCount > 0)
@@ -529,7 +529,7 @@
 
         {{-- SUSPENSION ORDER ACCORDION --}}
         <div class="form-card" style="margin-bottom:1.5rem; border-color:rgba(234,179,8,0.2);">
-            <div class="acc-header acc-yellow is-open" id="acc-so-hdr" onclick="toggleAcc('so')" role="button" aria-expanded="true" aria-controls="acc-so-bdy" style="border-bottom-color:rgba(234,179,8,0.18);">
+            <div class="acc-header acc-yellow" id="acc-so-hdr" onclick="toggleAcc('so')" role="button" aria-expanded="true" aria-controls="acc-so-bdy" style="border-bottom-color:rgba(234,179,8,0.18);">
                 <i class="fas fa-pause-circle" style="color:#d97706; font-size:0.85rem; flex-shrink:0;"></i>
                 <span class="acc-title">{{ $hasSO ? 'Suspension Order' : 'Add Suspension' }}</span>
                 @if($hasSO)
@@ -540,7 +540,7 @@
                 <div class="acc-status-dot" style="background:{{ $hasSO ? '#d97706' : '#d1d5db' }};"></div>
                 <div class="acc-chevron" style="border-color:rgba(234,179,8,0.25);"><i class="fas fa-chevron-down"></i></div>
             </div>
-            <div class="acc-body" id="acc-so-bdy">
+            <div class="acc-body is-collapsed" id="acc-so-bdy">
             <div class="acc-body-inner">
             <div class="section-body">
                 <div class="grid-2col">
@@ -571,9 +571,151 @@
             </div>
             </div>
             </div>
+            </div>
+{{-- BILLING UPDATE ACCORDION --}}
+@php
+    $billingAmounts = is_array($project->billing_amounts) ? array_map('floatval', $project->billing_amounts) : [];
+    $billingDates   = is_array($project->billing_dates)   ? $project->billing_dates : [];
+    $billingCount   = count($billingAmounts);
+    $nextBillingNo  = $billingCount + 1;
+    $totalBilled    = array_sum($billingAmounts);
+    $remainingBal   = (float)$project->contract_amount - $totalBilled;
+@endphp
+<div class="form-card" style="margin-bottom:1.5rem; border-color:rgba(34,197,94,0.18);">
+    <div class="acc-header" id="acc-billing-hdr" onclick="toggleAcc('billing')"
+         role="button" aria-expanded="true" aria-controls="acc-billing-bdy"
+         style="border-bottom-color:rgba(34,197,94,0.15);">
+        <i class="fas fa-file-invoice-dollar" style="color:#16a34a; font-size:0.85rem; flex-shrink:0;"></i>
+        <span class="acc-title">Billing Updates</span>
+        @if($billingCount > 0)
+            <span class="tag-chip" style="margin-left:0.4rem; background:rgba(34,197,94,0.1); color:#16a34a; border-color:rgba(34,197,94,0.25);">{{ $billingCount }} recorded</span>
+        @else
+            <span style="font-size:0.7rem; color:#9ca3af; margin-left:0.4rem; font-weight:400;">No entries yet</span>
+        @endif
+        <div class="acc-status-dot" style="background:{{ $billingCount > 0 ? '#16a34a' : '#d1d5db' }};"></div>
+        <div class="acc-chevron" style="border-color:rgba(34,197,94,0.2);"><i class="fas fa-chevron-down"></i></div>
+    </div>
+    <div class="acc-body is-collapsed" id="acc-billing-bdy">
+    <div class="acc-body-inner">
+    <div class="section-body">
+
+        @if($billingCount > 0)
+        <div style="margin-bottom:1.5rem;">
+            <p style="font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#9ca3af; margin-bottom:0.75rem; display:flex; align-items:center; gap:0.5rem;">
+                <i class="fas fa-history" style="color:#16a34a;"></i> Billing History
+            </p>
+            {{-- Column headers --}}
+            <div style="display:grid; grid-template-columns:18px 1fr 5rem 5rem; gap:0 0.75rem; padding:0 0.25rem; margin-bottom:0.4rem;">
+                <span></span>
+                <p class="h-col-hdr">Billing</p>
+                <p class="h-col-hdr" style="text-align:center;">Action</p>
+                <p class="h-col-hdr" style="text-align:right;">Amount</p>
+            </div>
+            <div class="history-timeline">
+                @foreach($billingAmounts as $bi => $amount)
+                @php $bIsLast = $bi === $billingCount - 1; @endphp
+                <div style="display:grid; grid-template-columns:18px 1fr 5rem 5rem; gap:0 0.75rem; align-items:start;">
+                    <div class="h-spine">
+                        <div class="h-dot" style="background:#16a34a; box-shadow:0 0 0 3px rgba(34,197,94,0.18);"></div>
+                        @if(!$bIsLast)<div class="h-line" style="background:rgba(34,197,94,0.18);"></div>@endif
+                    </div>
+                    <div class="h-label {{ $bIsLast ? 'last' : '' }}" style="display:flex; flex-direction:column; gap:0.2rem;">
+                        <span>Billing No. {{ $bi + 1 }}</span>
+                        @if(!empty($billingDates[$bi]))
+                            <span style="font-size:0.72rem; font-weight:500; color:#9ca3af;">{{ \Carbon\Carbon::parse($billingDates[$bi])->format('M d, Y') }}</span>
+                        @endif
+                    </div>
+                    <div style="display:flex; justify-content:center; padding-top:2px;">
+                        <button type="button"
+                            onclick="openBillingEditModal({{ $bi }}, {{ $amount }}, '{{ $billingDates[$bi] ?? '' }}')"
+                            style="display:inline-flex; align-items:center; gap:0.3rem; padding:3px 10px; border-radius:6px; border:1.5px solid rgba(34,197,94,0.25); background:rgba(34,197,94,0.06); color:#16a34a; font-size:0.68rem; font-weight:700; cursor:pointer; font-family:'Instrument Sans',sans-serif; transition:all 0.15s; white-space:nowrap;"
+                            onmouseover="this.style.background='rgba(34,197,94,0.15)';this.style.borderColor='rgba(34,197,94,0.45)'"
+                            onmouseout="this.style.background='rgba(34,197,94,0.06)';this.style.borderColor='rgba(34,197,94,0.25)'">
+                            <i class="fas fa-pen" style="font-size:0.55rem;"></i> Edit
+                        </button>
+                    </div>
+                    <div style="display:flex; justify-content:flex-end; padding-top:2px;">
+                        <span style="font-size:0.82rem; font-weight:700; color:#16a34a;">₱{{ number_format($amount, 2) }}</span>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+
+            {{-- Total billed summary --}}
+            <div class="h-summary" style="margin-top:1rem; border-color:rgba(34,197,94,0.2);">
+                <span style="font-size:0.8rem; font-weight:600; color:var(--ink-muted); display:flex; align-items:center; gap:0.4rem;">
+                    <i class="fas fa-sigma" style="color:#16a34a; font-size:0.75rem;"></i>
+                    Total across {{ $billingCount }} {{ $billingCount === 1 ? 'billing' : 'billings' }}
+                </span>
+                <span style="font-family:'Syne',sans-serif; font-size:1.2rem; font-weight:800; color:#16a34a;">₱{{ number_format($totalBilled, 2) }}</span>
+            </div>
+
+            {{-- Remaining balance --}}
+            <div style="margin-top:0.75rem; padding:0.875rem 1rem; border-radius:10px; background:{{ $remainingBal >= 0 ? 'rgba(59,130,246,0.04)' : 'rgba(239,68,68,0.04)' }}; border:1px solid {{ $remainingBal >= 0 ? 'rgba(59,130,246,0.18)' : 'rgba(239,68,68,0.18)' }}; display:flex; align-items:center; justify-content:space-between;">
+                <span style="font-size:0.8rem; font-weight:600; color:var(--ink-muted); display:flex; align-items:center; gap:0.4rem;">
+                    <i class="fas fa-wallet" style="color:{{ $remainingBal >= 0 ? '#3b82f6' : '#dc2626' }};"></i>
+                    Remaining Balance
+                    <span style="font-size:0.68rem; color:#9ca3af; font-weight:400;">(Contract − Total Billed)</span>
+                </span>
+                <span style="font-family:'Syne',sans-serif; font-size:1.2rem; font-weight:800; color:{{ $remainingBal >= 0 ? '#3b82f6' : '#dc2626' }};">
+                    ₱{{ number_format($remainingBal, 2) }}
+                </span>
+            </div>
+        </div>
+        <div style="border-top:1px dashed rgba(34,197,94,0.2); margin-bottom:1.5rem;"></div>
+        @endif
+
+        {{-- Add new billing --}}
+        <p style="font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#9ca3af; margin-bottom:0.875rem; display:flex; align-items:center; gap:0.5rem;">
+            <i class="fas fa-plus-circle" style="color:#16a34a;"></i>
+            Add Billing No. {{ $nextBillingNo }}
+        </p>
+        <div class="grid-2col">
+            <div class="field-group">
+                <label class="field-label">Billing Amount (₱) <span style="color:#ef4444;">*</span></label>
+                <div style="position:relative;">
+                    <span style="position:absolute; left:1rem; top:50%; transform:translateY(-50%); color:var(--ink-muted); font-weight:600; pointer-events:none;">₱</span>
+                    <input type="number" name="new_billing_amount" id="new_billing_amount" class="field-input"
+                           min="0" step="0.01" placeholder="0.00"
+                           style="padding-left:1.75rem; border-color:rgba(34,197,94,0.25);"
+                           oninput="updateBillingPreview()">
+                </div>
+                <p class="field-hint">Amount billed in this update</p>
+            </div>
+            <div class="field-group">
+                <label class="field-label">Billing Date</label>
+                <input type="date" name="new_billing_date" class="field-input"
+                       style="border-color:rgba(34,197,94,0.25);">
+                <p class="field-hint">Date of this billing update</p>
+            </div>
+
+            {{-- Live preview --}}
+            <div class="field-group" style="grid-column:1/-1;">
+                <label class="field-label">After This Billing (Preview)</label>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+                    <div style="padding:0.875rem 1rem; border:1.5px solid rgba(34,197,94,0.2); border-radius:9px; background:rgba(34,197,94,0.04);">
+                        <p style="font-size:0.62rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#9ca3af; margin-bottom:0.3rem;">Total Amount Billed</p>
+                        <p style="font-family:'Syne',sans-serif; font-size:1rem; font-weight:800; color:#16a34a; margin:0;">
+                            ₱<span id="billing_total_preview" data-base="{{ $totalBilled }}">{{ number_format($totalBilled, 2) }}</span>
+                        </p>
+                    </div>
+                    <div style="padding:0.875rem 1rem; border:1.5px solid rgba(59,130,246,0.2); border-radius:9px; background:rgba(59,130,246,0.04);">
+                        <p style="font-size:0.62rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#9ca3af; margin-bottom:0.3rem;">Remaining Balance</p>
+                        <p id="billing_remaining_preview" style="font-family:'Syne',sans-serif; font-size:1rem; font-weight:800; color:#3b82f6; margin:0;">
+                            ₱<span id="billing_remaining_val">{{ number_format($remainingBal, 2) }}</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        </div>{{-- end tab-extensions --}}
+    </div>
+    </div>
+    </div>
+</div>
+        </div>
+
+        {{-- end tab-extensions --}}
 
         {{-- TAB 4: ADMIN --}}
         <div id="tab-admin" class="tab-content">
@@ -870,8 +1012,91 @@ function submitDeleteEntry() {
     form.submit();
 }
 </script>
+{{-- BILLING EDIT MODAL --}}
+<x-modal id="billing-edit-modal" title="Edit Billing Entry" type="default" icon="fa-pen" size="md">
+    <div style="display:flex; flex-direction:column; gap:1.1rem;">
+        <div>
+            <label style="display:block; font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-muted); margin-bottom:0.4rem;">Entry</label>
+            <div id="billing-edit-label" style="padding:0.65rem 1rem; border-radius:9px; background:var(--bg-secondary); border:1.5px solid var(--border); font-size:0.875rem; font-weight:700; color:var(--text-primary);">—</div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+            <div>
+                <label style="display:block; font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-muted); margin-bottom:0.4rem;">
+                    Billing Amount (₱) <span style="color:#ef4444;">*</span>
+                </label>
+                <div style="position:relative;">
+                    <span style="position:absolute; left:1rem; top:50%; transform:translateY(-50%); color:var(--ink-muted); font-weight:600; pointer-events:none;">₱</span>
+                    <input type="number" id="billing-edit-amount" min="0" step="0.01" placeholder="0.00"
+                           style="width:100%; padding:0.72rem 1rem 0.72rem 1.75rem; border:1.5px solid rgba(34,197,94,0.3); border-radius:9px; font-size:0.875rem; color:var(--text-primary); background:var(--bg-primary); outline:none; font-family:'Instrument Sans',sans-serif; box-sizing:border-box; transition:border-color 0.2s, box-shadow 0.2s;"
+                           onfocus="this.style.borderColor='#16a34a';this.style.boxShadow='0 0 0 3px rgba(34,197,94,0.1)'"
+                           onblur="this.style.borderColor='rgba(34,197,94,0.3)';this.style.boxShadow='none'">
+                </div>
+                <p style="font-size:0.68rem; color:#9ca3af; margin-top:0.3rem;">Required</p>
+            </div>
+            <div>
+                <label style="display:block; font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-muted); margin-bottom:0.4rem;">Billing Date</label>
+                <input type="date" id="billing-edit-date"
+                       style="width:100%; padding:0.72rem 1rem; border:1.5px solid var(--border); border-radius:9px; font-size:0.875rem; color:var(--text-primary); background:var(--bg-primary); outline:none; font-family:'Instrument Sans',sans-serif; box-sizing:border-box; transition:border-color 0.2s, box-shadow 0.2s;"
+                       onfocus="this.style.borderColor='#16a34a';this.style.boxShadow='0 0 0 3px rgba(34,197,94,0.1)'"
+                       onblur="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
+                <p style="font-size:0.68rem; color:#9ca3af; margin-top:0.3rem;">Optional</p>
+            </div>
+        </div>
+        <p id="billing-edit-error" style="display:none; font-size:0.75rem; color:#ef4444; align-items:center; gap:0.3rem;">
+            <i class="fas fa-exclamation-circle"></i> Please enter a valid billing amount.
+        </p>
+    </div>
+    <x-slot name="footer">
+        <button type="button" onclick="closeModal('billing-edit-modal')"
+            style="padding:0.6rem 1.2rem; border:1.5px solid var(--border); border-radius:9px; background:var(--bg-primary); color:var(--text-secondary); font-weight:600; font-size:0.85rem; cursor:pointer; font-family:'Instrument Sans',sans-serif; transition:all 0.15s;"
+            onmouseover="this.style.borderColor='#16a34a'" onmouseout="this.style.borderColor='var(--border)'">Cancel</button>
+        <button type="button" id="billing-edit-save-btn" onclick="submitBillingEdit()"
+            style="padding:0.6rem 1.4rem; background:#16a34a; color:white; border:none; border-radius:9px; font-weight:700; font-size:0.85rem; cursor:pointer; font-family:'Instrument Sans',sans-serif; box-shadow:0 2px 8px rgba(34,197,94,0.3); transition:all 0.15s;"
+            onmouseover="this.style.background='#15803d'" onmouseout="this.style.background='#16a34a'">
+            <i class="fas fa-save" style="margin-right:0.35rem; font-size:0.75rem;"></i> Save Changes
+        </button>
+    </x-slot>
+</x-modal>
+
+<script>
+window._billingEditIndex = 0;
+
+window.openBillingEditModal = function (index, amount, date) {
+    window._billingEditIndex = index;
+    document.getElementById('billing-edit-label').textContent  = 'Billing No. ' + (index + 1);
+    document.getElementById('billing-edit-amount').value       = amount || '';
+    document.getElementById('billing-edit-date').value         = date   || '';
+    document.getElementById('billing-edit-error').style.display = 'none';
+    openModal('billing-edit-modal');
+};
+
+window.submitBillingEdit = function () {
+    const amount = document.getElementById('billing-edit-amount').value;
+    if (!amount || parseFloat(amount) < 0) {
+        document.getElementById('billing-edit-error').style.display = 'flex';
+        document.getElementById('billing-edit-amount').focus();
+        return;
+    }
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '{{ route("admin.projects.updateBilling", $project) }}';
+    const fields = {
+        '_token':         '{{ csrf_token() }}',
+        '_method':        'PATCH',
+        'billing_index':  window._billingEditIndex,
+        'billing_amount': amount,
+        'billing_date':   document.getElementById('billing-edit-date').value,
+    };
+    Object.entries(fields).forEach(([name, value]) => {
+        const input = document.createElement('input');
+        input.type = 'hidden'; input.name = name; input.value = value;
+        form.appendChild(input);
+    });
+    document.body.appendChild(form);
+    form.submit();
+};
+</script>
 @push('scripts')
     @vite('resources/js/admin/projects/edit.js')
 @endpush
-```
     </x-app-layout>
