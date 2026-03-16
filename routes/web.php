@@ -33,7 +33,6 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::delete('/projects/{project}/entry', [ProjectController::class, 'destroyEntry'])->name('projects.destroyEntry');
     Route::patch('/projects/{project}/billing', [ProjectController::class, 'updateBilling'])->name('projects.updateBilling');
 
-
     Route::resource('projects', ProjectController::class);
 
     Route::get('/reports', [ProjectController::class, 'reports'])->name('reports.index');

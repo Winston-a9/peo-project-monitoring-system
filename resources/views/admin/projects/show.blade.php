@@ -473,14 +473,10 @@
     @if($hasLD)
     <div class="card" style="overflow:hidden;">
         <div style="display:flex;align-items:center;border-bottom:1px solid var(--bd);background:var(--bg2);">
-            <button onclick="toggleLDTab('view')" id="ld-tab-view"
-                style="flex:1;padding:0.875rem 1.25rem;background:transparent;border:none;cursor:pointer;font-size:0.825rem;font-weight:700;color:var(--tx);border-bottom:2px solid #f97316;transition:all 0.2s;display:flex;align-items:center;gap:0.5rem;font-family:'Instrument Sans',sans-serif;">
-                <i class="fas fa-eye" style="font-size:0.75rem;"></i> View Assessment
-            </button>
-            <button onclick="toggleLDTab('update')" id="ld-tab-update"
-                style="flex:1;padding:0.875rem 1.25rem;background:transparent;border:none;cursor:pointer;font-size:0.825rem;font-weight:700;color:var(--tx2);border-bottom:2px solid transparent;transition:all 0.2s;display:flex;align-items:center;gap:0.5rem;font-family:'Instrument Sans',sans-serif;">
-                <i class="fas fa-edit" style="font-size:0.75rem;"></i> Update Assessment
-            </button>
+            <div style="padding:0.875rem 1.25rem;display:flex;align-items:center;gap:0.5rem;">
+                <i class="fas fa-calculator" style="color:#dc2626;font-size:0.8rem;"></i>
+                <span style="font-size:0.825rem;font-weight:700;color:var(--tx);font-family:'Instrument Sans',sans-serif;">Liquidated Damages</span>
+            </div>
             <div style="padding:0.875rem 1.25rem;display:flex;align-items:center;gap:0.5rem;border-left:1px solid var(--bd);flex-shrink:0;">
                 <i class="fas fa-calculator" style="color:#dc2626;font-size:0.8rem;"></i>
                 @if($project->total_ld)
@@ -503,12 +499,9 @@
                     <span class="dv">{{ $project->ld_unworked !== null ? $project->ld_unworked.'%' : '—' }}</span>
                 </div>
                 <div class="dr" style="border-right:1px solid var(--bd);">
-                    <span class="dl"><i class="fas fa-calendar-xmark"></i> Days Overdue From</span>
-                    <span class="dv">
-                        @if($project->ld_days_overdue)
-                            {{ \Carbon\Carbon::parse($project->ld_days_overdue)->format('M d, Y') }}
-                        @else —
-                        @endif
+                    <span class="dl"><i class="fas fa-calendar-xmark"></i> Days Overdue</span>
+                    <span class="dv" style="{{ $project->ld_days_overdue ? 'color:#dc2626;' : '' }}">
+                        {{ $project->ld_days_overdue ? (int)$project->ld_days_overdue . ' days' : '—' }}
                     </span>
                 </div>
                 <div class="dr">
@@ -522,97 +515,6 @@
                     ₱{{ $project->total_ld ? number_format($project->total_ld, 2) : '0.00' }}
                 </span>
             </div>
-            <div style="padding:0.875rem 1.25rem;background:rgba(59,130,246,0.04);border-top:1px solid var(--bd);display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
-                <div>
-                    <p style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink2);margin-bottom:0.35rem;">Days Overdue (Calculated)</p>
-                    <p style="font-size:0.9rem;font-weight:600;color:#3b82f6;">
-                        @if($project->ld_days_overdue)
-                            @php $daysOverdue = \Carbon\Carbon::parse($project->ld_days_overdue)->diffInDays(now()); @endphp
-                            {{ $daysOverdue }} {{ Str::plural('day', $daysOverdue) }}
-                        @else Not Set
-                        @endif
-                    </p>
-                </div>
-                <div>
-                    <p style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink2);margin-bottom:0.35rem;">Total Liability</p>
-                    <p style="font-size:0.9rem;font-weight:600;color:#16a34a;">
-                        @if($project->ld_per_day && $project->ld_days_overdue)
-                            @php $calculatedTotal = $project->ld_per_day * \Carbon\Carbon::parse($project->ld_days_overdue)->diffInDays(now()); @endphp
-                            ₱{{ number_format($calculatedTotal, 2) }}
-                        @else Pending
-                        @endif
-                    </p>
-                </div>
-            </div>
-        </div>
-
-        {{-- UPDATE TAB --}}
-        <div id="ld-tab-update-content" style="display:none;">
-            <form action="{{ route('admin.projects.update', $project) }}" method="POST">
-                @csrf @method('PUT')
-                <div style="padding:1.25rem;display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
-                    @php
-                        $inStyle = "width:100%;padding:0.7rem 0.875rem;border:1.5px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);font-size:0.875rem;font-family:'Instrument Sans',sans-serif;box-sizing:border-box;outline:none;transition:border-color 0.2s,box-shadow 0.2s;";
-                        $lblStyle = "display:block;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink2);margin-bottom:0.45rem;";
-                        $hintStyle = "font-size:0.68rem;color:#9ca3af;margin-top:0.3rem;";
-                    @endphp
-                    <div>
-                        <label style="{{ $lblStyle }}"><i class="fas fa-percent" style="color:var(--or5);width:14px;"></i> Accomplished (%)</label>
-                        <input type="number" name="ld_accomplished" min="0" max="100" step="0.00001"
-                            value="{{ $project->ld_accomplished ?? '' }}" placeholder="e.g. 84.70200"
-                            style="{{ $inStyle }}"
-                            onfocus="this.style.borderColor='rgba(249,115,22,0.5)';this.style.boxShadow='0 0 0 3px rgba(249,115,22,0.1)'"
-                            onblur="this.style.borderColor='var(--bd)';this.style.boxShadow='none'">
-                        <p style="{{ $hintStyle }}">Up to 5 decimal places (e.g. 84.70200)</p>
-                    </div>
-                    <div>
-                        <label style="{{ $lblStyle }}"><i class="fas fa-percent" style="color:var(--or5);width:14px;"></i> Unworked (%)</label>
-                        <input type="number" name="ld_unworked" min="0" max="100" step="0.00001"
-                            value="{{ $project->ld_unworked ?? '' }}" placeholder="e.g. 15.29800"
-                            style="{{ $inStyle }}"
-                            onfocus="this.style.borderColor='rgba(249,115,22,0.5)';this.style.boxShadow='0 0 0 3px rgba(249,115,22,0.1)'"
-                            onblur="this.style.borderColor='var(--bd)';this.style.boxShadow='none'">
-                        <p style="{{ $hintStyle }}">100% − Accomplished</p>
-                    </div>
-                    <div>
-                        <label style="{{ $lblStyle }}"><i class="fas fa-calendar" style="color:var(--or5);width:14px;"></i> Days Overdue From</label>
-                        <input type="date" name="ld_days_overdue"
-                            value="{{ $project->ld_days_overdue ? \Carbon\Carbon::parse($project->ld_days_overdue)->format('Y-m-d') : '' }}"
-                            style="{{ $inStyle }}cursor:pointer;"
-                            onfocus="this.style.borderColor='rgba(249,115,22,0.5)';this.style.boxShadow='0 0 0 3px rgba(249,115,22,0.1)'"
-                            onblur="this.style.borderColor='var(--bd)';this.style.boxShadow='none'">
-                        <p style="{{ $hintStyle }}">Date the project fell behind</p>
-                    </div>
-                    <div>
-                        <label style="{{ $lblStyle }}"><i class="fas fa-peso-sign" style="color:var(--or5);width:14px;"></i> LD / Day (₱) <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#9ca3af;font-size:0.65rem;">(auto)</span></label>
-                        <div style="padding:0.7rem 0.875rem;border:1.5px solid rgba(249,115,22,0.1);border-radius:8px;background:rgba(249,115,22,0.03);color:var(--tx2);font-size:0.875rem;font-family:'Instrument Sans',sans-serif;">
-                            ₱{{ $project->ld_per_day ? number_format($project->ld_per_day, 2) : '0.00' }}
-                        </div>
-                        <p style="{{ $hintStyle }}">(Accomplished ÷ 100) × Contract Amount × 0.001</p>
-                    </div>
-                    <div style="grid-column:1/-1;">
-                        <label style="{{ $lblStyle }}"><i class="fas fa-peso-sign" style="color:#dc2626;width:14px;"></i> Total LD (₱) <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#9ca3af;font-size:0.65rem;">(auto)</span></label>
-                        <div style="padding:0.7rem 0.875rem;border:1.5px solid rgba(239,68,68,0.15);border-radius:8px;background:rgba(239,68,68,0.04);font-size:0.95rem;font-family:'Syne',sans-serif;font-weight:800;color:#dc2626;">
-                            ₱{{ $project->total_ld ? number_format($project->total_ld, 2) : '0.00' }}
-                        </div>
-                        <p style="{{ $hintStyle }}">Recalculated when you save changes in the Edit page</p>
-                    </div>
-                </div>
-                <div style="padding:0 1.25rem 1.25rem;display:flex;align-items:center;gap:0.75rem;">
-                    <button type="submit"
-                        style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.65rem 1.15rem;background:#f97316;color:#fff;font-weight:700;font-size:0.825rem;border-radius:9px;border:none;cursor:pointer;box-shadow:0 2px 10px rgba(249,115,22,0.25);font-family:'Instrument Sans',sans-serif;transition:all 0.2s;"
-                        onmouseover="this.style.background='#ea580c';this.style.transform='translateY(-1px)'"
-                        onmouseout="this.style.background='#f97316';this.style.transform='translateY(0)'">
-                        <i class="fas fa-check-circle" style="font-size:0.75rem;"></i> Save Assessment
-                    </button>
-                    <button type="button" onclick="toggleLDTab('view')"
-                        style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.65rem 1.15rem;background:transparent;color:var(--tx2);font-weight:700;font-size:0.825rem;border-radius:9px;border:1.5px solid var(--bd);cursor:pointer;font-family:'Instrument Sans',sans-serif;transition:all 0.2s;"
-                        onmouseover="this.style.borderColor='#9ca3af'"
-                        onmouseout="this.style.borderColor='var(--bd)'">
-                        <i class="fas fa-times-circle" style="font-size:0.75rem;"></i> Cancel
-                    </button>
-                </div>
-            </form>
         </div>
     </div>
     @endif

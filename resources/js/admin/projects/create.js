@@ -6,9 +6,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // ✅ Expose to window so inline oninput= attributes in the blade can call them
 window.toggleCompletedAt = function () {
-    const sel = document.getElementById('status_sel');
-    if (!sel) return;
-    document.getElementById('completed_at_field').classList.toggle('hidden', sel.value !== 'completed');
+    const sel   = document.getElementById('status_sel');
+    const field = document.getElementById('completed_at_field');
+    if (!sel || !field) return;
+    field.classList.toggle('hidden', sel.value !== 'completed');
 };
 
 window.liveSlippage = function () {

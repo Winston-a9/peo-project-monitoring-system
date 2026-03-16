@@ -170,8 +170,6 @@ class ProjectController extends Controller
             'ld_accomplished'          => 'nullable|numeric|min:0|max:100',
             'ld_days_overdue'          => 'nullable|integer|min:0',
             'performance_bond_date'     => 'nullable|date',
-            'new_billing_amount' => 'nullable|numeric|min:0',
-            'new_billing_date'   => 'nullable|date',
         ]);
 
         // ── Step 1: Basic scalar fields ──
@@ -260,29 +258,6 @@ class ProjectController extends Controller
         $data['date_requested'] = empty($existingDates)
             ? null
             : array_values(array_map(fn($d) => ($d !== '' ? $d : null), $existingDates));
-
-            // ── Step 4c: Append new Billing ──
-            $newBillingAmount = $request->input('new_billing_amount');
-            $newBillingDate   = $request->input('new_billing_date');
-
-            $existingBillingAmounts = $fresh->billing_amounts ?? [];
-            $existingBillingDates   = $fresh->billing_dates   ?? [];
-            $existingBillingAmounts = is_array($existingBillingAmounts) ? $existingBillingAmounts : [];
-            $existingBillingDates   = is_array($existingBillingDates)   ? $existingBillingDates   : [];
-
-            if ($newBillingAmount !== null && $newBillingAmount !== '') {
-                $existingBillingAmounts[] = (float) $newBillingAmount;
-                $existingBillingDates[]   = $newBillingDate ?: null;
-            }
-
-            $totalAmountBilled  = array_sum(array_map('floatval', $existingBillingAmounts));
-            $contractAmt        = (float) ($data['contract_amount'] ?? $fresh->contract_amount ?? 0);
-            $remainingBalance   = $contractAmt - $totalAmountBilled;
-
-            $data['billing_amounts']     = array_values($existingBillingAmounts);
-            $data['billing_dates']       = array_values($existingBillingDates);
-            $data['total_amount_billed'] = $totalAmountBilled > 0 ? round($totalAmountBilled, 2) : null;
-            $data['remaining_balance']   = $totalAmountBilled > 0 ? round($remainingBalance, 2)  : null;
 
         // ── Step 5: Handle Suspension Order ──
         $newSODays = (int) $request->input('new_so_days', 0);
@@ -762,43 +737,6 @@ class ProjectController extends Controller
         return redirect()
             ->route('admin.projects.edit', $project)
             ->with('success', "{$deletedLabel} deleted. Reason logged to remarks.");
-    }
-    public function updateBilling(Request $request, Project $project)
-    {
-    $request->validate([
-        'billing_index'  => 'required|integer|min:0',
-        'billing_amount' => 'required|numeric|min:0',
-        'billing_date'   => 'nullable|date',
-    ]);
-
-    $fresh  = $project->fresh();
-    $index  = (int) $request->input('billing_index');
-    $amount = (float) $request->input('billing_amount');
-    $date   = $request->input('billing_date');
-
-    $amounts = is_array($fresh->billing_amounts) ? array_map('floatval', $fresh->billing_amounts) : [];
-    $dates   = is_array($fresh->billing_dates)   ? $fresh->billing_dates : [];
-
-    if (!isset($amounts[$index])) {
-        return back()->with('error', 'Billing entry not found.');
-    }
-
-    $amounts[$index] = $amount;
-    $dates[$index]   = $date ?: null;
-
-    $total       = array_sum($amounts);
-    $contractAmt = (float) ($fresh->contract_amount ?? 0);
-
-    $project->update([
-        'billing_amounts'     => array_values($amounts),
-        'billing_dates'       => array_values($dates),
-        'total_amount_billed' => $total > 0 ? round($total, 2) : null,
-        'remaining_balance'   => $total > 0 ? round($contractAmt - $total, 2) : null,
-    ]);
-
-    return redirect()
-        ->route('admin.projects.edit', $project)
-        ->with('success', 'Billing No.' . ($index + 1) . ' updated successfully.');
     }
 
     public function destroy(Project $project)

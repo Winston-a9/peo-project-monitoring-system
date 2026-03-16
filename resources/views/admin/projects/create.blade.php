@@ -76,6 +76,17 @@
                         </div>
                         @error('contract_amount')<p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
                     </div>
+                    <div>
+                        <label class="field-label">Status</label>
+                        <select name="status" id="status_sel" class="field-input"
+                            onchange="toggleCompletedAt()"
+                            style="appearance:none; padding-right:2rem; background-image:url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%236b4f35%22 stroke-width=%222%22%3E%3Cpath d=%22M6 9l6 6 6-6%22/%3E%3C/svg%3E'); background-position:right 0.6rem center; background-repeat:no-repeat; background-size:1.1em; cursor:pointer;">
+                            <option value="ongoing"   {{ old('status') == 'ongoing'   ? 'selected' : '' }}>Ongoing</option>
+                            <option value="completed" {{ old('status') == 'completed' ? 'selected' : '' }}>Completed</option>
+                            <option value="expired"   {{ old('status') == 'expired'   ? 'selected' : '' }}>Expired</option>
+                        </select>
+                        @error('status')<p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
+                    </div>
                     <div id="completed_at_field" class="{{ old('status') == 'completed' ? '' : 'hidden' }}" style="grid-column:1/-1;">
                         <label class="field-label">Date Completed</label>
                         <input type="date" name="completed_at" class="field-input {{ $errors->has('completed_at') ? 'has-error' : '' }}"
