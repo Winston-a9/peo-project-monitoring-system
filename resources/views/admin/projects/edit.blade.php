@@ -21,167 +21,9 @@
     </div>
 </x-slot>
 
-<style>
-    :root {
-        --orange-500:#f97316; --orange-600:#ea580c;
-        --ink:#1a0f00; --ink-muted:#6b4f35;
-        --border:rgba(249,115,22,0.14);
-        --bg-primary:#ffffff; --bg-secondary:#fffaf5;
-        --text-primary:#1a0f00; --text-secondary:#6b4f35;
-        --indigo-500:#6366f1; --indigo-600:#4f46e5;
-    }
-    .dark, html.dark {
-        --bg-primary:#0f0f0f; --bg-secondary:#1a1a1a;
-        --text-primary:#f5f5f0; --text-secondary:#9ca3af;
-        --ink:#f5f5f0; --ink-muted:#9ca3af;
-        --border:rgba(249,115,22,0.25);
-    }
-    body { color:var(--text-primary); transition:background 0.3s,color 0.3s; }
-
-    .app-page-title { font-family:'Syne',sans-serif; font-weight:800; font-size:1.6rem; letter-spacing:-0.03em; color:var(--text-primary); display:flex; align-items:center; gap:0.6rem; margin:0; }
-    .app-icon-badge { background:#f97316; width:34px; height:34px; border-radius:9px; display:inline-flex; align-items:center; justify-content:center; box-shadow:0 2px 10px rgba(249,115,22,0.35); color:white; }
-    .app-page-subtitle { color:var(--text-secondary); font-size:0.82rem; margin:3px 0 0 0; }
-    .app-header-actions { display:flex; gap:0.6rem; align-items:center; }
-    .app-btn-secondary { display:inline-flex; align-items:center; gap:0.4rem; padding:0.6rem 1rem; border:1.5px solid var(--border); border-radius:9px; font-weight:600; font-size:0.825rem; color:var(--text-secondary); text-decoration:none; background:var(--bg-secondary); transition:all 0.2s; cursor:pointer; font-family:'Instrument Sans',sans-serif; }
-    .app-btn-secondary:hover { border-color:var(--orange-500); background:rgba(249,115,22,0.08); color:var(--orange-600); }
-
-    .form-card { background:var(--bg-primary); border:1px solid var(--border); border-radius:12px; overflow:hidden; box-shadow:0 2px 4px rgba(0,0,0,0.02); }
-    .section-header { padding:1.1rem 1.5rem; border-bottom:1px solid var(--border); background:var(--bg-secondary); display:flex; align-items:center; gap:0.5rem; }
-    .section-header span { font-family:'Syne',sans-serif; font-weight:700; font-size:0.875rem; color:var(--ink); }
-    .section-header i { color:var(--orange-500); font-size:0.85rem; }
-    .section-body { padding:1.5rem; }
-
-    .field-group { margin-bottom:1.25rem; }
-    .field-group:last-child { margin-bottom:0; }
-    .field-label { display:block; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-muted); margin-bottom:0.5rem; }
-    .field-input { width:100%; padding:0.75rem 1rem; border:1.5px solid var(--border); border-radius:9px; font-size:0.875rem; color:var(--text-primary); background:var(--bg-primary); outline:none; font-family:'Instrument Sans',sans-serif; transition:border-color 0.2s,box-shadow 0.2s; }
-    .field-input:focus { border-color:var(--orange-500); box-shadow:0 0 0 3px rgba(249,115,22,0.1); }
-    .readonly-field { background:var(--bg-secondary) !important; cursor:not-allowed; color:var(--ink-muted); }
-    .field-error { font-size:0.775rem; color:#ef4444; margin-top:0.35rem; display:flex; align-items:center; gap:0.3rem; }
-    .field-hint { font-size:0.7rem; color:#9ca3af; margin-top:0.35rem; }
-
-    .prog-bar-track { height:5px; background:rgba(249,115,22,0.1); border-radius:99px; margin-top:0.6rem; overflow:hidden; }
-    .prog-bar-fill { height:100%; border-radius:99px; transition:width 0.4s ease; }
-
-    .info-box { padding:0.75rem 1rem; border-radius:10px; border:1px solid var(--border); background:var(--bg-secondary); display:flex; align-items:center; gap:0.6rem; font-size:0.825rem; }
-    .info-box i { color:var(--orange-500); min-width:20px; }
-
-    .dynamic-row { display:flex; align-items:center; gap:0.5rem; }
-    .dynamic-select { flex:1; min-width:0; padding:0.65rem 2.2rem 0.65rem 0.9rem; border:1.5px solid var(--border); border-radius:9px; font-size:0.855rem; color:var(--text-primary); background:var(--bg-primary); outline:none; font-family:'Instrument Sans',sans-serif; appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-position:right 0.6rem center; background-repeat:no-repeat; background-size:1.1em; cursor:pointer; transition:border-color 0.2s,box-shadow 0.2s; }
-    .dynamic-select:focus { border-color:var(--orange-500); box-shadow:0 0 0 3px rgba(249,115,22,0.1); }
-    .remove-btn { width:36px; height:36px; border-radius:8px; border:1.5px solid #fecaca; background:#fef2f2; color:#dc2626; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:0.75rem; transition:all 0.18s; }
-    .remove-btn:hover { background:#dc2626; color:white; border-color:#dc2626; }
-    .add-row-btn { margin-top:0.875rem; display:inline-flex; align-items:center; gap:0.4rem; padding:0.5rem 1rem; border:1.5px dashed rgba(249,115,22,0.35); border-radius:8px; font-size:0.775rem; font-weight:600; color:var(--orange-600); background:rgba(249,115,22,0.04); cursor:pointer; transition:all 0.2s; font-family:'Instrument Sans',sans-serif; }
-    .add-row-btn:hover { border-color:var(--orange-500); background:rgba(249,115,22,0.09); }
-    .tag-chip { display:inline-flex; align-items:center; padding:4px 12px; border-radius:99px; font-size:0.68rem; font-weight:700; background:rgba(249,115,22,0.1); color:var(--orange-600); border:1px solid rgba(249,115,22,0.2); }
-    .tag-chip-indigo { background:rgba(99,102,241,0.1); color:#6366f1; border:1px solid rgba(99,102,241,0.2); }
-
-    /* History timeline */
-    .history-timeline { display:flex; flex-direction:column; gap:0; }
-    .history-entry { display:grid; gap:0 1rem; align-items:stretch; }
-    .history-entry.te-entry { grid-template-columns:18px 1fr 5rem 5rem 5rem; }
-    .history-entry.vo-entry { grid-template-columns:18px 1fr 5rem 5rem 5rem; }
-    .h-spine { display:flex; flex-direction:column; align-items:center; padding-top:3px; }
-    .h-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
-    .h-dot-orange { background:#f97316; box-shadow:0 0 0 3px rgba(249,115,22,0.18); }
-    .h-dot-indigo { background:#6366f1; box-shadow:0 0 0 3px rgba(99,102,241,0.18); }
-    .h-line { width:2px; flex:1; min-height:1.5rem; margin:3px 0; }
-    .h-line-orange { background:rgba(249,115,22,0.18); }
-    .h-line-indigo { background:rgba(99,102,241,0.18); }
-    .h-label { font-size:0.855rem; font-weight:700; color:var(--text-primary); padding:0.1rem 0 1rem; }
-    .h-label.last { padding-bottom:0; }
-    .h-pill { display:inline-flex; align-items:center; gap:0.3rem; padding:3px 10px; border-radius:99px; font-size:0.72rem; font-weight:700; white-space:nowrap; }
-    .h-pill-orange { background:rgba(249,115,22,0.1); color:#ea580c; border:1px solid rgba(249,115,22,0.22); }
-    .h-pill-indigo { background:rgba(99,102,241,0.1); color:#6366f1; border:1px solid rgba(99,102,241,0.22); }
-    .h-pill-gray   { background:rgba(0,0,0,0.04); color:#9ca3af; border:1px solid rgba(0,0,0,0.07); }
-    .h-pill-cum-last { background:rgba(249,115,22,0.12); color:#ea580c; border:1px solid rgba(249,115,22,0.22); }
-    .h-col-hdr { font-size:0.63rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#9ca3af; }
-    .h-summary { display:flex; align-items:center; justify-content:space-between; margin-top:1rem; padding:0.65rem 0.875rem; border-radius:9px; border:1px solid var(--border); background:var(--bg-secondary); }
-
-    .form-actions { display:flex; gap:0.875rem; margin-top:2rem; }
-    .btn-submit { display:inline-flex; align-items:center; gap:0.5rem; padding:0.85rem 1.75rem; background:var(--orange-500); color:white; font-weight:700; font-size:0.9rem; border-radius:10px; border:none; cursor:pointer; box-shadow:0 3px 14px rgba(249,115,22,0.38); font-family:'Instrument Sans',sans-serif; transition:all 0.2s; }
-    .btn-submit:hover { background:#ea580c; transform:translateY(-1px); }
-    .btn-cancel { display:inline-flex; align-items:center; gap:0.5rem; padding:0.85rem 1.5rem; border:1.5px solid var(--border); border-radius:10px; font-weight:600; font-size:0.875rem; color:var(--ink-muted); text-decoration:none; background:var(--bg-primary); transition:all 0.2s; cursor:pointer; font-family:'Instrument Sans',sans-serif; }
-    .btn-cancel:hover { border-color:var(--orange-500); background:rgba(249,115,22,0.05); }
-
-    .grid-2col { display:grid; grid-template-columns:1fr 1fr; gap:1.25rem; }
-    @keyframes fadeUp { from{opacity:0;transform:translateY(14px);} to{opacity:1;transform:translateY(0);} }
-    .fade-up { animation:fadeUp 0.45s ease both; }
-    @media (max-width:768px) { .tab-btn { padding:0.75rem 1rem; font-size:0.8rem; } }
-    @media (max-width:640px) {
-        .grid-2col { grid-template-columns:1fr; }
-        .tab-btn { padding:0.65rem 0.8rem; font-size:0.75rem; }
-        .tab-btn span { display:none; }
-    }
-
-    /* ══ ACCORDION STYLES ══ */
-    .acc-header {
-        padding: 1.1rem 1.5rem;
-        background: var(--bg-secondary);
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        cursor: pointer;
-        user-select: none;
-        transition: background 0.2s;
-        border-bottom: 1px solid transparent;
-    }
-    .acc-header:hover { background: rgba(249,115,22,0.06); }
-    .acc-header.acc-indigo:hover { background: rgba(99,102,241,0.06); }
-    .acc-header.acc-yellow:hover { background: rgba(234,179,8,0.06); }
-    .acc-header.is-open { border-bottom-color: var(--border); }
-    .acc-header .acc-title {
-        font-family: 'Syne', sans-serif;
-        font-weight: 700;
-        font-size: 0.875rem;
-        color: var(--ink);
-    }
-    .acc-chevron {
-        width: 28px; height: 28px;
-        border-radius: 7px;
-        border: 1.5px solid var(--border);
-        background: var(--bg-primary);
-        display: flex; align-items: center; justify-content: center;
-        flex-shrink: 0;
-        transition: transform 0.3s ease, background 0.2s, border-color 0.2s, color 0.2s;
-        color: var(--text-secondary);
-        font-size: 0.65rem;
-    }
-    .acc-header.is-open .acc-chevron {
-        transform: rotate(180deg);
-        background: rgba(249,115,22,0.08);
-        border-color: rgba(249,115,22,0.3);
-        color: var(--orange-500);
-    }
-    .acc-header.acc-indigo.is-open .acc-chevron {
-        background: rgba(99,102,241,0.08);
-        border-color: rgba(99,102,241,0.3);
-        color: #6366f1;
-    }
-    .acc-header.acc-yellow.is-open .acc-chevron {
-        background: rgba(234,179,8,0.08);
-        border-color: rgba(234,179,8,0.3);
-        color: #d97706;
-    }
-    .acc-body {
-        display: grid;
-        grid-template-rows: 1fr;
-        transition: grid-template-rows 0.35s cubic-bezier(0.4,0,0.2,1);
-    }
-    .acc-body.is-collapsed {
-        grid-template-rows: 0fr;
-    }
-    .acc-body-inner {
-        overflow: hidden;
-    }
-    .acc-status-dot {
-        width: 7px; height: 7px;
-        border-radius: 50%;
-        flex-shrink: 0;
-        margin-left: auto;
-        margin-right: 0.4rem;
-    }
-</style>
+@push('styles')
+    @vite('resources/css/admin/projects/edit.css')
+@endpush
 
 @php
     $existingDocs  = is_array($project->documents_pressed) ? $project->documents_pressed : [];
@@ -263,20 +105,6 @@
             </button>
         </div>
 
-        <style>
-            .tab-btn {
-                padding:0.85rem 1.25rem; border:none; background:transparent; cursor:pointer;
-                display:flex; align-items:center; gap:0.5rem; color:var(--text-secondary);
-                font-weight:600; font-size:0.85rem; font-family:'Instrument Sans',sans-serif;
-                border-bottom:3px solid transparent; transition:all 0.2s;
-                position:relative; bottom:-1.5px;
-            }
-            .tab-btn:hover { color:var(--text-primary); }
-            .tab-btn.tab-active { color:var(--orange-500); border-bottom-color:var(--orange-500); }
-            .tab-content { display:none; }
-            .tab-content.active { display:block; }
-        </style>
-
         {{-- TAB 1: OVERVIEW --}}
         <div id="tab-overview" class="tab-content active">
             <div class="info-box" style="margin-bottom:1.5rem;">
@@ -293,7 +121,6 @@
                     <span>Project Information</span>
                     <span style="margin-left:auto; font-size:0.7rem; color:#9ca3af; font-weight:400;">Read-only</span>
                 </div>
-                {{-- Hidden inputs carry all values for form submission --}}
                 <input type="hidden" name="in_charge"       value="{{ $project->in_charge }}">
                 <input type="hidden" name="project_title"   value="{{ $project->project_title }}">
                 <input type="hidden" name="location"        value="{{ $project->location }}">
@@ -343,7 +170,6 @@
                     <span>Contract Dates</span>
                     <span style="margin-left:auto; font-size:0.7rem; color:#9ca3af; font-weight:400;">Key milestones</span>
                 </div>
-                {{-- Hidden inputs carry values for form submission --}}
                 <input type="hidden" name="date_started"             value="{{ $project->date_started->format('Y-m-d') }}">
                 <input type="hidden" name="original_contract_expiry" value="{{ $project->original_contract_expiry->format('Y-m-d') }}">
                 <div class="section-body">
@@ -416,7 +242,7 @@
             </div>
         </div>
 
-        {{-- LIQUIDATED DAMAGES — auto fields shown as plain text with comma formatting --}}
+        {{-- LIQUIDATED DAMAGES --}}
         <div class="form-card" style="margin-bottom:1.5rem;">
             <div class="section-header">
                 <i class="fas fa-calculator"></i>
@@ -467,10 +293,10 @@
         </div>
         </div>
 
-        {{-- TAB 3: EXTENSIONS — with accordion panels --}}
+        {{-- TAB 3: EXTENSIONS --}}
         <div id="tab-extensions" class="tab-content">
 
-        {{-- ══ TIME EXTENSIONS ACCORDION ══ --}}
+        {{-- TIME EXTENSIONS ACCORDION --}}
         <div class="form-card" style="margin-bottom:1.5rem;">
             <div class="acc-header is-open" id="acc-te-hdr" onclick="toggleAcc('te')" role="button" aria-expanded="true" aria-controls="acc-te-bdy">
                 <i class="fas fa-clock" style="color:var(--orange-500); font-size:0.85rem; flex-shrink:0;"></i>
@@ -580,7 +406,7 @@
             </div>
         </div>
 
-        {{-- ══ VARIATION ORDERS ACCORDION ══ --}}
+        {{-- VARIATION ORDERS ACCORDION --}}
         <div class="form-card" style="margin-bottom:1.5rem; border-color:rgba(99,102,241,0.18);">
             <div class="acc-header acc-indigo is-open" id="acc-vo-hdr" onclick="toggleAcc('vo')" role="button" aria-expanded="true" aria-controls="acc-vo-bdy" style="border-bottom-color:rgba(99,102,241,0.15);">
                 <i class="fas fa-file-signature" style="color:#6366f1; font-size:0.85rem; flex-shrink:0;"></i>
@@ -701,7 +527,7 @@
             </div>
         </div>
 
-        {{-- ══ SUSPENSION ORDER ACCORDION ══ --}}
+        {{-- SUSPENSION ORDER ACCORDION --}}
         <div class="form-card" style="margin-bottom:1.5rem; border-color:rgba(234,179,8,0.2);">
             <div class="acc-header acc-yellow is-open" id="acc-so-hdr" onclick="toggleAcc('so')" role="button" aria-expanded="true" aria-controls="acc-so-bdy" style="border-bottom-color:rgba(234,179,8,0.18);">
                 <i class="fas fa-pause-circle" style="color:#d97706; font-size:0.85rem; flex-shrink:0;"></i>
@@ -778,6 +604,9 @@
                     </div>
                     @endforeach
                 </div>
+                <button type="button" class="add-row-btn" onclick="addIssuanceRow()">
+                    <i class="fas fa-plus"></i> Add Notification
+                </button>
 
                 {{-- Performance Bond date — only visible when Performance Bond is selected --}}
                 <div id="performance-bond-date-field" style="display:none; margin-top:1.25rem; padding:1rem 1.15rem; border-radius:10px; border:1.5px solid rgba(249,115,22,0.2); background:rgba(249,115,22,0.04);">
@@ -818,160 +647,29 @@
     </form>
 </div>
 
+{{-- PHP-rendered runtime variables required by edit.js --}}
+{{-- ✅ These MUST be in @push so they render in the same stack, before edit.js --}}
+@push('scripts')
 <script>
-// ── Tab switching ──
-function switchTab(tabId, btnElement) {
-    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('tab-active'));
-    document.getElementById(tabId).classList.add('active');
-    btnElement.classList.add('tab-active');
-}
-
-// ── Accordion toggle ──
-function toggleAcc(id) {
-    const hdr  = document.getElementById('acc-' + id + '-hdr');
-    const body = document.getElementById('acc-' + id + '-bdy');
-    const open = hdr.classList.contains('is-open');
-    if (open) {
-        hdr.classList.remove('is-open');
-        body.classList.add('is-collapsed');
-        hdr.setAttribute('aria-expanded', 'false');
-    } else {
-        hdr.classList.add('is-open');
-        body.classList.remove('is-collapsed');
-        hdr.setAttribute('aria-expanded', 'true');
-    }
-}
-
-function toggleCompletedAt() {
-    document.getElementById('completed_at_field').classList.toggle('hidden', document.getElementById('status_sel').value !== 'completed');
-}
-
-function computeSlippage() {
-    const ap   = parseFloat(document.getElementById('as_planned').value);
-    const wd   = parseFloat(document.getElementById('work_done').value);
-    document.getElementById('ap_bar').style.width = Math.min(ap || 0, 100) + '%';
-    document.getElementById('wd_bar').style.width = Math.min(wd || 0, 100) + '%';
-    const lbl  = document.getElementById('slippage_label');
-    const valEl = document.getElementById('slippage-value');
-    if (isNaN(ap) || isNaN(wd)) { valEl.textContent = '—'; return; }
-    const sl = (wd - ap).toFixed(2);
-    document.getElementById('slippage').value = sl;
-    if (+sl > 0)      { lbl.style.color='#16a34a'; lbl.innerHTML='<i class="fas fa-arrow-up"></i> Ahead';    valEl.style.color='#16a34a'; }
-    else if (+sl < 0) { lbl.style.color='#dc2626'; lbl.innerHTML='<i class="fas fa-arrow-down"></i> Behind'; valEl.style.color='#dc2626'; }
-    else              { lbl.style.color='#9ca3af'; lbl.innerHTML='<i class="fas fa-minus"></i> On schedule'; valEl.style.color='#9ca3af'; }
-    valEl.textContent = (+sl > 0 ? '+' : '') + sl + '%';
-}
-
-// ── LD — uses unworked % not accomplished % ──
-function fmtNum(n, decimals) {
-    return n.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
-}
-function calculateLDPerDay() {
-    const acc      = parseFloat(document.getElementById('ld_accomplished').value) || 0;
-    const amt      = parseFloat(document.getElementById('contract_amount').value.replace(/,/g, '')) || 0;
-    const unworked = Math.max(0, 100 - acc);
-    const perDay   = (unworked / 100) * amt * 0.001;
-
-    document.getElementById('ld_unworked').value = unworked.toFixed(2);
-    document.getElementById('ld_per_day').value  = perDay.toFixed(2);
-
-    document.getElementById('ld_unworked_display').textContent = fmtNum(unworked, 2);
-    document.getElementById('ld_per_day_display').textContent  = fmtNum(perDay, 2);
-
-    calculateLDTotal();
-}
-function calculateLDTotal() {
-    const perDay  = parseFloat(document.getElementById('ld_per_day').value)            || 0;
-    const overdue = parseFloat(document.getElementById('ld_days_overdue_input').value) || 0;
-    const total   = perDay * overdue;
-
-    document.getElementById('total_ld').value = total.toFixed(2);
-    document.getElementById('total_ld_display').textContent = fmtNum(total, 2);
-}
-
-// ── Date preview helpers ──
-const originalExpiry = '{{ $project->original_contract_expiry->format("Y-m-d") }}';
-const existingTEDays = {{ (int) collect($project->extension_days ?? [])->filter(fn($v) => is_numeric($v))->sum() }};
-const existingVODays = {{ (int) collect($project->vo_days ?? [])->filter(fn($v) => is_numeric($v))->sum() }};
-const existingSODays = {{ (int) ($project->suspension_days ?? 0) }};
-
-function addDaysToDate(dateStr, days) {
-    const d = new Date(dateStr + 'T00:00:00');
-    d.setDate(d.getDate() + days);
-    return d;
-}
-function formatDate(d) {
-    return d.toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
-}
-function updateTEPreview() {
-    const newDays = parseInt(document.getElementById('new_te_days').value) || 0;
-    const preview = document.getElementById('te_revised_preview');
-    if (newDays < 1) { preview.textContent = 'Enter days above to preview'; return; }
-    preview.textContent = formatDate(addDaysToDate(originalExpiry, existingTEDays + existingVODays + existingSODays + newDays));
-}
-function updateVOPreview() {
-    const newDays = parseInt(document.getElementById('new_vo_days').value) || 0;
-    const preview = document.getElementById('vo_revised_preview');
-    if (newDays < 1) { preview.textContent = 'Enter days above to preview'; return; }
-    preview.textContent = formatDate(addDaysToDate(originalExpiry, existingTEDays + existingVODays + existingSODays + newDays));
-}
-function updateSOPreview() {
-    const newDays = parseInt(document.getElementById('new_so_days').value) || 0;
-    const preview = document.getElementById('so_revised_preview');
-    if (newDays < 1) { preview.textContent = 'Enter days to preview'; return; }
-    preview.textContent = formatDate(addDaysToDate(originalExpiry, existingTEDays + existingVODays + existingSODays + newDays));
-}
-
-// ── Issuances ──
-function checkPerformanceBond() {
-    const hasPerformanceBond = [...document.querySelectorAll('#issuances-list select')]
-        .some(s => s.value === 'Performance Bond');
-    const field = document.getElementById('performance-bond-date-field');
-    field.style.display = hasPerformanceBond ? 'block' : 'none';
-}
-
-const ISSUANCE_OPTS = ['1st Notice of Negative Slippage','2nd Notice of Negative Slippage','3rd Notice of Negative Slippage','Liquidated Damages','Notice to Terminate','Notice of Expiry'];
-function issuanceRowHTML(val = '') {
-    let opts = '<option value="">— Select Issuance —</option>';
-    ISSUANCE_OPTS.forEach(o => opts += `<option value="${o}" ${o===val?'selected':''}>${o}</option>`);
-    return `<div class="dynamic-row">
-        <select name="issuances[]" class="dynamic-select" onchange="updateCount('issuances-list','issuance-count'); checkPerformanceBond()">${opts}</select>
-        <button type="button" class="remove-btn" onclick="removeIssuanceRow(this)"><i class="fas fa-times"></i></button>
-    </div>`;
-}
-function addIssuanceRow() {
-    document.getElementById('issuances-list').insertAdjacentHTML('beforeend', issuanceRowHTML());
-    updateCount('issuances-list', 'issuance-count');
-}
-function removeIssuanceRow(btn) {
-    const list = document.getElementById('issuances-list');
-    if (list.querySelectorAll('.dynamic-row').length <= 1) {
-        list.querySelector('select').value = '';
-        updateCount('issuances-list','issuance-count');
-        checkPerformanceBond();
-        return;
-    }
-    btn.closest('.dynamic-row').remove();
-    updateCount('issuances-list', 'issuance-count');
-    checkPerformanceBond();
-}
-function updateCount(listId, countId) {
-    const filled = [...document.getElementById(listId).querySelectorAll('select')].filter(s => s.value !== '').length;
-    const chip   = document.getElementById(countId);
-    chip.textContent       = filled;
-    chip.style.background  = filled > 0 ? 'rgba(249,115,22,0.15)' : 'rgba(249,115,22,0.07)';
-    chip.style.color       = filled > 0 ? '#ea580c' : '#9ca3af';
-    chip.style.borderColor = filled > 0 ? 'rgba(249,115,22,0.3)' : 'rgba(249,115,22,0.15)';
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    computeSlippage();
-    updateCount('issuances-list', 'issuance-count');
-    calculateLDPerDay();
-    checkPerformanceBond();
-});
+    const originalExpiry = '{{ $project->original_contract_expiry->format("Y-m-d") }}';
+    const existingTEDays = {{ (int) collect($project->extension_days ?? [])->filter(fn($v) => is_numeric($v))->sum() }};
+    const existingVODays = {{ (int) collect($project->vo_days ?? [])->filter(fn($v) => is_numeric($v))->sum() }};
+    const existingSODays = {{ (int) ($project->suspension_days ?? 0) }};
+    {{-- ✅ FIX: Added missing 'Performance Bond' to match the PHP $issuanceOptions array --}}
+    const ISSUANCE_OPTS  = [
+        '1st Notice of Negative Slippage',
+        '2nd Notice of Negative Slippage',
+        '3rd Notice of Negative Slippage',
+        'Liquidated Damages',
+        'Notice to Terminate',
+        'Notice of Expiry',
+        'Performance Bond'
+    ];
+    const _totalTECount  = {{ $teCount }};
+    const _totalVOCount  = {{ $voCount }};
 </script>
+@vite('resources/js/admin/projects/edit.js')
+@endpush
 
 {{-- EDIT ENTRY MODAL --}}
 <x-modal id="edit-entry-modal" title="Edit Entry" type="default" icon="fa-pen" size="md">
@@ -1028,6 +726,7 @@ document.addEventListener('DOMContentLoaded', () => {
     </x-slot>
 </x-modal>
 
+{{-- Modal-specific JS (uses blade-rendered routes & tokens — cannot move to edit.js) --}}
 <script>
 function openEditModal(type, index, label, days, cost, dateRequested) {
     const panel  = document.getElementById('edit-entry-modal-panel');
@@ -1138,54 +837,8 @@ function submitEditEntry() {
     </x-slot>
 </x-modal>
 
+{{-- Modal-specific JS (uses blade-rendered routes & tokens — DONT move to edit.js) --}}
 <script>
-window._delType  = 'te';
-window._delIndex = 0;
-const _totalTECount = {{ $teCount }};
-const _totalVOCount = {{ $voCount }};
-
-document.getElementById('del-reason-input').addEventListener('input', function () {
-    document.getElementById('del-reason-count').textContent = this.value.length;
-});
-
-function openDeleteModal(type, index, label, days) {
-    window._delType  = type;
-    window._delIndex = index;
-    const isVO = type === 'vo';
-    document.getElementById('del-entry-icon').className = 'fas ' + (isVO ? 'fa-file-signature' : 'fa-clock');
-    document.getElementById('del-entry-icon').style.color = '#dc2626';
-    document.getElementById('del-entry-label').textContent = label;
-    document.getElementById('del-entry-days').textContent  = '+' + days + 'd';
-    const titleEl = document.getElementById('delete-entry-modal-title');
-    if (titleEl) titleEl.textContent = 'Delete ' + label;
-    const totalOfType = isVO ? _totalVOCount : _totalTECount;
-    const notice = document.getElementById('del-renumber-notice');
-    if (totalOfType > 1) {
-        notice.style.display = 'flex';
-        document.getElementById('del-renumber-text').innerHTML =
-            'Remaining <strong style="color:var(--text-primary);">' + (isVO ? 'Variation Orders' : 'Time Extensions') +
-            '</strong> will be renumbered from <strong style="color:var(--text-primary);">1</strong>.';
-    } else {
-        notice.style.display = 'none';
-    }
-    const textarea = document.getElementById('del-reason-input');
-    textarea.value = '';
-    textarea.style.borderColor = 'var(--border)';
-    textarea.style.boxShadow   = 'none';
-    document.getElementById('del-reason-count').textContent = '0';
-    document.getElementById('del-reason-error').style.display = 'none';
-    const btn = document.getElementById('del-confirm-btn');
-    btn.innerHTML = '<i class="fas fa-trash-alt" style="font-size:0.75rem;"></i> Delete Entry';
-    btn.disabled  = false;
-    btn.style.opacity = '1';
-    openModal('delete-entry-modal');
-}
-
-function delClearError() {
-    document.getElementById('del-reason-error').style.display = 'none';
-    document.getElementById('del-reason-input').style.borderColor = 'var(--border)';
-}
-
 function submitDeleteEntry() {
     const reason = document.getElementById('del-reason-input').value.trim();
     if (!reason) {
@@ -1217,4 +870,8 @@ function submitDeleteEntry() {
     form.submit();
 }
 </script>
-</x-app-layout>
+@push('scripts')
+    @vite('resources/js/admin/projects/edit.js')
+@endpush
+```
+    </x-app-layout>

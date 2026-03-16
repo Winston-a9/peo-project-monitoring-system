@@ -21,190 +21,9 @@
     </div>
 </x-slot>
 
-<style>
-    :root {
-        --orange-500: #f97316;
-        --orange-600: #ea580c;
-        --ink:        #1a0f00;
-        --ink-muted:  #6b4f35;
-        --border:     rgba(249,115,22,0.14);
-        --bg-primary: #ffffff;
-        --bg-secondary: #fffaf5;
-        --text-primary: #1a0f00;
-        --text-secondary: #6b4f35;
-    }
-
-    @media (prefers-color-scheme: dark) {
-        :root {
-            --bg-primary: #0f0f0f;
-            --bg-secondary: #1a1a1a;
-            --text-primary: #f5f5f0;
-            --text-secondary: #9ca3af;
-            --ink: #f5f5f0;
-            --ink-muted: #9ca3af;
-            --border: rgba(249,115,22,0.25);
-        }
-    }
-
-    @keyframes fadeUp { from{opacity:0;transform:translateY(12px);} to{opacity:1;transform:translateY(0);} }
-    .fade-up   { animation: fadeUp 0.4s ease both; }
-    .fade-up-2 { animation: fadeUp 0.4s 0.06s ease both; }
-
-    body { transition: background-color 0.3s, color 0.3s; }
-
-    .main-card { background:var(--bg-primary); border:1px solid var(--border); border-radius:16px; overflow:hidden; }
-    .filter-bar { padding:1.1rem 1.5rem; border-bottom:1px solid var(--border); background:var(--bg-secondary); }
-
-    .filter-input {
-        padding:0.575rem 1rem 0.575rem 2.25rem; width:100%;
-        border:1.5px solid var(--border); border-radius:9px;
-        font-size:0.84rem; color:var(--text-primary); background:var(--bg-primary); outline:none;
-        font-family:'Instrument Sans',sans-serif; transition:border-color 0.2s, box-shadow 0.2s;
-    }
-    .filter-input:focus { border-color:var(--orange-500); box-shadow:0 0 0 3px rgba(249,115,22,0.1); }
-
-    .filter-select {
-        padding:0.575rem 2.25rem 0.575rem 0.875rem; width:100%;
-        border:1.5px solid var(--border); border-radius:9px;
-        font-size:0.84rem; color:var(--text-primary); background:var(--bg-primary); outline:none;
-        appearance:none; cursor:pointer; font-family:'Instrument Sans',sans-serif;
-        background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-        background-position:right 0.55rem center; background-repeat:no-repeat; background-size:1em;
-        transition:border-color 0.2s, box-shadow 0.2s;
-    }
-    .filter-select:focus { border-color:var(--orange-500); box-shadow:0 0 0 3px rgba(249,115,22,0.1); }
-
-    /* Table */
-    .proj-table { width:100%; border-collapse:collapse; }
-    .proj-table thead th {
-        padding:0.7rem 1.25rem; background:var(--bg-secondary);
-        font-size:0.63rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em;
-        color:var(--text-secondary); border-bottom:1px solid var(--border);
-        white-space:nowrap; text-align:left; user-select:none;
-    }
-    .proj-table thead th.sortable { cursor:pointer; transition:color 0.15s; }
-    .proj-table thead th.sortable:hover { color:var(--orange-600); }
-    .proj-table thead th .sort-icon { margin-left:0.3rem; opacity:0.35; font-size:0.55rem; }
-    .proj-table thead th.sort-active .sort-icon { opacity:1; color:var(--orange-500); }
-
-    .proj-table tbody td {
-        padding:0.9rem 1.25rem; font-size:0.845rem; color:var(--text-secondary);
-        border-bottom:1px solid var(--border); vertical-align:middle;
-    }
-    .proj-table tbody tr:last-child td { border-bottom:none; }
-    .proj-table tbody tr { transition:background 0.13s; }
-    @media (prefers-color-scheme: light) {
-    .proj-table tbody tr:hover td { background:rgba(249,115,22,0.04); }
-    }
-    @media (prefers-color-scheme: dark) {
-        .proj-table tbody tr:hover td { background:rgba(249,115,22,0.12); }
-    }
-
-    /* ADD THIS too for the cursor */
-    .proj-table tbody tr { cursor: pointer; }
-
-    .proj-table tbody tr:hover td:first-child { box-shadow:inset 3px 0 0 var(--orange-500); }
-
-    /* Badges */
-    .badge { display:inline-flex; align-items:center; gap:0.3rem; padding:3px 10px; border-radius:99px; font-size:0.68rem; font-weight:700; border:1px solid; white-space:nowrap; }
-    @media (prefers-color-scheme: light) {
-        .badge-active    { background:rgba(6,182,212,0.08);   color:#0891b2; border-color:rgba(6,182,212,0.22); }
-        .badge-ongoing   { background:rgba(59,130,246,0.08);  color:#2563eb; border-color:rgba(59,130,246,0.22); }
-        .badge-completed { background:rgba(34,197,94,0.08);   color:#16a34a; border-color:rgba(34,197,94,0.2); }
-        .badge-expiring  { background:rgba(234,179,8,0.1);    color:#b45309; border-color:rgba(234,179,8,0.25); }
-        .badge-expired   { background:rgba(239,68,68,0.08);   color:#dc2626; border-color:rgba(239,68,68,0.2); }
-    }
-    @media (prefers-color-scheme: dark) {
-        .badge-active    { background:rgba(6,182,212,0.15);   color:#06b6d4; border-color:rgba(6,182,212,0.3); }
-        .badge-ongoing   { background:rgba(59,130,246,0.15);  color:#60a5fa; border-color:rgba(59,130,246,0.3); }
-        .badge-completed { background:rgba(34,197,94,0.15);   color:#4ade80; border-color:rgba(34,197,94,0.3); }
-        .badge-expiring  { background:rgba(234,179,8,0.15);    color:#facc15; border-color:rgba(234,179,8,0.3); }
-        .badge-expired   { background:rgba(239,68,68,0.15);   color:#f87171; border-color:rgba(239,68,68,0.3); }
-    }
-
-    .slip-pill { display:inline-flex; align-items:center; gap:0.25rem; padding:2px 8px; border-radius:99px; font-size:0.69rem; font-weight:700; }
-    @media (prefers-color-scheme: light) {
-        .slip-ahead  { background:rgba(34,197,94,0.1);   color:#16a34a; }
-        .slip-behind { background:rgba(239,68,68,0.1);   color:#dc2626; }
-        .slip-on     { background:rgba(156,163,175,0.1); color:#6b7280; }
-    }
-    @media (prefers-color-scheme: dark) {
-        .slip-ahead  { background:rgba(34,197,94,0.15);   color:#4ade80; }
-        .slip-behind { background:rgba(239,68,68,0.15);   color:#f87171; }
-        .slip-on     { background:rgba(156,163,175,0.15); color:#9ca3af; }
-    }
-
-    .view-btn { display:inline-flex; align-items:center; gap:0.3rem; padding:0.38rem 0.8rem; border-radius:8px; font-size:0.755rem; font-weight:600; color:var(--text-secondary); border:1.5px solid var(--border); background:var(--bg-primary); text-decoration:none; transition:all 0.16s; white-space:nowrap; }
-    .view-btn:hover { border-color:var(--orange-500); color:var(--orange-600); background:rgba(249,115,22,0.1); }
-
-    .edit-btn { display:inline-flex; align-items:center; gap:0.3rem; padding:0.38rem 0.8rem; border-radius:8px; font-size:0.755rem; font-weight:600; color:#f97316; border:1.5px solid rgba(249,115,22,0.4); background:rgba(249,115,22,0.1); text-decoration:none; transition:all 0.16s; white-space:nowrap; }
-    .edit-btn:hover { border-color:#f97316; color:#f97316; background:rgba(249,115,22,0.15); }
-
-    .delete-btn { display:inline-flex; align-items:center; gap:0.3rem; padding:0.38rem 0.8rem; border-radius:8px; font-size:0.755rem; font-weight:600; color:#ef4444; border:1.5px solid rgba(239,68,68,0.4); background:rgba(239,68,68,0.1); cursor:pointer; font-family:'Instrument Sans',sans-serif; transition:all 0.16s; white-space:nowrap; }
-    .delete-btn:hover { border-color:#ef4444; color:#ef4444; background:rgba(239,68,68,0.15); }
-
-    /* Chips */
-    .chip { display:inline-flex; align-items:center; gap:0.3rem; padding:0.3rem 0.75rem; border-radius:99px; font-size:0.72rem; font-weight:600; border:1.5px solid; text-decoration:none; transition:all 0.16s; }
-    .chip-default { background:var(--bg-primary); color:var(--text-secondary); border-color:var(--border); }
-    .chip-default:hover { border-color:rgba(249,115,22,0.35); color:var(--orange-600); }
-    .chip-active { background:var(--orange-500); color:white; border-color:var(--orange-500); box-shadow:0 2px 8px rgba(249,115,22,0.28); }
-
-    /* Pagination */
-    .pagination-wrap { padding:1rem 1.5rem; border-top:1px solid var(--border); background:var(--bg-secondary); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.75rem; }
-    .page-info { font-size:0.78rem; color:var(--text-secondary); }
-    .page-links { display:flex; align-items:center; gap:0.3rem; flex-wrap:wrap; }
-    .page-btn { display:inline-flex; align-items:center; justify-content:center; min-width:32px; height:32px; padding:0 0.5rem; border-radius:8px; font-size:0.8rem; font-weight:600; border:1.5px solid var(--border); background:var(--bg-primary); color:var(--text-secondary); text-decoration:none; transition:all 0.16s; font-family:'Instrument Sans',sans-serif; }
-    .page-btn:hover:not(.disabled):not(.active) { border-color:var(--orange-500); color:var(--orange-600); background:rgba(249,115,22,0.1); }
-    .page-btn.active { background:var(--orange-500); border-color:var(--orange-500); color:white; box-shadow:0 2px 8px rgba(249,115,22,0.3); }
-    .page-btn.disabled { opacity:0.35; pointer-events:none; cursor:default; }
-    .page-btn.ellipsis { border-color:transparent; background:transparent; pointer-events:none; }
-
-    .per-page-select { padding:0.35rem 1.75rem 0.35rem 0.6rem; border:1.5px solid var(--border); border-radius:8px; font-size:0.78rem; color:var(--text-primary); background:var(--bg-primary); outline:none; appearance:none; cursor:pointer; font-family:'Instrument Sans',sans-serif; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-position:right 0.4rem center; background-repeat:no-repeat; background-size:0.9em; transition:border-color 0.2s; }
-    .per-page-select:focus { border-color:var(--orange-500); }
-
-    .empty-state { padding:3.5rem 1.5rem; text-align:center; }
-
-    .modal-bg { position:fixed; inset:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center; z-index:1000; }
-    @media (prefers-color-scheme: dark) {
-        .modal-bg { background:rgba(0,0,0,0.7); }
-    }
-    .modal-box { background:var(--bg-primary); border-radius:14px; padding:2rem; max-width:360px; width:90%; box-shadow:0 32px 80px rgba(0,0,0,0.2); border:1px solid var(--border); }
-
-    /* Dark Mode Toggle Sidebar */
-    .theme-sidebar {
-        position:fixed; right:0; top:50%; transform:translateY(-50%);
-        background:var(--bg-primary); border:1px solid var(--border);
-        border-right:none; border-radius:16px 0 0 16px;
-        padding:1.2rem 0.8rem; z-index:999;
-        display:flex; flex-direction:column; gap:0.8rem;
-        box-shadow:-4px 0 16px rgba(0,0,0,0.1);
-        transition:all 0.3s;
-    }
-
-    @media (prefers-color-scheme: dark) {
-        .theme-sidebar { box-shadow:-4px 0 16px rgba(0,0,0,0.3); }
-    }
-
-    .theme-btn {
-        width:48px; height:48px;
-        border-radius:12px; border:1.5px solid var(--border);
-        background:var(--bg-primary); color:var(--text-primary);
-        display:flex; align-items:center; justify-content:center;
-        cursor:pointer; transition:all 0.2s; font-size:1.1rem;
-    }
-
-    .theme-btn:hover {
-        border-color:var(--orange-500);
-        background:rgba(249,115,22,0.1);
-        color:var(--orange-600);
-    }
-
-    .theme-btn.active {
-        background:var(--orange-500); color:white; border-color:var(--orange-500);
-        box-shadow:0 4px 12px rgba(249,115,22,0.3);
-    }
-
-</style>
+@push('styles')
+    @vite('resources/css/admin/projects/index.css')
+@endpush
 
 @php
     $today      = now();
@@ -222,16 +41,13 @@
     $sortCol = in_array($sortCol, $allowed) ? $sortCol : 'updated_at';
 
     $q = \App\Models\Project::query();
-
-    if ($search) {
-        $q->where(fn($x) => $x->where('project_title','like',"%$search%")->orWhere('contractor','like',"%$search%")->orWhere('location','like',"%$search%"));
-    }
+    if ($search)   $q->where(fn($x) => $x->where('project_title','like',"%$search%")->orWhere('contractor','like',"%$search%")->orWhere('location','like',"%$search%"));
     if ($inCharge) $q->where('in_charge', $inCharge);
     if ($slipFilter === 'ahead')  $q->where('slippage','>',0);
     if ($slipFilter === 'behind') $q->where('slippage','<',0);
     if ($slipFilter === 'on')     $q->where('slippage',0);
     if ($dateFrom) $q->where('date_started', '>=', $dateFrom);
-    if ($dateTo) $q->where('date_started', '<=', $dateTo);
+    if ($dateTo)   $q->where('date_started', '<=', $dateTo);
 
     if ($status === 'completed') {
         $q->where('status','completed');
@@ -247,7 +63,6 @@
 
     $projects = $q->orderBy($sortCol,$sortDir)->paginate($perPage)->withQueryString();
 
-    // Chip counts — without status filter applied
     $base = \App\Models\Project::query();
     if ($search)   $base->where(fn($x) => $x->where('project_title','like',"%$search%")->orWhere('contractor','like',"%$search%")->orWhere('location','like',"%$search%"));
     if ($inCharge) $base->where('in_charge',$inCharge);
@@ -255,7 +70,7 @@
     if ($slipFilter === 'behind') $base->where('slippage','<',0);
     if ($slipFilter === 'on')     $base->where('slippage',0);
     if ($dateFrom) $base->where('date_started', '>=', $dateFrom);
-    if ($dateTo) $base->where('date_started', '<=', $dateTo);
+    if ($dateTo)   $base->where('date_started', '<=', $dateTo);
 
     $counts = [
         'all'       => (clone $base)->count(),
@@ -263,21 +78,16 @@
         'completed' => (clone $base)->where('status','completed')->count(),
         'expiring'  => (clone $base)->where('status','!=','completed')->where(fn($x) => $x->whereNull('revised_contract_expiry')->whereBetween('original_contract_expiry',[now(),now()->addDays(30)])->orWhereBetween('revised_contract_expiry',[now(),now()->addDays(30)]))->count(),
         'expired'   => (clone $base)->where('status','!=','completed')->where(fn($x) => $x->whereNull('revised_contract_expiry')->where('original_contract_expiry','<',now())->orWhere('revised_contract_expiry','<',now()))->count(),
-        'ongoing'   => (clone $base)->where('status','ongoing')->where(fn($x) => $x->whereNull('revised_contract_expiry')->where('original_contract_expiry','>=',now())->orWhere('revised_contract_expiry','>=',now()))->count(),
-        'completed' => (clone $base)->where('status','completed')->count(),
-        'expiring'  => (clone $base)->where('status','!=','completed')->where(fn($x) => $x->whereNull('revised_contract_expiry')->whereBetween('original_contract_expiry',[now(),now()->addDays(30)])->orWhereBetween('revised_contract_expiry',[now(),now()->addDays(30)]))->count(),
-        'expired'   => (clone $base)->where('status','!=','completed')->where(fn($x) => $x->whereNull('revised_contract_expiry')->where('original_contract_expiry','<',now())->orWhere('revised_contract_expiry','<',now()))->count(),
     ];
 
     $allInCharge = \App\Models\Project::pluck('in_charge')->unique()->filter()->sort()->values();
-
     $sortUrl = fn($col) => request()->fullUrlWithQuery(['sort'=>$col,'dir'=>($sortCol===$col && $sortDir==='asc'?'desc':'asc'),'page'=>1]);
     $chipUrl = fn($val) => request()->fullUrlWithQuery(['status'=>$val,'page'=>1]);
 @endphp
 
 <div class="space-y-4">
 
-    {{-- Chips --}}
+    {{-- Status chips --}}
     <div class="fade-up" style="display:flex; align-items:center; gap:0.45rem; flex-wrap:wrap;">
         @foreach([
             ['all','All',null,null],
@@ -314,32 +124,27 @@
                 <input type="hidden" name="dir"      value="{{ $sortDir }}">
                 <input type="hidden" name="per_page" value="{{ $perPage }}">
                 <div style="display:grid; grid-template-columns:1fr auto auto auto auto auto; gap:0.65rem; align-items:end;">
-
                     <div style="position:relative;">
                         <i class="fas fa-search" style="position:absolute; left:0.72rem; top:50%; transform:translateY(-50%); color:#9ca3af; font-size:0.7rem; pointer-events:none;"></i>
                         <input type="text" name="search" id="searchInput" value="{{ $search }}" class="filter-input" placeholder="Search title, contractor, location…">
                     </div>
-
                     <select name="in_charge" class="filter-select" style="width:auto; min-width:138px;" onchange="this.form.submit()">
                         <option value="">All In Charge</option>
                         @foreach($allInCharge as $ic)
                             <option value="{{ $ic }}" {{ $inCharge===$ic?'selected':'' }}>{{ $ic }}</option>
                         @endforeach
                     </select>
-
                     <select name="slip" class="filter-select" style="width:auto; min-width:138px;" onchange="this.form.submit()">
                         <option value="">All Slippage</option>
                         <option value="ahead"  {{ $slipFilter==='ahead' ?'selected':'' }}>Ahead</option>
                         <option value="behind" {{ $slipFilter==='behind'?'selected':'' }}>Behind</option>
                         <option value="on"     {{ $slipFilter==='on'    ?'selected':'' }}>On Schedule</option>
                     </select>
-
                     <div style="display:flex; align-items:center; gap:0.3rem;">
-                        <input type="date" name="date_from" value="{{ $dateFrom }}" class="filter-input" style="width:140px;" placeholder="From date" title="Filter by start date from...">
+                        <input type="date" name="date_from" value="{{ $dateFrom }}" class="filter-input" style="width:140px;">
                         <span style="color:#9ca3af; font-size:0.75rem; font-weight:600;">to</span>
-                        <input type="date" name="date_to" value="{{ $dateTo }}" class="filter-input" style="width:140px;" placeholder="To date" title="Filter by start date to...">
+                        <input type="date" name="date_to"   value="{{ $dateTo }}"   class="filter-input" style="width:140px;">
                     </div>
-
                     <button type="submit"
                         style="display:inline-flex; align-items:center; gap:0.35rem; padding:0.575rem 1.1rem; background:var(--orange-500); color:white; border:none; border-radius:9px; font-size:0.83rem; font-weight:600; cursor:pointer; font-family:'Instrument Sans',sans-serif; transition:background 0.18s; white-space:nowrap;"
                         onmouseover="this.style.background='#ea580c'" onmouseout="this.style.background='#f97316'">
@@ -371,9 +176,7 @@
                         <th class="{{ $sort?'sortable':'' }} {{ $sort&&$sortCol===$c?'sort-active':'' }}"
                             @if($sort) onclick="window.location='{{ $sortUrl($c) }}'" @endif>
                             {{ $lbl }}
-                            @if($sort)
-                            <i class="fas sort-icon {{ $sortCol===$c?($sortDir==='asc'?'fa-sort-up':'fa-sort-down'):'fa-sort' }}"></i>
-                            @endif
+                            @if($sort)<i class="fas sort-icon {{ $sortCol===$c?($sortDir==='asc'?'fa-sort-up':'fa-sort-down'):'fa-sort' }}"></i>@endif
                         </th>
                         @endforeach
                     </tr>
@@ -381,13 +184,12 @@
                 <tbody>
                     @forelse($projects as $project)
                     @php
-                        $expiry     = $project->revised_contract_expiry ?? $project->original_contract_expiry;
-                        $daysLeft   = (int)$today->diffInDays($expiry, false);
-                        $sl         = (float)($project->slippage ?? 0);
-                        $sk         = $project->status==='completed'?'completed':($daysLeft<0?'expired':($daysLeft<30?'expiring':($project->status==='ongoing'?'active':'ongoing')));
+                        $expiry   = $project->revised_contract_expiry ?? $project->original_contract_expiry;
+                        $daysLeft = (int)$today->diffInDays($expiry, false);
+                        $sl       = (float)($project->slippage ?? 0);
+                        $sk       = $project->status==='completed'?'completed':($daysLeft<0?'expired':($daysLeft<30?'expiring':($project->status==='ongoing'?'active':'ongoing')));
                     @endphp
-                    <tr style="cursor:pointer;" onclick="window.location='{{ route('admin.projects.show', $project) }}'">
-
+                    <tr onclick="window.location='{{ route('admin.projects.show', $project) }}'">
                         <td>
                             <div style="font-weight:700; color:var(--ink); max-width:190px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ $project->project_title }}</div>
                             <div style="font-size:0.68rem; color:#9ca3af; margin-top:2px;">{{ $project->updated_at->diffForHumans() }}</div>
@@ -423,9 +225,9 @@
                             </div>
                         </td>
                         <td>
-                            @if($sl > 0) <span class="slip-pill slip-ahead"><i class="fas fa-arrow-up" style="font-size:0.55rem;"></i> +{{ $sl }}%</span>
+                            @if($sl > 0)     <span class="slip-pill slip-ahead"><i class="fas fa-arrow-up" style="font-size:0.55rem;"></i> +{{ $sl }}%</span>
                             @elseif($sl < 0) <span class="slip-pill slip-behind"><i class="fas fa-arrow-down" style="font-size:0.55rem;"></i> {{ $sl }}%</span>
-                            @else <span class="slip-pill slip-on"><i class="fas fa-minus" style="font-size:0.55rem;"></i> 0%</span>
+                            @else            <span class="slip-pill slip-on"><i class="fas fa-minus" style="font-size:0.55rem;"></i> 0%</span>
                             @endif
                         </td>
                         <td>
@@ -466,9 +268,7 @@
                 <span class="page-info">
                     @if($projects->firstItem())
                         Showing <strong>{{ $projects->firstItem() }}</strong>–<strong>{{ $projects->lastItem() }}</strong> of <strong>{{ $projects->total() }}</strong> projects
-                    @else
-                        No results
-                    @endif
+                    @else No results @endif
                 </span>
                 <div style="display:flex; align-items:center; gap:0.4rem;">
                     <span style="font-size:0.72rem; color:#9ca3af;">Per page:</span>
@@ -479,36 +279,25 @@
                     </select>
                 </div>
             </div>
-
             @if($projects->hasPages())
             <div class="page-links">
-                {{-- Prev --}}
                 @if($projects->onFirstPage())
                     <span class="page-btn disabled"><i class="fas fa-chevron-left" style="font-size:0.62rem;"></i></span>
                 @else
                     <a href="{{ $projects->previousPageUrl() }}" class="page-btn"><i class="fas fa-chevron-left" style="font-size:0.62rem;"></i></a>
                 @endif
-
-                {{-- Numbers --}}
                 @php
-                    $cur  = $projects->currentPage();
-                    $last = $projects->lastPage();
-                    $pages = []; $prev = null;
-                    $raw = [];
-                    for ($i=1;$i<=$last;$i++) { if($i===1||$i===$last||abs($i-$cur)<=2) $raw[]=$i; }
-                    foreach($raw as $pg) { if($prev!==null&&$pg-$prev>1) $pages[]='…'; $pages[]=$pg; $prev=$pg; }
+                    $cur=$projects->currentPage(); $last=$projects->lastPage();
+                    $pages=[]; $prev=null; $raw=[];
+                    for($i=1;$i<=$last;$i++){if($i===1||$i===$last||abs($i-$cur)<=2)$raw[]=$i;}
+                    foreach($raw as $pg){if($prev!==null&&$pg-$prev>1)$pages[]='…';$pages[]=$pg;$prev=$pg;}
                 @endphp
                 @foreach($pages as $pg)
-                    @if($pg==='…')
-                        <span class="page-btn ellipsis">…</span>
-                    @elseif($pg==$cur)
-                        <span class="page-btn active">{{ $pg }}</span>
-                    @else
-                        <a href="{{ $projects->url($pg) }}" class="page-btn">{{ $pg }}</a>
+                    @if($pg==='…') <span class="page-btn ellipsis">…</span>
+                    @elseif($pg==$cur) <span class="page-btn active">{{ $pg }}</span>
+                    @else <a href="{{ $projects->url($pg) }}" class="page-btn">{{ $pg }}</a>
                     @endif
                 @endforeach
-
-                {{-- Next --}}
                 @if($projects->hasMorePages())
                     <a href="{{ $projects->nextPageUrl() }}" class="page-btn"><i class="fas fa-chevron-right" style="font-size:0.62rem;"></i></a>
                 @else
@@ -517,7 +306,6 @@
             </div>
             @endif
         </div>
-
     </div>
 </div>
 
@@ -532,9 +320,7 @@
             <p id="deleteProjectName" style="color:var(--ink-muted); font-size:0.845rem; margin-bottom:0.25rem;"></p>
             <p style="color:#b91c1c; font-size:0.78rem; margin-bottom:1.5rem; background:#fef2f2; padding:0.4rem 0.75rem; border-radius:6px; display:inline-block;">This action cannot be undone.</p>
             <div style="display:flex; gap:0.65rem; justify-content:center;">
-                <button onclick="closeModal()" style="padding:0.6rem 1.4rem; border:1.5px solid rgba(0,0,0,0.1); border-radius:9px; font-weight:600; font-size:0.845rem; cursor:pointer; background:white; color:var(--ink); font-family:'Instrument Sans',sans-serif;">
-                    Cancel
-                </button>
+                <button onclick="closeModal()" style="padding:0.6rem 1.4rem; border:1.5px solid rgba(0,0,0,0.1); border-radius:9px; font-weight:600; font-size:0.845rem; cursor:pointer; background:white; color:var(--ink); font-family:'Instrument Sans',sans-serif;">Cancel</button>
                 <button id="confirmDeleteBtn" style="padding:0.6rem 1.4rem; border-radius:9px; background:#dc2626; color:white; font-weight:600; font-size:0.845rem; cursor:pointer; border:none; font-family:'Instrument Sans',sans-serif; display:inline-flex; align-items:center; gap:0.4rem;">
                     <i class="fas fa-trash" style="font-size:0.75rem;"></i> Delete
                 </button>
@@ -543,38 +329,7 @@
     </div>
 </div>
 
-<script>
-function changePerPage(val) {
-    const url = new URL(window.location.href);
-    url.searchParams.set('per_page', val);
-    url.searchParams.set('page', 1);
-    window.location.href = url.toString();
-}
-document.getElementById('searchInput').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') { e.preventDefault(); this.closest('form').submit(); }
-});
-
-let pendingDeleteId = null;
-
-function confirmDelete(id, name) {
-    pendingDeleteId = id;
-    document.getElementById('deleteProjectName').textContent = `"${name}"`;
-    document.getElementById('deleteModal').style.display = 'flex';
-}
-
-function closeModal() {
-    document.getElementById('deleteModal').style.display = 'none';
-    pendingDeleteId = null;
-}
-
-document.getElementById('confirmDeleteBtn').addEventListener('click', () => {
-    if (!pendingDeleteId) return;
-    const f = document.createElement('form');
-    f.method = 'POST';
-    f.action = `/admin/projects/${pendingDeleteId}`;
-    f.innerHTML = `@csrf @method('DELETE')`;
-    document.body.appendChild(f);
-    f.submit();
-});
-</script>
+@push('scripts')
+    @vite('resources/js/admin/projects/index.js')
+@endpush
 </x-app-layout>
