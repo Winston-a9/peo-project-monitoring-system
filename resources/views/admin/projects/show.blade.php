@@ -791,15 +791,26 @@
 {{-- ══════════ ACTIVITY LOG ══════════ --}}
 @php $logs = $project->logs()->with('user')->latest()->get(); @endphp
 <div class="card fu d4">
-    <div class="ch" style="justify-content:space-between;">
-        <div style="display:flex;align-items:center;gap:0.5rem;">
+    {{-- Collapsible header --}}
+    <div class="ch" style="justify-content:space-between; cursor:pointer; user-select:none;"
+         onclick="toggleActivityLog()" id="activity-log-header">
+        <div style="display:flex; align-items:center; gap:0.5rem;">
             <i class="fas fa-clock-rotate-left" style="color:var(--or5);font-size:0.8rem;"></i>
             <span class="ct">Activity Log</span>
         </div>
-        @if($logs->count())
-            <span class="pill p-or">{{ $logs->count() }} {{ Str::plural('entry', $logs->count()) }}</span>
-        @endif
+        <div style="display:flex; align-items:center; gap:0.5rem;">
+            @if($logs->count())
+                <span class="pill p-or">{{ $logs->count() }} {{ Str::plural('entry', $logs->count()) }}</span>
+            @endif
+            <div id="activity-log-chevron"
+                 style="width:28px;height:28px;border-radius:7px;border:1.5px solid var(--bd);background:var(--bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:transform 0.3s ease,background 0.2s;color:var(--tx2);font-size:0.65rem;transform:rotate(180deg);">
+                <i class="fas fa-chevron-down"></i>
+            </div>
+        </div>
     </div>
+
+    {{-- Collapsible body --}}
+    <div id="activity-log-body" style="overflow:hidden; max-height:2000px; transition:max-height 0.35s cubic-bezier(0.4,0,0.2,1);">
     @if($logs->count())
     <div style="max-height:500px;overflow-y:auto;padding:1.1rem 1.25rem;">
         <div style="display:flex;flex-direction:column;">
@@ -944,7 +955,8 @@
         <p style="font-size:0.845rem;font-style:italic;">No activity recorded yet.</p>
     </div>
     @endif
-</div>
+    </div> {{-- end collapsible body --}}
+</div>  {{-- end activity log card --}}
 
 {{-- ══════════ DANGER ZONE ══════════ --}}
 <div style="background:var(--bg);border:1px solid rgba(239,68,68,0.2);border-radius:14px;padding:1.1rem 1.25rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;box-shadow:var(--sh);" class="fu d5">

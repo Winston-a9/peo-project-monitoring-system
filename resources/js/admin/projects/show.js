@@ -85,6 +85,24 @@ window.toggleBillingTab = function (tab) {
         tableBtn.style.color               = 'var(--tx)';
     }
 };
+/* ── Activity log collapse ── */
+window.toggleActivityLog = function () {
+    const body    = document.getElementById('activity-log-body');
+    const chevron = document.getElementById('activity-log-chevron');
+    const isOpen  = body.style.maxHeight !== '0px';
+
+    if (isOpen) {
+        body.style.maxHeight  = '0px';
+        chevron.style.transform = 'rotate(0deg)';
+        chevron.style.background = 'var(--bg)';
+    } else {
+        body.style.maxHeight  = '2000px';
+        chevron.style.transform = 'rotate(180deg)';
+        chevron.style.background = 'rgba(249,115,22,0.08)';
+        chevron.style.borderColor = 'rgba(249,115,22,0.3)';
+        chevron.style.color = 'var(--or5)';
+    }
+};
 
 /* ── Init on load ── */
 initTheme();
