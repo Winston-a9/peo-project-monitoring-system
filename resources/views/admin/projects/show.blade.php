@@ -816,13 +816,42 @@
                 [$aColor, $aBg, $aBorder, $aIcon] = $aMap;
                 $changes = $log->changes ?? [];
                 $filteredChanges = [];
+                $filteredChanges = [];
+
+                // Fields that are auto-computed or irrelevant to display
+                $skipFields = [
+                    'updated_at',
+                    'slippage',               // auto-computed from as_planned/work_done
+                    'revised_contract_expiry',// auto-computed from TE/VO/SO days
+                    'contract_days',          // auto-computed
+                    'time_extension',         // auto-counted
+                    'variation_order',        // auto-counted
+                    'total_amount_billed',    // auto-summed from billing_amounts
+                    'remaining_balance',      // auto-computed
+                    'ld_unworked',            // auto-computed from ld_accomplished
+                    'ld_per_day',             // auto-computed
+                    'total_ld',               // auto-computed
+                ];
+
+                // Fields that need special empty-check before showing
+                $emptyCheckFields = ['issuances', 'documents_pressed', 'billing_amounts', 'billing_dates', 'extension_days', 'vo_days', 'vo_cost', 'cost_involved', 'date_requested'];
+
                 foreach ($changes as $field => $change) {
-                    if (in_array($field, ['work_done', 'updated_at'])) continue;
-                    if (in_array($field, ['issuances'])) {
+                    // Skip auto-computed and noise fields
+                    if (in_array($field, $skipFields)) continue;
+
+                    // Skip array fields if the new value is empty
+                    if (in_array($field, $emptyCheckFields)) {
                         $newVal = $change['to'] ?? $change['new'] ?? $change;
-                        $flat = is_array($newVal) ? array_filter($newVal) : $newVal;
+                        $flat   = is_array($newVal) ? array_filter($newVal) : $newVal;
                         if (empty($flat)) continue;
                     }
+
+                    // Skip null-to-null or unchanged
+                    $from = $change['from'] ?? $change['old'] ?? null;
+                    $to   = $change['to']   ?? $change['new'] ?? $change;
+                    if ($from === $to) continue;
+
                     $filteredChanges[$field] = $change;
                 }
                 $changeCount = count($filteredChanges);
@@ -868,8 +897,27 @@
                             }
                             $isSlip  = $field === 'slippage';
                             $slipNum = $isSlip ? (float)$displayTo : 0;
-                            $label   = ucwords(str_replace('_', ' ', $field));
-                        @endphp
+                            $labelMap = [
+                                'as_planned'               => 'As Planned (%)',
+                                'work_done'                => 'Work Done (%)',
+                                'status'                   => 'Status',
+                                'completed_at'             => 'Date Completed',
+                                'remarks_recommendation'   => 'Remarks',
+                                'issuances'                => 'Notifications',
+                                'documents_pressed'        => 'Documents',
+                                'extension_days'           => 'Extension Days',
+                                'vo_days'                  => 'VO Days',
+                                'vo_cost'                  => 'VO Cost',
+                                'cost_involved'            => 'Cost Involved',
+                                'suspension_days'          => 'Suspension Days',
+                                'date_requested'           => 'Date Requested',
+                                'ld_accomplished'          => 'LD Accomplished (%)',
+                                'ld_days_overdue'          => 'Days Overdue From',
+                                'billing_amounts'          => 'Billing Amounts',
+                                'billing_dates'            => 'Billing Dates',
+                                'performance_bond_date'    => 'Performance Bond Date',
+                            ];
+                            $label = $labelMap[$field] ?? ucwords(str_replace('_', ' ', $field));                        @endphp
                         <div style="display:flex;align-items:center;gap:0.45rem;flex-wrap:wrap;padding:0.4rem 0.75rem;border-radius:8px;background:var(--bg2);border:1px solid var(--bd);">
                             <span style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink2);min-width:80px;">{{ $label }}</span>
                             @if($displayFrom !== '')

@@ -135,8 +135,10 @@
                         <label class="field-label">As Planned <span style="font-weight:400; text-transform:none; letter-spacing:0; color:#9ca3af;">(%)</span></label>
                         <div class="prefix-wrap" style="position:relative;">
                             <input type="number" name="as_planned" id="as_planned" class="field-input"
-                                style="padding-right:2.5rem;" placeholder="0" value="{{ old('as_planned', 0) }}" min="0" max="100" step="0.01" oninput="liveSlippage()">
-                            <span style="position:absolute; right:0.875rem; top:50%; transform:translateY(-50%); color:var(--ink-muted); font-size:0.8rem; font-weight:600;">%</span>
+                            style="padding-right:2.5rem;" placeholder="0.00"
+                            value="{{ old('as_planned', 0) }}"
+                            min="0" max="100" step="0.01"
+                            oninput="this.value=Math.min(100,Math.max(0,parseFloat(this.value)||0)).toFixed(2).replace(/\.?0+$/,''); liveSlippage()">
                         </div>
                         <div class="prog-bar-track"><div class="prog-bar-fill" id="ap_bar" style="background:var(--orange-500); width:0%;"></div></div>
                     </div>
@@ -144,8 +146,10 @@
                         <label class="field-label">Work Done <span style="font-weight:400; text-transform:none; letter-spacing:0; color:#9ca3af;">(%)</span></label>
                         <div style="position:relative;">
                             <input type="number" name="work_done" id="work_done" class="field-input"
-                                style="padding-right:2.5rem;" placeholder="0" value="{{ old('work_done', 0) }}" min="0" max="100" step="0.01" oninput="liveSlippage()">
-                            <span style="position:absolute; right:0.875rem; top:50%; transform:translateY(-50%); color:var(--ink-muted); font-size:0.8rem; font-weight:600;">%</span>
+                            style="padding-right:2.5rem;" placeholder="0.00"
+                            value="{{ old('work_done', 0) }}"
+                            min="0" max="100" step="0.01"
+                            oninput="this.value=Math.min(100,Math.max(0,parseFloat(this.value)||0)).toFixed(2).replace(/\.?0+$/,''); liveSlippage()">
                         </div>
                         <div class="prog-bar-track"><div class="prog-bar-fill" id="wd_bar" style="background:#3b82f6; width:0%;"></div></div>
                     </div>

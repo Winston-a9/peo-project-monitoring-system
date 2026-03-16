@@ -215,8 +215,11 @@
                     <div class="field-group">
                         <label class="field-label">As Planned (%)</label>
                         <div style="position:relative;">
-                            <input type="number" name="as_planned" id="as_planned" class="field-input" value="{{ old('as_planned', $project->as_planned) }}" min="0" max="100" step="0.01" oninput="computeSlippage()" required style="padding-right:2.5rem;">
-                            <span style="position:absolute; right:1rem; top:50%; transform:translateY(-50%); color:var(--ink-muted); font-weight:600;">%</span>
+                            <input type="number" name="as_planned" id="as_planned" class="field-input"
+                            value="{{ old('as_planned', $project->as_planned) }}"
+                            min="0" max="100" step="0.01"
+                            oninput="this.value=Math.min(100,Math.max(0,parseFloat(this.value)||0)).toFixed(2).replace(/\.?0+$/,''); computeSlippage()"
+                            required style="padding-right:2.5rem;">
                         </div>
                         <div class="prog-bar-track"><div class="prog-bar-fill" id="ap_bar" style="background:var(--orange-500); width:{{ $project->as_planned }}%;"></div></div>
                         @error('as_planned')<p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
@@ -224,8 +227,11 @@
                     <div class="field-group">
                         <label class="field-label">Work Done (%)</label>
                         <div style="position:relative;">
-                            <input type="number" name="work_done" id="work_done" class="field-input" value="{{ old('work_done', $project->work_done) }}" min="0" max="100" step="0.01" oninput="computeSlippage()" required style="padding-right:2.5rem;">
-                            <span style="position:absolute; right:1rem; top:50%; transform:translateY(-50%); color:var(--ink-muted); font-weight:600;">%</span>
+                            <input type="number" name="work_done" id="work_done" class="field-input"
+                            value="{{ old('work_done', $project->work_done) }}"
+                            min="0" max="100" step="0.01"
+                            oninput="this.value=Math.min(100,Math.max(0,parseFloat(this.value)||0)).toFixed(2).replace(/\.?0+$/,''); computeSlippage()"
+                            required style="padding-right:2.5rem;">
                         </div>
                         <div class="prog-bar-track"><div class="prog-bar-fill" id="wd_bar" style="background:#3b82f6; width:{{ $project->work_done }}%;"></div></div>
                         @error('work_done')<p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
@@ -253,8 +259,11 @@
                     <div class="field-group">
                         <label class="field-label">Accomplished (%)</label>
                         <div style="position:relative;">
-                            <input type="number" id="ld_accomplished" name="ld_accomplished" class="field-input" value="{{ old('ld_accomplished', $project->ld_accomplished ?? '') }}" min="0" max="100" step="0.001" oninput="calculateLDPerDay()" style="padding-right:2.5rem;">
-                            <span style="position:absolute; right:1rem; top:50%; transform:translateY(-50%); color:var(--ink-muted); font-weight:600;">%</span>
+                            <input type="number" id="ld_accomplished" name="ld_accomplished" class="field-input"
+                        value="{{ old('ld_accomplished', $project->ld_accomplished ?? '') }}"
+                        min="0" max="100" step="0.01"
+                        oninput="this.value=Math.min(100,Math.max(0,parseFloat(this.value)||0)).toFixed(2).replace(/\.?0+$/,''); calculateLDPerDay()"
+                        style="padding-right:2.5rem;">
                         </div>
                         <p class="field-hint">Percentage of work completed</p>
                     </div>
@@ -571,8 +580,9 @@
             </div>
             </div>
             </div>
-            </div>
-{{-- BILLING UPDATE ACCORDION --}}
+        </div>
+
+        {{-- BILLING UPDATE ACCORDION --}}
 @php
     $billingAmounts = is_array($project->billing_amounts) ? array_map('floatval', $project->billing_amounts) : [];
     $billingDates   = is_array($project->billing_dates)   ? $project->billing_dates : [];
