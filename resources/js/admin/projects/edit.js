@@ -1,18 +1,3 @@
-/**
- * edit.js
- * JavaScript for: resources/views/admin/projects/edit.blade.php
- *
- * The following variables must be declared inline in the blade
- * BEFORE this file is loaded (they are PHP-rendered at runtime):
- *
- *   const originalExpiry = '{{ $project->original_contract_expiry->format("Y-m-d") }}';
- *   const existingTEDays = {{ ... }};
- *   const existingVODays = {{ ... }};
- *   const existingSODays = {{ ... }};
- *   const ISSUANCE_OPTS  = [...];
- *   const _totalTECount  = {{ $teCount }};
- *   const _totalVOCount  = {{ $voCount }};
- */
 
 /* ── Tab switching ── */
 window.switchTab = function (tabId, btnElement) {
@@ -57,7 +42,7 @@ window.computeSlippage = function () {
     if (isNaN(ap) || isNaN(wd)) { valEl.textContent = '—'; return; }
 
     // ✅ parseFloat fixes string comparison bug from toFixed()
-    const sl = parseFloat((wd - ap).toFixed(2));
+    const sl = parseFloat((wd - ap).toFixed(3));
     document.getElementById('slippage').value = sl;
 
     if (sl > 0)      { lbl.style.color = '#16a34a'; lbl.innerHTML = '<i class="fas fa-arrow-up"></i> Ahead';    valEl.style.color = '#16a34a'; }
@@ -72,6 +57,7 @@ function fmtNum(n, decimals) {
     return n.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 }
 
+// LD PER DAY CALCULATOR
 window.calculateLDPerDay = function () {
     const acc      = parseFloat(document.getElementById('ld_accomplished').value) || 0;
     const amt      = parseFloat(document.getElementById('contract_amount').value.replace(/,/g, '')) || 0;
@@ -81,7 +67,6 @@ window.calculateLDPerDay = function () {
     document.getElementById('ld_unworked').value = unworked.toFixed(3);
     document.getElementById('ld_per_day').value  = perDay.toFixed(3);
 
-    // Only update display elements if they exist (optional in your blade)
     const unworkedDisplay = document.getElementById('ld_unworked_display');
     const perDayDisplay   = document.getElementById('ld_per_day_display');
     if (unworkedDisplay) unworkedDisplay.textContent = fmtNum(unworked, 3);
@@ -90,6 +75,7 @@ window.calculateLDPerDay = function () {
     window.calculateLDTotal();
 };
 
+// LD TOTAL CALCULATOR
 window.calculateLDTotal = function () {
     const perDay  = parseFloat(document.getElementById('ld_per_day').value)            || 0;
     const overdue = parseFloat(document.getElementById('ld_days_overdue_input').value) || 0;
@@ -113,6 +99,7 @@ function formatDate(d) {
     return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 }
 
+// TIME EXTENSION EXPIRY PREVIEW
 window.updateTEPreview = function () {
     const newDays = parseInt(document.getElementById('new_te_days').value) || 0;
     const preview = document.getElementById('te_revised_preview');
@@ -120,6 +107,7 @@ window.updateTEPreview = function () {
     preview.textContent = formatDate(addDaysToDate(originalExpiry, existingTEDays + existingVODays + existingSODays + newDays));
 };
 
+// VARIATION ORDER EXPIRY PREVIEW
 window.updateVOPreview = function () {
     const newDays = parseInt(document.getElementById('new_vo_days').value) || 0;
     const preview = document.getElementById('vo_revised_preview');
@@ -127,6 +115,7 @@ window.updateVOPreview = function () {
     preview.textContent = formatDate(addDaysToDate(originalExpiry, existingTEDays + existingVODays + existingSODays + newDays));
 };
 
+// SUSPENSION ORDER EXPIRY PREVIEW
 window.updateSOPreview = function () {
     const newDays = parseInt(document.getElementById('new_so_days').value) || 0;
     const preview = document.getElementById('so_revised_preview');
@@ -142,6 +131,7 @@ window.checkPerformanceBond = function () {
     if (field) field.style.display = hasPerformanceBond ? 'block' : 'none';
 };
 
+// ISSUANCE ROW HTML BUILDER
 window.issuanceRowHTML = function (val = '') {
     let opts = '<option value="">— Select Issuance —</option>';
     ISSUANCE_OPTS.forEach(o => opts += `<option value="${o}" ${o === val ? 'selected' : ''}>${o}</option>`);
@@ -151,11 +141,13 @@ window.issuanceRowHTML = function (val = '') {
     </div>`;
 };
 
+// ADD ISSUANCE ROW
 window.addIssuanceRow = function () {
     document.getElementById('issuances-list').insertAdjacentHTML('beforeend', window.issuanceRowHTML());
     window.updateCount('issuances-list', 'issuance-count');
 };
 
+// REMOVE ISSUANCE ROW
 window.removeIssuanceRow = function (btn) {
     const list = document.getElementById('issuances-list');
     if (list.querySelectorAll('.dynamic-row').length <= 1) {
@@ -169,6 +161,7 @@ window.removeIssuanceRow = function (btn) {
     window.checkPerformanceBond();
 };
 
+// UPDATE ISSUANCE COUNT BADGE
 window.updateCount = function (listId, countId) {
     const filled = [...document.getElementById(listId).querySelectorAll('select')]
         .filter(s => s.value !== '').length;
@@ -220,10 +213,12 @@ window.openDeleteModal = function (type, index, label, days) {
     openModal('delete-entry-modal');
 };
 
+// CLEAR DELETE ERROR STATE
 window.delClearError = function () {
     document.getElementById('del-reason-error').style.display     = 'none';
     document.getElementById('del-reason-input').style.borderColor = 'var(--border)';
 };
+
 /* ── Billing preview ── */
 window.updateBillingPreview = function () {
     const input       = document.getElementById('new_billing_amount');
@@ -252,7 +247,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ✅ Use window. prefix so Vite module scope doesn't cause ReferenceError
     window.computeSlippage();
 
     const issuancesList = document.getElementById('issuances-list');

@@ -1,10 +1,19 @@
+// ─────────────────────────────────────────────
+// INITIALIZATION
+// Runs all setup functions once the page is ready
+// ─────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function () {
-    liveSlippage();
-    calculateOriginalExpiry();
-    toggleCompletedAt();
+    liveSlippage();          // Set initial slippage display state
+    calculateOriginalExpiry(); // Calculate expiry if old() values are present
+    toggleCompletedAt();     // Show/hide the Date Completed field on load
 });
 
-// ✅ Expose to window so inline oninput= attributes in the blade can call them
+
+// ─────────────────────────────────────────────
+// TOGGLE DATE COMPLETED FIELD
+// Shows the "Date Completed" input only when
+// the Status dropdown is set to "Completed"
+// ─────────────────────────────────────────────
 window.toggleCompletedAt = function () {
     const sel   = document.getElementById('status_sel');
     const field = document.getElementById('completed_at_field');
@@ -12,10 +21,20 @@ window.toggleCompletedAt = function () {
     field.classList.toggle('hidden', sel.value !== 'completed');
 };
 
+
+// ─────────────────────────────────────────────
+// LIVE SLIPPAGE CALCULATOR
+// Triggered on every keystroke in As Planned or Work Done.
+// Computes slippage = Work Done - As Planned, then:
+//   - Updates the progress bar widths
+//   - Updates the hidden slippage input (submitted with form)
+//   - Changes the label color and text (Ahead / Behind / On schedule)
+// ─────────────────────────────────────────────
 window.liveSlippage = function () {
     const ap = parseFloat(document.getElementById('as_planned').value);
     const wd = parseFloat(document.getElementById('work_done').value);
 
+    // Update the visual progress bars
     document.getElementById('ap_bar').style.width = Math.min(ap || 0, 100) + '%';
     document.getElementById('wd_bar').style.width = Math.min(wd || 0, 100) + '%';
 
@@ -23,6 +42,7 @@ window.liveSlippage = function () {
     const valEl   = document.getElementById('slippage-value');
     const display = document.getElementById('slippage-display');
 
+    // If either field is empty/invalid, reset to neutral state
     if (isNaN(ap) || isNaN(wd)) {
         lbl.style.color           = '#9ca3af';
         lbl.innerHTML             = '<i class="fas fa-minus"></i> Enter values above';
@@ -34,37 +54,49 @@ window.liveSlippage = function () {
         return;
     }
 
-    const sl = parseFloat((wd - ap).toFixed(2));
-    document.getElementById('slippage').value = sl;
+    // Calculate slippage to 3 decimal places
+    const sl = parseFloat((wd - ap).toFixed(3));
+    document.getElementById('slippage').value = sl; // Write to hidden input for form submission
 
+    // Color-code the display based on result
     if (sl > 0) {
-        lbl.style.color           = '#16a34a';
+        lbl.style.color           = '#16a34a';  // Green = ahead
         lbl.innerHTML             = '<i class="fas fa-arrow-up"></i> Ahead of schedule';
         valEl.style.color         = '#16a34a';
         display.style.borderColor = 'rgba(22,163,74,0.2)';
         display.style.background  = 'rgba(22,163,74,0.04)';
     } else if (sl < 0) {
-        lbl.style.color           = '#dc2626';
+        lbl.style.color           = '#dc2626';  // Red = behind
         lbl.innerHTML             = '<i class="fas fa-arrow-down"></i> Behind schedule';
         valEl.style.color         = '#dc2626';
         display.style.borderColor = 'rgba(220,38,38,0.2)';
         display.style.background  = 'rgba(220,38,38,0.04)';
     } else {
-        lbl.style.color           = '#9ca3af';
+        lbl.style.color           = '#9ca3af';  // Gray = on schedule
         lbl.innerHTML             = '<i class="fas fa-minus"></i> On schedule';
         valEl.style.color         = '#9ca3af';
         display.style.borderColor = 'rgba(26,15,0,0.08)';
         display.style.background  = '#fffaf5';
     }
 
+    // Show the final value e.g. "+2.500%" or "-1.200%"
     valEl.textContent = (sl > 0 ? '+' : '') + sl + '%';
 };
 
+
+// ─────────────────────────────────────────────
+// AUTO-CALCULATE ORIGINAL EXPIRY DATE
+// Triggered when Date Started or Contract Days changes.
+// Formula: Original Expiry = Date Started + Contract Days - 1
+// The -1 is because the start date itself counts as day 1.
+// Writes the result into the read-only expiry date input.
+// ─────────────────────────────────────────────
 window.calculateOriginalExpiry = function () {
     const dateStartedInput    = document.getElementById('date_started').value;
     const contractDaysInput   = document.getElementById('contract_days').value;
     const originalExpiryInput = document.getElementById('original_contract_expiry');
 
+    // Clear the field if either input is missing
     if (!dateStartedInput || !contractDaysInput) {
         originalExpiryInput.value = '';
         return;
@@ -73,14 +105,17 @@ window.calculateOriginalExpiry = function () {
     const dateStarted  = new Date(dateStartedInput + 'T00:00:00');
     const contractDays = parseInt(contractDaysInput);
 
+    // Clear the field if inputs are invalid
     if (isNaN(dateStarted.getTime()) || isNaN(contractDays) || contractDays < 1) {
         originalExpiryInput.value = '';
         return;
     }
 
+    // Add (contractDays - 1) to the start date
     const originalExpiry = new Date(dateStarted);
     originalExpiry.setDate(originalExpiry.getDate() + contractDays - 1);
 
+    // Format as YYYY-MM-DD for the date input
     const year  = originalExpiry.getFullYear();
     const month = String(originalExpiry.getMonth() + 1).padStart(2, '0');
     const day   = String(originalExpiry.getDate()).padStart(2, '0');

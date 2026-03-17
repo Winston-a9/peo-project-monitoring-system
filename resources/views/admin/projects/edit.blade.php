@@ -217,8 +217,8 @@
                         <div style="position:relative;">
                             <input type="number" name="as_planned" id="as_planned" class="field-input"
                             value="{{ old('as_planned', $project->as_planned) }}"
-                            min="0" max="100" step="0.01"
-                            oninput="this.value=Math.min(100,Math.max(0,parseFloat(this.value)||0)).toFixed(2).replace(/\.?0+$/,''); computeSlippage()"
+                            min="0" max="100" step="0.001"
+                            oninput="if(parseFloat(this.value)>100)this.value=100; computeSlippage()"
                             required style="padding-right:2.5rem;">
                         </div>
                         <div class="prog-bar-track"><div class="prog-bar-fill" id="ap_bar" style="background:var(--orange-500); width:{{ $project->as_planned }}%;"></div></div>
@@ -229,8 +229,8 @@
                         <div style="position:relative;">
                             <input type="number" name="work_done" id="work_done" class="field-input"
                             value="{{ old('work_done', $project->work_done) }}"
-                            min="0" max="100" step="0.01"
-                            oninput="this.value=Math.min(100,Math.max(0,parseFloat(this.value)||0)).toFixed(2).replace(/\.?0+$/,''); computeSlippage()"
+                            min="0" max="100" step="0.001"
+                            oninput="if(parseFloat(this.value)>100)this.value=100; computeSlippage()"
                             required style="padding-right:2.5rem;">
                         </div>
                         <div class="prog-bar-track"><div class="prog-bar-fill" id="wd_bar" style="background:#3b82f6; width:{{ $project->work_done }}%;"></div></div>
@@ -240,7 +240,7 @@
                 <div class="field-group">
                     <label class="field-label">Schedule Slippage <span style="font-weight:400; text-transform:none; letter-spacing:0; color:#9ca3af;">(automatic)</span></label>
                     <input type="hidden" name="slippage" id="slippage" value="{{ old('slippage', $project->slippage) }}">
-                    <div style="display:flex; align-items:center; justify-content:space-between; padding:0.85rem 1rem; border:1.5px solid rgba(26,15,0,0.08); border-radius:9px; background:var(--bg-secondary); min-height:48px;">
+                   <div id="slippage-display" style="display:flex; align-items:center; justify-content:space-between; padding:0.85rem 1rem; border:1.5px solid rgba(26,15,0,0.08); border-radius:9px; background:var(--bg-secondary); min-height:48px;">
                         <p id="slippage_label" style="font-size:0.85rem; font-weight:600; color:#9ca3af; margin:0;"><i class="fas fa-minus"></i> On schedule</p>
                         <span id="slippage-value" style="font-family:'Syne',sans-serif; font-size:1.25rem; font-weight:800; color:#9ca3af;">—</span>
                     </div>
@@ -261,8 +261,8 @@
                         <div style="position:relative;">
                             <input type="number" id="ld_accomplished" name="ld_accomplished" class="field-input"
                         value="{{ old('ld_accomplished', $project->ld_accomplished ?? '') }}"
-                        min="0" max="100" step="0.01"
-                        oninput="this.value=Math.min(100,Math.max(0,parseFloat(this.value)||0)).toFixed(2).replace(/\.?0+$/,''); calculateLDPerDay()"
+                        min="0" max="100" step="0.001"
+                        oninput="if(parseFloat(this.value)>100)this.value=100; calculateLDPerDay()"
                         style="padding-right:2.5rem;">
                         </div>
                         <p class="field-hint">Percentage of work completed</p>
@@ -923,95 +923,6 @@ function submitEditEntry() {
         'edit_entry_type': type, 'edit_entry_index': index, 'edit_days': days,
         'edit_cost': document.getElementById('edit_cost').value,
         'edit_date_requested': document.getElementById('edit_date_requested').value,
-    };
-    Object.entries(fields).forEach(([name, value]) => {
-        const input = document.createElement('input');
-        input.type = 'hidden'; input.name = name; input.value = value;
-        form.appendChild(input);
-    });
-    document.body.appendChild(form);
-    form.submit();
-}
-</script>
-
-{{-- DELETE ENTRY MODAL --}}
-<x-modal id="delete-entry-modal" title="Delete Entry" type="danger" icon="fa-trash-alt" size="md">
-    <div style="display:flex; flex-direction:column; gap:1.1rem;">
-        <div style="display:flex; align-items:flex-start; gap:0.875rem; padding:1rem; background:rgba(239,68,68,0.05); border:1px solid rgba(239,68,68,0.15); border-radius:10px;">
-            <div style="width:34px; height:34px; border-radius:9px; flex-shrink:0; background:rgba(239,68,68,0.1); border:1.5px solid rgba(239,68,68,0.2); display:flex; align-items:center; justify-content:center;">
-                <i class="fas fa-exclamation-triangle" style="color:#dc2626; font-size:0.8rem;"></i>
-            </div>
-            <div>
-                <p style="font-size:0.875rem; font-weight:700; color:var(--text-primary); margin:0 0 3px;">This cannot be undone</p>
-                <p style="font-size:0.78rem; color:var(--text-secondary); margin:0; line-height:1.5;">The entry will be permanently removed and remaining entries renumbered. Your reason will be saved to the project's remarks.</p>
-            </div>
-        </div>
-        <div>
-            <p style="font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--ink-muted); margin:0 0 0.4rem;">Entry to delete</p>
-            <div style="display:flex; align-items:center; justify-content:space-between; padding:0.65rem 1rem; border-radius:9px; background:var(--bg-secondary); border:1.5px solid rgba(239,68,68,0.2);">
-                <div style="display:flex; align-items:center; gap:0.5rem;">
-                    <i id="del-entry-icon" class="fas fa-clock" style="color:#dc2626; font-size:0.75rem;"></i>
-                    <span id="del-entry-label" style="font-size:0.875rem; font-weight:700; color:var(--text-primary);">—</span>
-                </div>
-                <span id="del-entry-days" style="font-size:0.75rem; font-weight:700; padding:2px 10px; border-radius:99px; background:rgba(239,68,68,0.1); color:#dc2626; border:1px solid rgba(239,68,68,0.2);">—</span>
-            </div>
-        </div>
-        <div>
-            <label for="del-reason-input" style="display:block; font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-muted); margin-bottom:0.4rem;">
-                Reason for deletion <span style="color:#ef4444;">*</span>
-            </label>
-            <textarea id="del-reason-input" rows="3" maxlength="1000" placeholder="Explain why this entry is being deleted…" oninput="delClearError()"
-                      style="width:100%; padding:0.75rem 1rem; border:1.5px solid var(--border); border-radius:9px; font-size:0.855rem; color:var(--text-primary); background:var(--bg-primary); outline:none; resize:none; font-family:'Instrument Sans',sans-serif; transition:border-color 0.2s,box-shadow 0.2s; box-sizing:border-box;"
-                      onfocus="this.style.borderColor='#ef4444';this.style.boxShadow='0 0 0 3px rgba(239,68,68,0.1)'"
-                      onblur="this.style.borderColor=this.value?'rgba(239,68,68,0.4)':'var(--border)';this.style.boxShadow='none'"></textarea>
-            <p id="del-reason-error" style="display:none; font-size:0.75rem; color:#ef4444; margin-top:0.35rem; align-items:center; gap:0.3rem;">
-                <i class="fas fa-exclamation-circle"></i> Please provide a reason before deleting.
-            </p>
-            <p style="font-size:0.68rem; color:#9ca3af; margin-top:0.3rem; text-align:right;"><span id="del-reason-count">0</span>/1000</p>
-        </div>
-        <div id="del-renumber-notice" style="display:none; align-items:center; gap:0.5rem; padding:0.6rem 0.875rem; border-radius:8px; background:rgba(249,115,22,0.05); border:1px solid rgba(249,115,22,0.15);">
-            <i class="fas fa-sort-numeric-down" style="color:#f97316; font-size:0.75rem; flex-shrink:0;"></i>
-            <p style="font-size:0.75rem; color:var(--text-secondary); margin:0;" id="del-renumber-text">Remaining entries will be renumbered from <strong style="color:var(--text-primary);">1</strong>.</p>
-        </div>
-    </div>
-    <x-slot name="footer">
-        <button type="button" onclick="closeModal('delete-entry-modal')"
-                style="padding:0.65rem 1.25rem; border:1.5px solid var(--border); border-radius:9px; background:var(--bg-primary); color:var(--text-secondary); font-weight:600; font-size:0.835rem; cursor:pointer; font-family:'Instrument Sans',sans-serif; transition:all 0.15s; display:inline-flex; align-items:center; gap:0.4rem;"
-                onmouseover="this.style.borderColor='var(--orange-500)'" onmouseout="this.style.borderColor='var(--border)'">
-            <i class="fas fa-times" style="font-size:0.75rem;"></i> Cancel
-        </button>
-        <button type="button" id="del-confirm-btn" onclick="submitDeleteEntry()"
-                style="padding:0.65rem 1.4rem; background:#dc2626; color:white; border:none; border-radius:9px; font-weight:700; font-size:0.835rem; cursor:pointer; font-family:'Instrument Sans',sans-serif; box-shadow:0 3px 12px rgba(220,38,38,0.3); display:inline-flex; align-items:center; gap:0.45rem; transition:all 0.15s;"
-                onmouseover="this.style.background='#b91c1c';this.style.transform='translateY(-1px)'"
-                onmouseout="this.style.background='#dc2626';this.style.transform='translateY(0)'">
-            <i class="fas fa-trash-alt" style="font-size:0.75rem;"></i> Delete Entry
-        </button>
-    </x-slot>
-</x-modal>
-
-{{-- Modal-specific JS (uses blade-rendered routes & tokens — DONT move to edit.js) --}}
-<script>
-function submitDeleteEntry() {
-    const reason = document.getElementById('del-reason-input').value.trim();
-    if (!reason) {
-        const textarea = document.getElementById('del-reason-input');
-        textarea.style.borderColor = '#ef4444';
-        textarea.style.boxShadow   = '0 0 0 3px rgba(239,68,68,0.12)';
-        textarea.focus();
-        document.getElementById('del-reason-error').style.display = 'flex';
-        return;
-    }
-    const btn = document.getElementById('del-confirm-btn');
-    btn.innerHTML  = '<i class="fas fa-spinner fa-spin" style="font-size:0.75rem;"></i> Deleting…';
-    btn.disabled   = true;
-    btn.style.opacity = '0.75';
-    const form  = document.createElement('form');
-    form.method = 'POST';
-    form.action = '{{ route("admin.projects.destroyEntry", $project) }}';
-    const fields = {
-        '_token': '{{ csrf_token() }}', '_method': 'DELETE',
-        'entry_type': window._delType, 'entry_index': window._delIndex,
-        'delete_reason': reason,
     };
     Object.entries(fields).forEach(([name, value]) => {
         const input = document.createElement('input');
