@@ -56,8 +56,19 @@
     } elseif ($status === 'expiring') {
         $q->where('status','!=','completed')->where(fn($x) => $x->whereNull('revised_contract_expiry')->whereBetween('original_contract_expiry',[now(),now()->addDays(30)])->orWhereBetween('revised_contract_expiry',[now(),now()->addDays(30)]));
     } elseif ($status === 'expired') {
-        $q->where('status','!=','completed')->where(fn($x) => $x->whereNull('revised_contract_expiry')->where('original_contract_expiry','<',now())->orWhere('revised_contract_expiry','<',now()));
-    } elseif ($status === 'ongoing') {
+        $q->where(fn($x) => $x
+            ->where('status', 'expired')
+            ->orWhere(fn($y) => $y
+                ->where('status', '!=', 'completed')
+                ->where('status', '!=', 'expired')
+                ->where(fn($z) => $z
+                    ->whereNull('revised_contract_expiry')->where('original_contract_expiry', '<', now())
+                    ->orWhere('revised_contract_expiry', '<', now())
+                )
+            )
+        );
+    }
+    elseif ($status === 'ongoing') {
         $q->where('status','ongoing')->where(fn($x) => $x->whereNull('revised_contract_expiry')->where('original_contract_expiry','>=',now())->orWhere('revised_contract_expiry','>=',now()));
     }
 
@@ -73,12 +84,37 @@
     if ($dateTo)   $base->where('date_started', '<=', $dateTo);
 
     $counts = [
-        'all'       => (clone $base)->count(),
-        'active'    => (clone $base)->where('status','ongoing')->where(fn($x) => $x->whereNull('revised_contract_expiry')->where('original_contract_expiry','>',now()->addDays(30))->orWhere('revised_contract_expiry','>',now()->addDays(30)))->count(),
-        'completed' => (clone $base)->where('status','completed')->count(),
-        'expiring'  => (clone $base)->where('status','!=','completed')->where(fn($x) => $x->whereNull('revised_contract_expiry')->whereBetween('original_contract_expiry',[now(),now()->addDays(30)])->orWhereBetween('revised_contract_expiry',[now(),now()->addDays(30)]))->count(),
-        'expired'   => (clone $base)->where('status','!=','completed')->where(fn($x) => $x->whereNull('revised_contract_expiry')->where('original_contract_expiry','<',now())->orWhere('revised_contract_expiry','<',now()))->count(),
-    ];
+    'all'       => (clone $base)->count(),
+
+    'active'    => (clone $base)
+                    ->where('status', 'ongoing')
+                    ->where(fn($x) => $x
+                        ->whereNull('revised_contract_expiry')->where('original_contract_expiry', '>', now()->addDays(30))
+                        ->orWhere('revised_contract_expiry', '>', now()->addDays(30))
+                    )->count(),
+
+    'completed' => (clone $base)->where('status', 'completed')->count(),
+
+    'expiring'  => (clone $base)
+                    ->where('status', '!=', 'completed')
+                    ->where('status', '!=', 'expired')
+                    ->where(fn($x) => $x
+                        ->whereNull('revised_contract_expiry')->whereBetween('original_contract_expiry', [now(), now()->addDays(30)])
+                        ->orWhereBetween('revised_contract_expiry', [now(), now()->addDays(30)])
+                    )->count(),
+
+    'expired'   => (clone $base)
+                    ->where(fn($x) => $x
+                        ->where('status', 'expired')
+                        ->orWhere(fn($y) => $y
+                            ->whereNotIn('status', ['completed', 'expired'])
+                            ->where(fn($z) => $z
+                                ->whereNull('revised_contract_expiry')->where('original_contract_expiry', '<', now())
+                                ->orWhereNotNull('revised_contract_expiry')->where('revised_contract_expiry', '<', now())
+                            )
+                        )
+                    )->count(),
+];
 
     $allInCharge = \App\Models\Project::pluck('in_charge')->unique()->filter()->sort()->values();
     $sortUrl = fn($col) => request()->fullUrlWithQuery(['sort'=>$col,'dir'=>($sortCol===$col && $sortDir==='asc'?'desc':'asc'),'page'=>1]);
@@ -187,8 +223,10 @@
                         $expiry   = $project->revised_contract_expiry ?? $project->original_contract_expiry;
                         $daysLeft = (int)$today->diffInDays($expiry, false);
                         $sl       = (float)($project->slippage ?? 0);
-                        $sk       = $project->status==='completed'?'completed':($daysLeft<0?'expired':($daysLeft<30?'expiring':($project->status==='ongoing'?'active':'ongoing')));
-                    @endphp
+                        $sk = $project->status==='completed' ? 'completed'
+                            : ($project->status==='expired' || $daysLeft < 0 ? 'expired'
+                            : ($daysLeft < 30 ? 'expiring'
+                            : 'ongoing'));                    @endphp
                     <tr onclick="window.location='{{ route('admin.projects.show', $project) }}'">
                         <td>
                             <div style="font-weight:700; color:var(--ink); max-width:190px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ $project->project_title }}</div>
