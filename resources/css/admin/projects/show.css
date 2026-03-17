@@ -1,6 +1,5 @@
 /* ============================================================
-   show.css
-   Styles for: resources/views/admin/projects/show.blade.php
+   show.css — resources/css/admin/projects/show.css
    ============================================================ */
 
 /* ── Tokens ── */
@@ -42,23 +41,6 @@ body { color: var(--tx); transition: background 0.3s, color 0.3s; }
     font-family:     'Instrument Sans', sans-serif;
 }
 .app-btn-secondary:hover { border-color: var(--or5); background: rgba(249,115,22,0.08); color: var(--or6); }
-.app-btn-theme {
-    background:   var(--bg2);
-    border:       1.5px solid var(--bd);
-    border-radius:10px;
-    padding:      0.5rem 0.95rem;
-    cursor:       pointer;
-    display:      flex;
-    align-items:  center;
-    gap:          0.5rem;
-    color:        var(--tx);
-    font-size:    0.9rem;
-    font-weight:  500;
-    font-family:  'Instrument Sans', sans-serif;
-    transition:   all 0.3s;
-}
-.app-btn-theme:hover { background: rgba(249,115,22,0.12); }
-.app-btn-theme i { color: #f97316; }
 
 /* ── Cards ── */
 .card { background: var(--bg); border: 1px solid var(--bd); border-radius: 14px; overflow: hidden; box-shadow: var(--sh); }
@@ -103,8 +85,109 @@ body { color: var(--tx); transition: background 0.3s, color 0.3s; }
 .tl-dot  { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
 .tl-line { width: 1.5px; flex: 1; min-height: 2.5rem; background: var(--bd); margin: 3px 0; }
 
+/* ══════════════════════════════════════════════
+   SHOW PAGE TAB NAVIGATION
+   ══════════════════════════════════════════════ */
+.show-tab-nav {
+    display:          flex;
+    align-items:      flex-end;
+    gap:              0;
+    background:       var(--bg);
+    border:           1px solid var(--bd);
+    border-radius:    14px;
+    overflow:         hidden;
+    box-shadow:       var(--sh);
+}
+
+.show-tab-btn {
+    display:          flex;
+    align-items:      center;
+    gap:              0.45rem;
+    padding:          0.875rem 1.25rem;
+    background:       transparent;
+    border:           none;
+    border-bottom:    2px solid transparent;
+    cursor:           pointer;
+    font-size:        0.825rem;
+    font-weight:      600;
+    color:            var(--tx2);
+    font-family:      'Instrument Sans', sans-serif;
+    white-space:      nowrap;
+    transition:       color 0.18s, border-color 0.18s, background 0.18s;
+    flex:             1;
+    justify-content:  center;
+    position:         relative;
+}
+
+.show-tab-btn i {
+    font-size: 0.75rem;
+    opacity:   0.7;
+    transition: opacity 0.18s;
+}
+
+.show-tab-btn:hover {
+    color:      var(--tx);
+    background: rgba(249,115,22,0.04);
+}
+
+.show-tab-btn:hover i { opacity: 1; }
+
+.show-tab-btn.active {
+    color:            var(--or5);
+    border-bottom:    2px solid var(--or5);
+    background:       rgba(249,115,22,0.04);
+    font-weight:      700;
+}
+
+.show-tab-btn.active i { opacity: 1; color: var(--or5); }
+
+/* Dividers between tabs */
+.show-tab-btn + .show-tab-btn {
+    border-left: 1px solid var(--bd);
+}
+
+/* Badge on tab button */
+.show-tab-badge {
+    display:          inline-flex;
+    align-items:      center;
+    justify-content:  center;
+    min-width:        18px;
+    height:           18px;
+    padding:          0 5px;
+    border-radius:    99px;
+    font-size:        0.62rem;
+    font-weight:      800;
+    background:       rgba(249,115,22,0.12);
+    color:            #ea580c;
+    border:           1px solid rgba(249,115,22,0.2);
+    line-height:      1;
+}
+
+.show-tab-badge-warn {
+    background: rgba(239,68,68,0.1);
+    color:      #dc2626;
+    border:     1px solid rgba(239,68,68,0.2);
+}
+
+.show-tab-badge-muted {
+    background: rgba(156,163,175,0.1);
+    color:      #9ca3af;
+    border:     1px solid rgba(156,163,175,0.15);
+}
+
+.show-tab-btn.active .show-tab-badge {
+    background: rgba(249,115,22,0.18);
+    color:      var(--or6);
+    border-color: rgba(249,115,22,0.3);
+}
+
+/* Tab panels */
+.show-tab-panel {
+    animation: fadeUp 0.22s ease both;
+}
+
 /* ── Animations ── */
-@keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes pulse  { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 .fu { animation: fadeUp 0.4s ease both; }
 .d1 { animation-delay: .05s; } .d2 { animation-delay: .10s; }

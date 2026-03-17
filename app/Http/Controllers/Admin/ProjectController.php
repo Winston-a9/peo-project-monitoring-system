@@ -219,6 +219,26 @@ class ProjectController extends Controller
         $currentTECount = collect($existingDocs)
             ->filter(fn($d) => str_starts_with((string) $d, 'Time Extension'))
             ->count();
+            // ── Step 3b: Carry forward billing arrays ──
+            $existingBillingAmounts = $fresh->billing_amounts ?? [];
+            $existingBillingDates   = $fresh->billing_dates   ?? [];
+            $existingBillingAmounts = is_array($existingBillingAmounts) ? array_map('floatval', $existingBillingAmounts) : [];
+            $existingBillingDates   = is_array($existingBillingDates)   ? $existingBillingDates : [];
+
+            // Append new billing if provided
+            $newBillingAmount = $request->input('new_billing_amount');
+            $newBillingDate   = $request->input('new_billing_date');
+
+            if ($newBillingAmount !== null && $newBillingAmount !== '' && (float)$newBillingAmount > 0) {
+                $existingBillingAmounts[] = (float) $newBillingAmount;
+                $existingBillingDates[]   = $newBillingDate ?: null;
+            }
+
+            $data['billing_amounts'] = array_values($existingBillingAmounts);
+            $data['billing_dates']   = array_values($existingBillingDates);
+            // ── Step 3c: Compute billing summary fields ──
+            $data['total_amount_billed'] = array_sum($data['billing_amounts']);
+            $data['remaining_balance']   = (float) ($fresh->original_contract_amount ?? $fresh->contract_amount) - $data['total_amount_billed'];
 
         // ── Step 4: Append new Time Extension ──
         $newTEDays = (int) $request->input('new_te_days', 0);
@@ -369,6 +389,43 @@ class ProjectController extends Controller
         return redirect()->route('admin.projects.show', $project)
             ->with('success', 'Project updated successfully.');
     }
+   public function updateBilling(Request $request, Project $project)
+{
+    $request->validate([
+        'billing_index'  => 'required|integer|min:0',
+        'billing_amount' => 'required|numeric|min:0',
+        'billing_date'   => 'nullable|date',
+    ]);
+
+    $fresh  = $project->fresh();
+    $index  = (int) $request->input('billing_index');
+    $amount = (float) $request->input('billing_amount');
+    $date   = $request->input('billing_date');
+
+    $billingAmounts = is_array($fresh->billing_amounts) ? array_map('floatval', $fresh->billing_amounts) : [];
+    $billingDates   = is_array($fresh->billing_dates)   ? $fresh->billing_dates : [];
+
+    if (!isset($billingAmounts[$index])) {
+        return back()->with('error', 'Billing entry not found.');
+    }
+
+    $billingAmounts[$index] = $amount;
+    $billingDates[$index]   = $date ?: null;
+
+    $originalAmount = (float) ($fresh->original_contract_amount ?? $fresh->contract_amount);
+    $totalBilled    = array_sum($billingAmounts);
+
+    $project->update([
+        'billing_amounts'     => array_values($billingAmounts),
+        'billing_dates'       => array_values($billingDates),
+        'total_amount_billed' => $totalBilled,
+        'remaining_balance'   => $originalAmount - $totalBilled,
+    ]);
+
+    return redirect()
+        ->route('admin.projects.edit', $project)
+        ->with('success', 'Billing No. ' . ($index + 1) . ' updated successfully.');
+}
 
     public function reports()
     {

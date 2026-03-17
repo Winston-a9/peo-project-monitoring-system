@@ -1,6 +1,5 @@
 /**
- * show.js
- * JavaScript for: resources/views/admin/projects/show.blade.php
+ * show.js — resources/js/admin/projects/show.js
  */
 
 /* ── Theme toggle ── */
@@ -27,41 +26,44 @@ window.toggleTheme = function () {
     updateThemeBtn(isDark ? 'dark' : 'light');
 };
 
-/* ── Activity log toggle ── */
+/* ── Show page tab switcher ── */
+window.switchShowTab = function (tabId, btnEl) {
+    /* hide all panels */
+    document.querySelectorAll('.show-tab-panel').forEach(p => p.style.display = 'none');
+    /* deactivate all buttons */
+    document.querySelectorAll('.show-tab-btn').forEach(b => b.classList.remove('active'));
+    /* show target panel */
+    const panel = document.getElementById('show-tab-' + tabId);
+    if (panel) panel.style.display = 'block';
+    /* activate clicked button */
+    btnEl.classList.add('active');
+    /* persist selection */
+    localStorage.setItem('show-tab', tabId);
+};
+
+/* Restore last active tab on page load */
+document.addEventListener('DOMContentLoaded', function () {
+    const saved = localStorage.getItem('show-tab') || 'overview';
+    const btn   = document.querySelector('.show-tab-btn[data-tab="' + saved + '"]');
+    if (btn) {
+        switchShowTab(saved, btn);
+    } else {
+        /* fallback: activate overview */
+        const fallbackBtn = document.querySelector('.show-tab-btn[data-tab="overview"]');
+        if (fallbackBtn) switchShowTab('overview', fallbackBtn);
+    }
+});
+
+/* ── Activity log entry toggle ── */
 window.toggleLog = function (id) {
     const el   = document.getElementById(id);
     const ch   = document.getElementById(id + '-chevron');
     const open = el.style.display === 'flex';
     el.style.display   = open ? 'none' : 'flex';
-    ch.style.transform = open ? 'rotate(0deg)' : 'rotate(180deg)';
+    if (ch) ch.style.transform = open ? 'rotate(0deg)' : 'rotate(180deg)';
 };
 
-/* ── LD tab toggle ── */
-window.toggleLDTab = function (tab) {
-    const viewContent   = document.getElementById('ld-tab-view-content');
-    const updateContent = document.getElementById('ld-tab-update-content');
-    const viewBtn       = document.getElementById('ld-tab-view');
-    const updateBtn     = document.getElementById('ld-tab-update');
-    if (!viewContent) return;
-
-    if (tab === 'view') {
-        viewContent.style.display         = 'block';
-        updateContent.style.display       = 'none';
-        viewBtn.style.borderBottomColor   = '#f97316';
-        viewBtn.style.color               = 'var(--tx)';
-        updateBtn.style.borderBottomColor = 'transparent';
-        updateBtn.style.color             = 'var(--tx2)';
-    } else {
-        viewContent.style.display         = 'none';
-        updateContent.style.display       = 'block';
-        viewBtn.style.borderBottomColor   = 'transparent';
-        viewBtn.style.color               = 'var(--tx2)';
-        updateBtn.style.borderBottomColor = '#f97316';
-        updateBtn.style.color             = 'var(--tx)';
-    }
-};
-
-/* ── Billing tab toggle ── */
+/* ── Billing inner tab toggle ── */
 window.toggleBillingTab = function (tab) {
     const summaryContent = document.getElementById('billing-tab-summary-content');
     const tableContent   = document.getElementById('billing-tab-table-content');
@@ -85,24 +87,6 @@ window.toggleBillingTab = function (tab) {
         tableBtn.style.color               = 'var(--tx)';
     }
 };
-/* ── Activity log collapse ── */
-window.toggleActivityLog = function () {
-    const body    = document.getElementById('activity-log-body');
-    const chevron = document.getElementById('activity-log-chevron');
-    const isOpen  = body.style.maxHeight !== '0px';
 
-    if (isOpen) {
-        body.style.maxHeight  = '0px';
-        chevron.style.transform = 'rotate(0deg)';
-        chevron.style.background = 'var(--bg)';
-    } else {
-        body.style.maxHeight  = '2000px';
-        chevron.style.transform = 'rotate(180deg)';
-        chevron.style.background = 'rgba(249,115,22,0.08)';
-        chevron.style.borderColor = 'rgba(249,115,22,0.3)';
-        chevron.style.color = 'var(--or5)';
-    }
-};
-
-/* ── Init on load ── */
+/* ── Init ── */
 initTheme();
