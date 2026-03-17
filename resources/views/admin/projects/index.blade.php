@@ -91,7 +91,7 @@
     <div class="fade-up" style="display:flex; align-items:center; gap:0.45rem; flex-wrap:wrap;">
         @foreach([
             ['all','All',null,null],
-            ['active','Active','fa-hourglass-start','#06b6d4'],
+            ['active','On Going','fa-hourglass-start','#06b6d4'],
             ['completed','Completed','fa-check-circle','#22c55e'],
             ['expiring','Expiring','fa-clock','#eab308'],
             ['expired','Expired','fa-times-circle','#ef4444'],
@@ -234,7 +234,6 @@
                             @if($sk==='completed') <span class="badge badge-completed"><i class="fas fa-check-circle" style="font-size:0.55rem;"></i> Completed</span>
                             @elseif($sk==='expired') <span class="badge badge-expired"><i class="fas fa-times-circle" style="font-size:0.55rem;"></i> Expired</span>
                             @elseif($sk==='expiring') <span class="badge badge-expiring"><i class="fas fa-clock" style="font-size:0.55rem;"></i> Expiring</span>
-                            @elseif($sk==='active') <span class="badge badge-active"><i class="fas fa-hourglass-start" style="font-size:0.55rem;"></i> Active</span>
                             @else <span class="badge badge-ongoing"><i class="fas fa-spinner" style="font-size:0.55rem;"></i> Ongoing</span>
                             @endif
                         </td>

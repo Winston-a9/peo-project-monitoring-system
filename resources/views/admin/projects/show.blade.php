@@ -102,12 +102,14 @@
                 <span style="font-family:'Syne',sans-serif;font-size:1.15rem;font-weight:800;color:#16a34a;">Completed</span>
             </div>
             @if($project->completed_at)<p style="font-size:0.75rem;color:var(--tx2);">{{ $project->completed_at->format('M d, Y') }}</p>@endif
-        @elseif($daysLeft < 0)
+                @elseif($project->status === 'expired' || $daysLeft < 0)
             <div style="display:flex;align-items:center;gap:0.5rem;">
                 <div style="width:8px;height:8px;border-radius:50%;background:#ef4444;flex-shrink:0;"></div>
                 <span style="font-family:'Syne',sans-serif;font-size:1.15rem;font-weight:800;color:#dc2626;">Expired</span>
             </div>
-            <p style="font-size:0.75rem;color:#ef4444;">{{ abs($daysLeft) }} days ago</p>
+            <p style="font-size:0.75rem;color:#ef4444;">
+                {{ $daysLeft < 0 ? abs($daysLeft).' days ago' : 'Marked as expired' }}
+            </p>
         @elseif($daysLeft <= 30)
             <div style="display:flex;align-items:center;gap:0.5rem;">
                 <div style="width:8px;height:8px;border-radius:50%;background:#f59e0b;flex-shrink:0;animation:pulse 1.5s ease infinite;"></div>
@@ -197,7 +199,7 @@
                 @if($project->status === 'completed')
                     <span class="pill p-gr"><i class="fas fa-check-circle" style="font-size:0.6rem;"></i> Completed</span>
                     @if($project->completed_at)<span style="font-size:0.72rem;color:var(--tx2);">{{ $project->completed_at->format('M d, Y') }}</span>@endif
-                @elseif($project->status === 'expired')
+                @elseif($project->status === 'expired' || $daysLeft < 0)
                     <span class="pill p-re"><i class="fas fa-times-circle" style="font-size:0.6rem;"></i> Expired</span>
                 @else
                     <span class="pill p-bl"><i class="fas fa-circle" style="font-size:0.5rem;"></i> Ongoing</span>
