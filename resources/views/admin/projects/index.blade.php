@@ -221,7 +221,7 @@
                     @forelse($projects as $project)
                     @php
                         $expiry   = $project->revised_contract_expiry ?? $project->original_contract_expiry;
-                        $daysLeft = (int)$today->diffInDays($expiry, false);
+                        $daysLeft = (int)$today->diffInDays($expiry->copy()->endOfDay(), false);
                         $sl       = (float)($project->slippage ?? 0);
                         $sk = $project->status==='completed' ? 'completed'
                             : ($project->status==='expired' || $daysLeft < 0 ? 'expired'

@@ -313,9 +313,16 @@ class ProjectController extends Controller
         $baseExpiry   = Carbon::parse($request->original_contract_expiry);
         $totalExtDays = $totalTEDays + $totalVODays;
 
-        $originalContractDays  = (int) Carbon::parse($request->date_started)
-            ->diffInDays(Carbon::parse($request->original_contract_expiry)) + 1;
-        $data['contract_days'] = $originalContractDays + $totalTEDays + $totalVODays;
+        $originalContractDays = (int) Carbon::parse($fresh->date_started)
+        ->diffInDays(Carbon::parse($fresh->original_contract_expiry)) + 1;
+
+        // If the stored value differs (was manually entered), trust the DB value
+        // by backing out any existing TE/VO days that were already added
+        $existingTEInDB = (int) array_sum(array_map('intval', $fresh->extension_days ?? []));
+        $existingVOInDB = (int) array_sum(array_map('intval', array_filter((array) ($fresh->vo_days ?? []))));
+        $baseContractDays = max(1, (int)($fresh->contract_days ?? $originalContractDays) - $existingTEInDB - $existingVOInDB);
+
+        $data['contract_days'] = $baseContractDays + $totalTEDays + $totalVODays;
 
         if ($totalExtDays > 0) {
             $extra = $hasSO ? $totalSODays : 0;

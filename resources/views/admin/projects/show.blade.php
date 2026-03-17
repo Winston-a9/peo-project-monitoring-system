@@ -26,7 +26,7 @@
 @php
     $today    = now();
     $expiry   = $project->revised_contract_expiry ?? $project->original_contract_expiry;
-    $daysLeft = (int) $today->diffInDays($expiry, false);
+    $daysLeft = (int) $today->diffInDays($expiry->endOfDay(), false);
 
     $issuances        = $project->issuances        ?? [];
     $documentsPressed = $project->documents_pressed ?? [];
