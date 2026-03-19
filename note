@@ -1,0 +1,134 @@
+in create add/change:
+
+input calendar form "contract days"
+
+ 	change original expiry will be a result of text date started + original days = original expiry
+
+in edit add/change:
+
+when Liquidated Damages is choosen
+new percentage form "Accomplished", "Unworked"
+new number input "LD per day", and "total LD"
+new calendar form "days overdue"
+
+ 	LD per day computation: (Accomplished/100) *Contract Amount*0.001
+ 	Total LD computation: LD per day * days overdue
+ 		total LD will be calculating everyday until the deadline of days overdue
+
+when time extension is selected add a new number form of cost involve
+
+add Suspension Order days count
+
+ 	if time extension = extended Calendar Days and Revised Expiry
+ 	if Suspension order = extend revised expiry only
+
+in Show add/change:
+ 	time extension count log
+ 	Calendar Days
+
+
+make a csv
+
+add report generator in users
+
+polish user and admin design
+
+filter add - Municipality, district, date
+
+user and admin roles
+
+add super admin
+
+==================================================================================================================================================================================================================================================================================================
+
+redesign my show.blade, in contract dates add calendar days and how many days its been added, in the approved time extensions/variation orders remove the column date requested
+
+3/10/2026
+
+FIX, DISPLAY THE LD SUMMARY AND DELETE THE TE/VO/SP SCOREBOARD
+
+edit.blade fix the money amount figure of contract amount, LD per day, Total LD
+
+make accomplished number limit 2, 5
+
+in extension tab make it each extension can be updated once in a time so it will prevent system confusion
+
+==================================================================================================================================================================================================================================================================================================
+
+3/13/2026
+
+EDIT:
+ 	 revised expiry and original -1 formula always
+ 	change the extension delete function into a edit function
+ 	performance bond 'date' for notif date and add a warning when its almost 5 days on the performance bond date
+ 	if Extension's cost involved is negative, deduct the contract amount
+ 	Use Accordion / Collapsible Sections on the tabs of TE,VO and SO
+ 	if the number is a amount of money it should have , every 3 digits of whole number.
+
+
+SHOW:
+ 	Display all added data into its respective tabs
+ 	add revised contract amount inside the contract amount display card (hide if theres no revised contract amount)
+
+==================================================================================================================================================================================================================================================================================================
+
+3/16/2026
+
+add total amount bill
+add Remaining balance
+Add Billing Update
+
+ 	each billing update has a count example billing no.1,2,3,4. each billing amount summed up and display the total amount in "total amount bill"
+
+	Billing Amount + Billing Amount (and so on depends on how many times billing amount has been added) = Total Amount Billed
+
+ 	Contract Amount - Total Amount bill = Remaining balance
+
+add a billing information table tab
+
+================================================================================================================================================================================================================================================================================================== 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+==================================================================================================================================================================================================================================================================================================
+TO ADD/FIX:
+	LD CALCULATION IS NOT CORRECT
+        make Days Overdue only a read-only,
+        fill Days Overdue = days remaining
+
+	Add notification for Contractor Notification
+
+	Fix the financial computation
+		LD should be available once the project is expired
+	
+==================================================================================================================================================================================================================================================================================================
+FIXED:
+ADMIN
+	In LD tab, I only need the view tab, everything else inside it delete, also delete days overdue and total liability display
+
+	If the project is updated its status, it should update all the blade of its new status so it will prevent user confusion - edit.blade, show.blade, index.blade
+
+	work progress max and Liquidated Damages Assessment (ACCOMPLISHED) input of 3 whole numbers and 2 decimals, 100.00max 0.0min. - edit.blade and create.blade (progress in create.blade)
+
+	Activity Log remove unnecessary updates, only show the updated data - show.blade
+
+Status Needs to fix only need one status display, force expired if the user updated the status.
+		in the index.blade change name:Active into On Going

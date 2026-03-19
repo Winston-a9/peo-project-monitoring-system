@@ -126,6 +126,7 @@
                 <input type="hidden" name="location"        value="{{ $project->location }}">
                 <input type="hidden" name="contractor"      value="{{ $project->contractor }}">
                 <input type="hidden" name="contract_amount" id="contract_amount" value="{{ $project->contract_amount }}">
+                <input type="hidden" id="original_contract_amount" value="{{ $project->original_contract_amount ?? $project->contract_amount }}">
                 <div class="section-body">
                     <div class="grid-2col">
                         <div class="field-group">
@@ -277,18 +278,29 @@
                         <p class="field-hint">Automatically calculated</p>
                     </div>
                     <div class="field-group">
-                        <label class="field-label">Days Overdue</label>
-                        <input type="number" id="ld_days_overdue_input" name="ld_days_overdue" class="field-input" value="{{ old('ld_days_overdue', $project->ld_days_overdue ?? '') }}" min="0" step="1" oninput="calculateLDTotal()" placeholder="e.g. 30">
-                        <p class="field-hint">Number of overdue days</p>
+                    <label class="field-label">Days Overdue <span style="font-weight:400; text-transform:none; letter-spacing:0; color:#9ca3af;">(auto)</span></label>
+                    {{-- Hidden input submits the value to the controller --}}
+                    <input type="hidden" id="ld_days_overdue_input" name="ld_days_overdue" value="0">
+                    <div style="padding:0.75rem 1rem; border:1.5px solid var(--border); border-radius:9px; background:var(--bg-secondary);">
+                        <p style="margin:0; display:flex; align-items:baseline; gap:0.4rem;">
+                            <span id="ld_days_overdue_display" style="font-size:1.1rem; font-weight:800; font-family:'Syne',sans-serif; letter-spacing:-0.02em; color:var(--tx2);">—</span>
+                            <span id="ld_days_unit" style="font-size:0.8rem; font-weight:600; color:var(--tx2);">calculating…</span>
+                        </p>
+                        <p style="font-size:0.68rem; color:#9ca3af; margin:3px 0 0;">
+                            {{ $project->revised_contract_expiry
+                                ? 'Revised Expiry: ' . $project->revised_contract_expiry->format('M d, Y')
+                                : 'Original Expiry: ' . $project->original_contract_expiry->format('M d, Y') }}
+                        </p>
                     </div>
+                    <p class="field-hint" id="ld_overdue_hint">Auto-calculated from {{ $project->revised_contract_expiry ? 'revised' : 'original' }} contract expiry</p>
+                </div>
                     <div class="field-group">
                         <label class="field-label">LD per Day (₱) <span style="font-weight:400; text-transform:none; letter-spacing:0; color:#9ca3af;">(auto)</span></label>
                         <input type="hidden" id="ld_per_day" name="ld_per_day" value="{{ old('ld_per_day', $project->ld_per_day ?? '0') }}">
                         <p style="font-size:0.9rem;font-weight:700;color:var(--text-primary);margin:0;padding:0.1rem 0;font-family:'Syne',sans-serif;letter-spacing:-0.01em;">
                             ₱<span id="ld_per_day_display">{{ number_format((float) old('ld_per_day', $project->ld_per_day ?? 0), 2) }}</span>
                         </p>
-                        <p class="field-hint">Formula: (Unworked % ÷ 100) × Contract Amount × 0.001</p>
-                    </div>
+                        <p class="field-hint">Formula: (Unworked % ÷ 100) × Original Contract Amount × 0.001</p>                    </div>
                     <div class="field-group" style="grid-column:1/-1;">
                         <label class="field-label">Total LD (₱) <span style="font-weight:400; text-transform:none; letter-spacing:0; color:#9ca3af;">(auto)</span></label>
                         <input type="hidden" id="total_ld" name="total_ld" value="{{ old('total_ld', $project->total_ld ?? '0') }}">
@@ -804,6 +816,7 @@
 @push('scripts')
 <script>
     const originalExpiry = '{{ $project->original_contract_expiry->format("Y-m-d") }}';
+    const revisedExpiry  = '{{ $project->revised_contract_expiry?->format("Y-m-d") ?? '' }}';
     const existingTEDays = {{ (int) collect($project->extension_days ?? [])->filter(fn($v) => is_numeric($v))->sum() }};
     const existingVODays = {{ (int) collect($project->vo_days ?? [])->filter(fn($v) => is_numeric($v))->sum() }};
     const existingSODays = {{ (int) ($project->suspension_days ?? 0) }};

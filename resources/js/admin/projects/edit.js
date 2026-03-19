@@ -1,4 +1,3 @@
-
 /* ── Tab switching ── */
 window.switchTab = function (tabId, btnElement) {
     document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
@@ -9,7 +8,7 @@ window.switchTab = function (tabId, btnElement) {
 
 /* ── Accordion toggle ── */
 window.toggleAcc = function (id) {
-    const hdr  = document.getElementById('acc-' + id + '-hdr');
+    const hdr = document.getElementById('acc-' + id + '-hdr');
     const body = document.getElementById('acc-' + id + '-bdy');
     const open = hdr.classList.contains('is-open');
     if (open) {
@@ -31,9 +30,9 @@ window.toggleCompletedAt = function () {
 
 /* ── Slippage calculator ── */
 window.computeSlippage = function () {
-    const ap    = parseFloat(document.getElementById('as_planned').value);
-    const wd    = parseFloat(document.getElementById('work_done').value);
-    const lbl   = document.getElementById('slippage_label');
+    const ap = parseFloat(document.getElementById('as_planned').value);
+    const wd = parseFloat(document.getElementById('work_done').value);
+    const lbl = document.getElementById('slippage_label');
     const valEl = document.getElementById('slippage-value');
 
     document.getElementById('ap_bar').style.width = Math.min(ap || 0, 100) + '%';
@@ -41,13 +40,12 @@ window.computeSlippage = function () {
 
     if (isNaN(ap) || isNaN(wd)) { valEl.textContent = '—'; return; }
 
-    // ✅ parseFloat fixes string comparison bug from toFixed()
     const sl = parseFloat((wd - ap).toFixed(3));
     document.getElementById('slippage').value = sl;
 
-    if (sl > 0)      { lbl.style.color = '#16a34a'; lbl.innerHTML = '<i class="fas fa-arrow-up"></i> Ahead';    valEl.style.color = '#16a34a'; }
+    if (sl > 0) { lbl.style.color = '#16a34a'; lbl.innerHTML = '<i class="fas fa-arrow-up"></i> Ahead'; valEl.style.color = '#16a34a'; }
     else if (sl < 0) { lbl.style.color = '#dc2626'; lbl.innerHTML = '<i class="fas fa-arrow-down"></i> Behind'; valEl.style.color = '#dc2626'; }
-    else             { lbl.style.color = '#9ca3af'; lbl.innerHTML = '<i class="fas fa-minus"></i> On schedule'; valEl.style.color = '#9ca3af'; }
+    else { lbl.style.color = '#9ca3af'; lbl.innerHTML = '<i class="fas fa-minus"></i> On schedule'; valEl.style.color = '#9ca3af'; }
 
     valEl.textContent = (sl > 0 ? '+' : '') + sl + '%';
 };
@@ -57,29 +55,92 @@ function fmtNum(n, decimals) {
     return n.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 }
 
-// LD PER DAY CALCULATOR
-window.calculateLDPerDay = function () {
-    const acc      = parseFloat(document.getElementById('ld_accomplished').value) || 0;
-    const amt      = parseFloat(document.getElementById('contract_amount').value.replace(/,/g, '')) || 0;
-    const unworked = Math.max(0, 100 - acc);
-    const perDay   = (unworked / 100) * amt * 0.001;
+/**
+ * Auto-calculates days overdue (or remaining) from the contract expiry date.
+ * Uses revisedExpiry if set, otherwise originalExpiry.
+ * Both variables are injected by the blade inline script before this file loads.
+ *
+ * - Contract still active  → shows "X days remaining" in green, hidden input = 0
+ * - Expires today          → shows "0 days — expires today" in amber, hidden input = 0
+ * - Contract overdue       → shows "X days overdue" in red, hidden input = X
+ */
+window.calculateDaysOverdue = function () {
+    const expiryStr = (typeof revisedExpiry !== 'undefined' && revisedExpiry !== '')
+        ? revisedExpiry
+        : (typeof originalExpiry !== 'undefined' ? originalExpiry : null);
 
-    document.getElementById('ld_unworked').value = unworked.toFixed(3);
-    document.getElementById('ld_per_day').value  = perDay.toFixed(3);
+    if (!expiryStr) return;
 
-    const unworkedDisplay = document.getElementById('ld_unworked_display');
-    const perDayDisplay   = document.getElementById('ld_per_day_display');
-    if (unworkedDisplay) unworkedDisplay.textContent = fmtNum(unworked, 3);
-    if (perDayDisplay)   perDayDisplay.textContent   = fmtNum(perDay, 3);
+    const expiry = new Date(expiryStr + 'T00:00:00');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const diffMs = today - expiry;
+    const diffDays = Math.floor(Math.abs(diffMs) / 86400000);
+    const isOverdue = diffMs > 0;
+
+    const hiddenEl = document.getElementById('ld_days_overdue_input');
+    const displayEl = document.getElementById('ld_days_overdue_display');
+    const unitEl = document.getElementById('ld_days_unit');
+    const hintEl = document.getElementById('ld_overdue_hint');
+    const boxEl = displayEl ? displayEl.closest('[id="ld_days_box"], div') : null;
+
+    // Set the hidden input — only positive when actually overdue
+    if (hiddenEl) hiddenEl.value = diffDays;
+    if (displayEl) displayEl.textContent = diffDays;if (displayEl) displayEl.textContent = diffDays;
+
+    if (isOverdue) {
+        if (displayEl) displayEl.style.color = '#dc2626';
+        if (unitEl) { unitEl.textContent = 'days overdue'; unitEl.style.color = '#dc2626'; }
+        if (hintEl) { hintEl.style.color = '#dc2626'; hintEl.innerHTML = '<i class="fas fa-triangle-exclamation"></i> Contract is overdue — LD is accumulating'; }
+    } else if (diffDays === 0) {
+        if (displayEl) displayEl.style.color = '#f59e0b';
+        if (unitEl) { unitEl.textContent = 'days — expires today'; unitEl.style.color = '#f59e0b'; }
+        if (hintEl) { hintEl.style.color = '#d97706'; hintEl.innerHTML = '<i class="fas fa-clock"></i> Contract expires today'; }
+    } else {
+        if (displayEl) displayEl.style.color = '#16a34a';
+        if (unitEl) { unitEl.textContent = 'days remaining'; unitEl.style.color = '#16a34a'; }
+        if (hintEl) { hintEl.style.color = '#16a34a'; hintEl.innerHTML = '<i class="fas fa-check-circle"></i> Contract still active — no LD applies'; }
+    }
 
     window.calculateLDTotal();
 };
 
-// LD TOTAL CALCULATOR
+/**
+ * LD Per Day formula:
+ *   LD per day = (Accomplished / 100) × Original Contract Amount × 0.001
+ *
+ * Note: uses ACCOMPLISHED %, not unworked %.
+ * ld_unworked is kept in sync for display only.
+ */
+window.calculateLDPerDay = function () {
+    const acc      = parseFloat(document.getElementById('ld_accomplished').value) || 0;
+    const amt      = parseFloat(document.getElementById('original_contract_amount').value.replace(/,/g, '')) || 0;
+    const unworked = Math.round((100 - acc) * 100) / 100;  // ✅ rounded to 2dp like Excel
+    const perDay   = Math.max(0, unworked) / 100 * amt * 0.001;  // full precision
+
+    document.getElementById('ld_unworked').value = unworked.toFixed(2);
+    document.getElementById('ld_per_day').value  = perDay;  // store full precision for total calc
+
+    const unworkedDisplay = document.getElementById('ld_unworked_display');
+    const perDayDisplay   = document.getElementById('ld_per_day_display');
+    if (unworkedDisplay) unworkedDisplay.textContent = fmtNum(unworked, 2);
+    if (perDayDisplay)   perDayDisplay.textContent   = fmtNum(perDay, 2);  // display 2dp
+
+    window.calculateLDTotal();
+};
+
+/**
+ * Total LD formula:
+ *   Total LD = LD per day × Days Overdue
+ *
+ * Days overdue is auto-filled by calculateDaysOverdue() — grows each day the
+ * project remains past its expiry without any user input needed.
+ */
 window.calculateLDTotal = function () {
-    const perDay  = parseFloat(document.getElementById('ld_per_day').value)            || 0;
+    const perDay  = parseFloat(document.getElementById('ld_per_day').value) || 0;
     const overdue = parseFloat(document.getElementById('ld_days_overdue_input').value) || 0;
-    const total   = perDay * overdue;
+    const total   = perDay * overdue;  // full precision multiplication
 
     document.getElementById('total_ld').value = total.toFixed(2);
 
@@ -99,7 +160,6 @@ function formatDate(d) {
     return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 }
 
-// TIME EXTENSION EXPIRY PREVIEW
 window.updateTEPreview = function () {
     const newDays = parseInt(document.getElementById('new_te_days').value) || 0;
     const preview = document.getElementById('te_revised_preview');
@@ -107,7 +167,6 @@ window.updateTEPreview = function () {
     preview.textContent = formatDate(addDaysToDate(originalExpiry, existingTEDays + existingVODays + existingSODays + newDays));
 };
 
-// VARIATION ORDER EXPIRY PREVIEW
 window.updateVOPreview = function () {
     const newDays = parseInt(document.getElementById('new_vo_days').value) || 0;
     const preview = document.getElementById('vo_revised_preview');
@@ -115,7 +174,6 @@ window.updateVOPreview = function () {
     preview.textContent = formatDate(addDaysToDate(originalExpiry, existingTEDays + existingVODays + existingSODays + newDays));
 };
 
-// SUSPENSION ORDER EXPIRY PREVIEW
 window.updateSOPreview = function () {
     const newDays = parseInt(document.getElementById('new_so_days').value) || 0;
     const preview = document.getElementById('so_revised_preview');
@@ -131,7 +189,6 @@ window.checkPerformanceBond = function () {
     if (field) field.style.display = hasPerformanceBond ? 'block' : 'none';
 };
 
-// ISSUANCE ROW HTML BUILDER
 window.issuanceRowHTML = function (val = '') {
     let opts = '<option value="">— Select Issuance —</option>';
     ISSUANCE_OPTS.forEach(o => opts += `<option value="${o}" ${o === val ? 'selected' : ''}>${o}</option>`);
@@ -141,13 +198,11 @@ window.issuanceRowHTML = function (val = '') {
     </div>`;
 };
 
-// ADD ISSUANCE ROW
 window.addIssuanceRow = function () {
     document.getElementById('issuances-list').insertAdjacentHTML('beforeend', window.issuanceRowHTML());
     window.updateCount('issuances-list', 'issuance-count');
 };
 
-// REMOVE ISSUANCE ROW
 window.removeIssuanceRow = function (btn) {
     const list = document.getElementById('issuances-list');
     if (list.querySelectorAll('.dynamic-row').length <= 1) {
@@ -161,33 +216,32 @@ window.removeIssuanceRow = function (btn) {
     window.checkPerformanceBond();
 };
 
-// UPDATE ISSUANCE COUNT BADGE
 window.updateCount = function (listId, countId) {
     const filled = [...document.getElementById(listId).querySelectorAll('select')]
         .filter(s => s.value !== '').length;
     const chip = document.getElementById(countId);
-    chip.textContent       = filled;
-    chip.style.background  = filled > 0 ? 'rgba(249,115,22,0.15)' : 'rgba(249,115,22,0.07)';
-    chip.style.color       = filled > 0 ? '#ea580c' : '#9ca3af';
+    chip.textContent = filled;
+    chip.style.background = filled > 0 ? 'rgba(249,115,22,0.15)' : 'rgba(249,115,22,0.07)';
+    chip.style.color = filled > 0 ? '#ea580c' : '#9ca3af';
     chip.style.borderColor = filled > 0 ? 'rgba(249,115,22,0.3)' : 'rgba(249,115,22,0.15)';
 };
 
 /* ── Delete entry modal ── */
 window.openDeleteModal = function (type, index, label, days) {
-    window._delType  = type;
+    window._delType = type;
     window._delIndex = index;
     const isVO = type === 'vo';
 
-    document.getElementById('del-entry-icon').className    = 'fas ' + (isVO ? 'fa-file-signature' : 'fa-clock');
-    document.getElementById('del-entry-icon').style.color  = '#dc2626';
+    document.getElementById('del-entry-icon').className = 'fas ' + (isVO ? 'fa-file-signature' : 'fa-clock');
+    document.getElementById('del-entry-icon').style.color = '#dc2626';
     document.getElementById('del-entry-label').textContent = label;
-    document.getElementById('del-entry-days').textContent  = '+' + days + 'd';
+    document.getElementById('del-entry-days').textContent = '+' + days + 'd';
 
     const titleEl = document.getElementById('delete-entry-modal-title');
     if (titleEl) titleEl.textContent = 'Delete ' + label;
 
     const totalOfType = isVO ? _totalVOCount : _totalTECount;
-    const notice      = document.getElementById('del-renumber-notice');
+    const notice = document.getElementById('del-renumber-notice');
     if (totalOfType > 1) {
         notice.style.display = 'flex';
         document.getElementById('del-renumber-text').innerHTML =
@@ -198,42 +252,41 @@ window.openDeleteModal = function (type, index, label, days) {
         notice.style.display = 'none';
     }
 
-    const textarea             = document.getElementById('del-reason-input');
-    textarea.value             = '';
+    const textarea = document.getElementById('del-reason-input');
+    textarea.value = '';
     textarea.style.borderColor = 'var(--border)';
-    textarea.style.boxShadow   = 'none';
-    document.getElementById('del-reason-count').textContent   = '0';
+    textarea.style.boxShadow = 'none';
+    document.getElementById('del-reason-count').textContent = '0';
     document.getElementById('del-reason-error').style.display = 'none';
 
-    const btn     = document.getElementById('del-confirm-btn');
+    const btn = document.getElementById('del-confirm-btn');
     btn.innerHTML = '<i class="fas fa-trash-alt" style="font-size:0.75rem;"></i> Delete Entry';
-    btn.disabled  = false;
+    btn.disabled = false;
     btn.style.opacity = '1';
 
     openModal('delete-entry-modal');
 };
 
-// CLEAR DELETE ERROR STATE
 window.delClearError = function () {
-    document.getElementById('del-reason-error').style.display     = 'none';
+    document.getElementById('del-reason-error').style.display = 'none';
     document.getElementById('del-reason-input').style.borderColor = 'var(--border)';
 };
 
 /* ── Billing preview ── */
 window.updateBillingPreview = function () {
-    const input       = document.getElementById('new_billing_amount');
-    const totalEl     = document.getElementById('billing_total_preview');
+    const input = document.getElementById('new_billing_amount');
+    const totalEl = document.getElementById('billing_total_preview');
     const remainingEl = document.getElementById('billing_remaining_val');
-    const previewP    = document.getElementById('billing_remaining_preview');
+    const previewP = document.getElementById('billing_remaining_preview');
     if (!input || !totalEl || !remainingEl) return;
 
-    const newAmt      = parseFloat(input.value) || 0;
-    const base        = parseFloat(totalEl.dataset.base) || 0;
+    const newAmt = parseFloat(input.value) || 0;
+    const base = parseFloat(totalEl.dataset.base) || 0;
     const contractAmt = parseFloat(document.getElementById('contract_amount')?.value) || 0;
-    const newTotal    = base + newAmt;
-    const newRemain   = contractAmt - newTotal;
+    const newTotal = base + newAmt;
+    const newRemain = contractAmt - newTotal;
 
-    totalEl.textContent     = newTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    totalEl.textContent = newTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     remainingEl.textContent = newRemain.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     if (previewP) previewP.style.color = newRemain >= 0 ? '#3b82f6' : '#dc2626';
 };
@@ -255,8 +308,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const ldAccomplished = document.getElementById('ld_accomplished');
     if (ldAccomplished) window.calculateLDPerDay();
 
+    window.calculateDaysOverdue(); // ✅ auto-fills days overdue from expiry date
+
     window.checkPerformanceBond();
-    // Init billing preview base value
+
     const billingTotalEl = document.getElementById('billing_total_preview');
     if (billingTotalEl && !billingTotalEl.dataset.base) {
         billingTotalEl.dataset.base = billingTotalEl.textContent.replace(/,/g, '');
