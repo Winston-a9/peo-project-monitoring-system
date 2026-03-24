@@ -532,7 +532,7 @@
             </button>
             <button onclick="toggleBillingTab('table')" id="billing-tab-table"
                 style="flex:1;padding:0.875rem 1.25rem;background:transparent;border:none;cursor:pointer;font-size:0.825rem;font-weight:700;color:var(--tx2);border-bottom:2px solid transparent;transition:all 0.2s;display:flex;align-items:center;gap:0.5rem;font-family:'Instrument Sans',sans-serif;">
-                <i class="fas fa-table" style="font-size:0.75rem;"></i> Billing History
+                <i class="fas fa-table" style="font-size:0.75rem;"></i> Financial
             </button>
             <div style="padding:0.875rem 1.25rem;display:flex;align-items:center;gap:0.5rem;border-left:1px solid var(--bd);flex-shrink:0;">
                 <i class="fas fa-file-invoice-dollar" style="color:#16a34a;font-size:0.8rem;"></i>
@@ -568,74 +568,115 @@
                     <p style="font-size:0.7rem;color:{{ $remainingBal >= 0 ? '#3b82f6' : '#dc2626' }};margin-top:0.3rem;font-weight:600;">{{ $remainPct }}% {{ $remainingBal >= 0 ? 'remaining' : 'exceeded' }}</p>
                 </div>
             </div>
-            <div style="padding:1rem 1.25rem;background:rgba(34,197,94,0.02);display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
-                <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;font-size:0.82rem;color:var(--tx2);">
-                    <span style="font-weight:700;color:var(--tx);">₱{{ number_format($project->contract_amount, 2) }}</span>
-                    <span style="color:#9ca3af;">−</span>
-                    <span style="font-weight:700;color:#16a34a;">₱{{ number_format($totalBilled, 2) }}</span>
-                    <span style="color:#9ca3af;">=</span>
-                    <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:0.95rem;color:{{ $remainingBal >= 0 ? '#3b82f6' : '#dc2626' }};">₱{{ number_format($remainingBal, 2) }}</span>
-                </div>
-                <span style="font-size:0.68rem;color:#9ca3af;margin-left:auto;">Contract Amount − Total Billed = Remaining Balance</span>
-            </div>
         </div>
         <div id="billing-tab-table-content" style="display:none;">
-            <div style="overflow-x:auto;">
-                <table class="te-tbl">
-                    <thead>
-                        <tr>
-                            <th style="text-align:left;">Billing No.</th>
-                            <th style="text-align:center;">Date</th>
-                            <th style="text-align:right;">Amount Billed</th>
-                            <th style="text-align:right;">Cumulative Total</th>
-                            <th style="text-align:right;">Remaining Balance</th>
-                        </tr>
-                    </thead>
+        <div style="overflow-x:auto;">
+            <table class="te-tbl">
+                <thead>
+                    <tr>
+                        <th style="text-align:left;">Entry</th>
+                        <th style="text-align:center;">Date</th>
+                        <th style="text-align:right;">Amount</th>
+                        <th style="text-align:right;">Cumulative Total</th>
+                        <th style="text-align:right;">Remaining Balance</th>
+                    </tr>
+                </thead>
+                <tbody>
                     <tbody>
-                        @php $runningTotal = 0; @endphp
-                        @foreach($billingAmounts as $bi => $amount)
-                        @php
-                            $runningTotal += $amount;
-                            $runningRemain = (float)$project->contract_amount - $runningTotal;
-                            $isEven = $bi % 2 === 0;
-                            $isLast = $bi === $billingCount - 1;
-                        @endphp
-                        <tr style="background:{{ $isEven ? 'var(--bg)' : 'var(--bg2)' }};"
-                            onmouseover="this.style.background='rgba(34,197,94,0.03)'"
-                            onmouseout="this.style.background='{{ $isEven ? 'var(--bg)' : 'var(--bg2)' }}'">
-                            <td>
-                                <div style="display:flex;align-items:center;gap:0.5rem;">
-                                    <div style="width:26px;height:26px;border-radius:7px;background:rgba(34,197,94,0.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                                        <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:0.68rem;color:#16a34a;">{{ $bi + 1 }}</span>
-                                    </div>
-                                    <span style="font-weight:700;color:var(--tx);">Billing No. {{ $bi + 1 }}</span>
-                                    @if($isLast)<span style="font-size:0.6rem;font-weight:700;background:rgba(34,197,94,0.1);color:#16a34a;border:1px solid rgba(34,197,94,0.22);border-radius:99px;padding:1px 7px;margin-left:4px;">Latest</span>@endif
+                    @php
+                        $tableRows = [];
+                        $allExtCosts = array_merge(
+                            is_array($project->cost_involved ?? null) ? $project->cost_involved : [],
+                            is_array($project->vo_cost ?? null)       ? $project->vo_cost : []
+                        );
+                        $allDocs = array_values(array_filter(
+                            is_array($project->documents_pressed ?? null) ? $project->documents_pressed : [],
+                            fn($d) => str_starts_with((string)$d, 'Time Extension') || str_starts_with((string)$d, 'Variation Order')
+                        ));
+                        foreach ($allExtCosts as $ei => $cost) {
+                            if ($cost !== null && (float)$cost != 0) {
+                                $tableRows[] = ['type'=>'ext','label'=>$allDocs[$ei] ?? 'Extension Cost','date'=>null,'amount'=>(float)$cost];
+                            }
+                        }
+                        foreach ($billingAmounts as $bi => $amount) {
+                            $tableRows[] = ['type'=>'billing','label'=>'Billing No.'.($bi+1),'date'=>$billingDates[$bi]??null,'amount'=>(float)$amount,'isLast'=>$bi===$billingCount-1];
+                        }
+                        $adjustedContract = (float)$project->contract_amount;
+                        $runningBilled    = 0;
+                    @endphp
+                    @foreach($tableRows as $ri => $row)
+                    @php
+                        $isEven = $ri % 2 === 0;
+                        $isExt  = $row['type'] === 'ext';
+                        if (!$isExt) $runningBilled += $row['amount'];
+                        $runningRemain = $adjustedContract - $runningBilled;
+                    @endphp
+                    <tr style="background:{{ $isEven ? 'var(--bg)' : 'var(--bg2)' }};"
+                        onmouseover="this.style.background='rgba({{ $isExt ? '99,102,241' : '34,197,94' }},0.04)'"
+                        onmouseout="this.style.background='{{ $isEven ? 'var(--bg)' : 'var(--bg2)' }}'">
+                        <td>
+                            <div style="display:flex;align-items:center;gap:0.5rem;">
+                                <div style="width:26px;height:26px;border-radius:7px;background:{{ $isExt ? 'rgba(99,102,241,0.1)' : 'rgba(34,197,94,0.1)' }};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                    <i class="fas {{ $isExt ? 'fa-file-signature' : 'fa-file-invoice-dollar' }}" style="font-size:0.65rem;color:{{ $isExt ? '#6366f1' : '#16a34a' }};"></i>
                                 </div>
-                            </td>
-                            <td style="text-align:center;color:var(--tx2);font-size:0.8rem;">
-                                @if(!empty($billingDates[$bi]))
-                                    <span style="font-weight:600;color:var(--tx);">{{ \Carbon\Carbon::parse($billingDates[$bi])->format('M d, Y') }}</span>
-                                @else
-                                    <span style="color:#9ca3af;">—</span>
-                                @endif
-                            </td>
-                            <td style="text-align:right;"><span style="font-weight:700;color:#16a34a;font-family:'Syne',sans-serif;font-size:0.95rem;">+₱{{ number_format($amount, 2) }}</span></td>
-                            <td style="text-align:right;"><span style="font-weight:700;color:{{ $isLast ? '#16a34a' : 'var(--tx)' }};">₱{{ number_format($runningTotal, 2) }}</span></td>
-                            <td style="text-align:right;"><span style="font-weight:700;color:{{ $runningRemain >= 0 ? '#3b82f6' : '#dc2626' }};">₱{{ number_format($runningRemain, 2) }}</span></td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                    <tfoot>
-                        <tr>
-                            <td colspan="2" style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink2);">Total</td>
-                            <td style="text-align:right;"><span style="font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:800;color:#16a34a;">₱{{ number_format($totalBilled, 2) }}</span></td>
-                            <td style="text-align:right;"><span style="font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:800;color:#16a34a;">₱{{ number_format($totalBilled, 2) }}</span></td>
-                            <td style="text-align:right;"><span style="font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:800;color:{{ $remainingBal >= 0 ? '#3b82f6' : '#dc2626' }};">₱{{ number_format($remainingBal, 2) }}</span></td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
+                                <div>
+                                    <span style="font-weight:700;color:{{ $isExt ? '#6366f1' : 'var(--tx)' }};">{{ $row['label'] }}</span>
+                                    @if($isExt)
+                                        <span style="font-size:0.6rem;font-weight:700;background:rgba(99,102,241,0.1);color:#6366f1;border:1px solid rgba(99,102,241,0.2);border-radius:99px;padding:1px 6px;margin-left:4px;">Contract Adj.</span>
+                                    @endif
+                                    @if(!$isExt && ($row['isLast'] ?? false))
+                                        <span style="font-size:0.6rem;font-weight:700;background:rgba(34,197,94,0.1);color:#16a34a;border:1px solid rgba(34,197,94,0.22);border-radius:99px;padding:1px 7px;margin-left:4px;">Latest</span>
+                                    @endif
+                                </div>
+                            </div>
+                        </td>
+                        <td style="text-align:center;color:var(--tx2);font-size:0.8rem;">
+                            @if($row['date'])
+                                <span style="font-weight:600;color:var(--tx);">{{ \Carbon\Carbon::parse($row['date'])->format('M d, Y') }}</span>
+                            @else
+                                <span style="color:#9ca3af;">—</span>
+                            @endif
+                        </td>
+                        <td style="text-align:right;">
+                            @if($isExt)
+                                <span style="font-weight:600;color:{{ $row['amount'] >= 0 ? '#16a34a' : '#dc2626' }};opacity:0.7;font-size:0.85rem;">
+                                    {{ $row['amount'] >= 0 ? '+' : '−' }}₱{{ number_format(abs($row['amount']), 2) }}
+                                </span>
+                                <p style="font-size:0.6rem;color:#9ca3af;margin-top:1px;text-align:right;">contract adj.</p>
+                            @else
+                                <span style="font-weight:700;color:#dc2626;font-family:'Syne',sans-serif;font-size:0.95rem;">
+                                    −₱{{ number_format($row['amount'], 2) }}
+                                </span>
+                                <p style="font-size:0.6rem;color:#9ca3af;margin-top:1px;text-align:right;">payment</p>
+                            @endif
+                        </td>
+                        <td style="text-align:right;">
+                            @if($isExt)
+                                <span style="color:#9ca3af;font-size:0.8rem;">—</span>
+                            @else
+                                <span style="font-weight:700;color:{{ ($row['isLast'] ?? false) ? '#16a34a' : 'var(--tx)' }};">₱{{ number_format($runningBilled, 2) }}</span>
+                            @endif
+                        </td>
+                        <td style="text-align:right;">
+                            @if($isExt)
+                                <span style="color:#9ca3af;font-size:0.8rem;">—</span>
+                            @else
+                                <span style="font-weight:700;color:{{ $runningRemain >= 0 ? '#3b82f6' : '#dc2626' }};">₱{{ number_format($runningRemain, 2) }}</span>
+                            @endif
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="2" style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink2);">Total</td>
+                        <td style="text-align:right;"><span style="font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:800;color:#16a34a;">₱{{ number_format($totalBilled, 2) }}</span></td>
+                        <td style="text-align:right;"><span style="font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:800;color:#16a34a;">₱{{ number_format($totalBilled, 2) }}</span></td>
+                        <td style="text-align:right;"><span style="font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:800;color:{{ ($adjustedContract - $totalBilled) >= 0 ? '#3b82f6' : '#dc2626' }};">₱{{ number_format($adjustedContract - $totalBilled, 2) }}</span></td>
+                </tfoot>
+            </table>
         </div>
+    </div>
     </div>
     @endif
 
