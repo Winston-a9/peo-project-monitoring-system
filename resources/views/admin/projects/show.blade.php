@@ -168,14 +168,8 @@
     <div class="card" style="padding:1.25rem;display:flex;flex-direction:column;justify-content:center;gap:0.4rem;">
         <p class="ey" style="margin:0;">Contract Amount</p>
         <p style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.25rem;color:var(--tx);letter-spacing:-0.03em;line-height:1.25;word-break:break-word;">
-            ₱{{ number_format($project->contract_amount, 2) }}
+            ₱{{ number_format($project->original_contract_amount ?? $project->contract_amount, 2) }}
         </p>
-        @if($lastCost !== null)
-            <p style="font-size:0.72rem;font-weight:700;color:{{ $lastCost > 0 ? '#16a34a' : '#dc2626' }};">
-                <i class="fas fa-arrow-{{ $lastCost > 0 ? 'up' : 'down' }}" style="font-size:0.55rem;"></i>
-                Last entry: {{ $lastCost > 0 ? '+' : '' }}₱{{ number_format($lastCost, 2) }}
-            </p>
-        @endif
         <p style="font-size:0.72rem;color:var(--tx2);">{{ $project->contract_days ?? '—' }} contract days</p>
     </div>
 </div>
