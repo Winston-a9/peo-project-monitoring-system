@@ -216,7 +216,7 @@
                     <div class="field-group">
                         <label class="field-label">As Planned (%)</label>
                         <div style="position:relative;">
-                            <input type="number" name="as_planned" id="as_planned" class="field-input"
+                            <input type="number" onkeydown="return event.key !== '-' && event.key !== 'e' " name="as_planned" id="as_planned" class="field-input"
                             value="{{ old('as_planned', $project->as_planned) }}"
                             min="0" max="100" step="0.001"
                             oninput="if(parseFloat(this.value)>100)this.value=100; computeSlippage()"
@@ -228,7 +228,7 @@
                     <div class="field-group">
                         <label class="field-label">Work Done (%)</label>
                         <div style="position:relative;">
-                            <input type="number" name="work_done" id="work_done" class="field-input"
+                            <input type="number" onkeydown="return event.key !== '-' && event.key !== 'e' " name="work_done" id="work_done" class="field-input"
                             value="{{ old('work_done', $project->work_done) }}"
                             min="0" max="100" step="0.001"
                             oninput="if(parseFloat(this.value)>100)this.value=100; computeSlippage()"
@@ -260,7 +260,7 @@
                     <div class="field-group">
                         <label class="field-label">Accomplished (%)</label>
                         <div style="position:relative;">
-                            <input type="number" id="ld_accomplished" name="ld_accomplished" class="field-input"
+                            <input type="number" onkeydown="return event.key !== '-' && event.key !== 'e' " id="ld_accomplished" name="ld_accomplished" class="field-input"
                         value="{{ old('ld_accomplished', $project->ld_accomplished ?? '') }}"
                         min="0" max="100" step="0.001"
                         oninput="if(parseFloat(this.value)>100)this.value=100; calculateLDPerDay()"
@@ -398,7 +398,7 @@
                 <div class="grid-2col">
                     <div class="field-group">
                         <label class="field-label">Extension Days <span style="color:#ef4444;">*</span></label>
-                        <input type="number" name="new_te_days" id="new_te_days" class="field-input" min="1" step="1" placeholder="e.g. 60" oninput="updateTEPreview()">
+                        <input type="number" onkeydown="return event.key !== '-' && event.key !== 'e' " name="new_te_days" id="new_te_days" class="field-input" min="1" step="1" placeholder="e.g. 60" oninput="updateTEPreview()">
                         <p class="field-hint">Number of days to extend the contract deadline</p>
                     </div>
                     <div class="field-group">
@@ -512,7 +512,7 @@
                 <div class="grid-2col">
                     <div class="field-group">
                         <label class="field-label">VO Days <span style="color:#ef4444;">*</span></label>
-                        <input type="number" name="new_vo_days" id="new_vo_days" class="field-input" min="1" step="1" placeholder="e.g. 45" oninput="updateVOPreview()" style="border-color:rgba(99,102,241,0.25);">
+                        <input type="number" onkeydown="return event.key !== '-' && event.key !== 'e'"  name="new_vo_days" id="new_vo_days" class="field-input" min="1" step="1" placeholder="e.g. 45" oninput="updateVOPreview()" style="border-color:rgba(99,102,241,0.25);">
                         <p class="field-hint">Days added by this variation order</p>
                     </div>
                     <div class="field-group">
@@ -567,7 +567,7 @@
                 <div class="grid-2col">
                     <div class="field-group">
                         <label class="field-label">{{ $hasSO ? 'Additional' : '' }} Suspension Days <span style="color:#ef4444;">*</span></label>
-                        <input type="number" name="new_so_days" id="new_so_days" class="field-input" min="1" step="1" placeholder="e.g. 30" oninput="updateSOPreview()">
+                        <input type="number" onkeydown="return event.key !== '-' && event.key !== 'e'" name="new_so_days" id="new_so_days" class="field-input" min="1" step="1" placeholder="e.g. 30" oninput="updateSOPreview()">
                         <p class="field-hint">{{ $hasSO ? 'Added to existing '.$project->suspension_days.' days' : 'Days that work was suspended' }}</p>
                     </div>
                     <div class="field-group">
@@ -697,7 +697,7 @@
                 <label class="field-label">Billing Amount (₱) <span style="color:#ef4444;">*</span></label>
                 <div style="position:relative;">
                     <span style="position:absolute; left:1rem; top:50%; transform:translateY(-50%); color:var(--ink-muted); font-weight:600; pointer-events:none;">₱</span>
-                    <input type="number" name="new_billing_amount" id="new_billing_amount" class="field-input"
+                    <input type="number" onkeydown="return event.key !== '-' && event.key !== 'e'" name="new_billing_amount" id="new_billing_amount" class="field-input"
                            min="0" step="0.01" placeholder="0.00"
                            style="padding-left:1.75rem; border-color:rgba(34,197,94,0.25);"
                            oninput="updateBillingPreview()">
@@ -851,7 +851,7 @@
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
                 <div>
                     <label for="edit_days" style="display:block; font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-muted); margin-bottom:0.4rem;">Days <span style="color:#ef4444;">*</span></label>
-                    <input type="number" id="edit_days" name="edit_days" min="1" step="1" required
+                    <input type="number" onkeydown="return event.key !== '-' && event.key !== 'e'" id="edit_days" name="edit_days" min="1" step="1" required
                            style="width:100%; padding:0.72rem 1rem; border:1.5px solid var(--border); border-radius:9px; font-size:0.875rem; color:var(--text-primary); background:var(--bg-primary); outline:none; font-family:'Instrument Sans',sans-serif; transition:border-color 0.2s,box-shadow 0.2s; box-sizing:border-box;"
                            onfocus="this.style.borderColor='var(--orange-500)';this.style.boxShadow='0 0 0 3px rgba(249,115,22,0.1)'"
                            onblur="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
@@ -870,7 +870,7 @@
                 <label for="edit_cost" style="display:block; font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-muted); margin-bottom:0.4rem;">Cost Involved (₱)</label>
                 <div style="position:relative;">
                     <span style="position:absolute; left:1rem; top:50%; transform:translateY(-50%); color:var(--ink-muted); font-weight:600; pointer-events:none; font-size:0.9rem;">₱</span>
-                    <input type="number" id="edit_cost" name="edit_cost" min="-9999999999" step="0.01" placeholder="0.00"
+                    <input type="number" onkeydown="return event.key !== '-' && event.key !== 'e'" id="edit_cost" name="edit_cost" min="-9999999999" step="0.01" placeholder="0.00"
                            style="width:100%; padding:0.72rem 1rem 0.72rem 1.75rem; border:1.5px solid var(--border); border-radius:9px; font-size:0.875rem; color:var(--text-primary); background:var(--bg-primary); outline:none; font-family:'Instrument Sans',sans-serif; transition:border-color 0.2s,box-shadow 0.2s; box-sizing:border-box;"
                            onfocus="this.style.borderColor='var(--orange-500)';this.style.boxShadow='0 0 0 3px rgba(249,115,22,0.1)'"
                            onblur="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
@@ -960,7 +960,7 @@ function submitEditEntry() {
                 </label>
                 <div style="position:relative;">
                     <span style="position:absolute; left:1rem; top:50%; transform:translateY(-50%); color:var(--ink-muted); font-weight:600; pointer-events:none;">₱</span>
-                    <input type="number" id="billing-edit-amount" min="0" step="0.01" placeholder="0.00"
+                    <input type="number" onkeydown="return event.key !== '-' && event.key !== 'e'" id="billing-edit-amount" min="0" step="0.01" placeholder="0.00"
                            style="width:100%; padding:0.72rem 1rem 0.72rem 1.75rem; border:1.5px solid rgba(34,197,94,0.3); border-radius:9px; font-size:0.875rem; color:var(--text-primary); background:var(--bg-primary); outline:none; font-family:'Instrument Sans',sans-serif; box-sizing:border-box; transition:border-color 0.2s, box-shadow 0.2s;"
                            onfocus="this.style.borderColor='#16a34a';this.style.boxShadow='0 0 0 3px rgba(34,197,94,0.1)'"
                            onblur="this.style.borderColor='rgba(34,197,94,0.3)';this.style.boxShadow='none'">

@@ -71,7 +71,7 @@
                         <label class="field-label">Contract Amount</label>
                         <div class="prefix-wrap">
                             <span class="prefix">₱</span>
-                            <input type="number" name="contract_amount" class="field-input {{ $errors->has('contract_amount') ? 'has-error' : '' }}"
+                            <input type="number" name="contract_amount" onkeydown="return event.key !=='-' && event.key !=='e' " class="field-input {{ $errors->has('contract_amount') ? 'has-error' : '' }}"
                                 placeholder="0.00" value="{{ old('contract_amount', 0) }}" min="0" step="0.01" required>
                         </div>
                         @error('contract_amount')<p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
@@ -112,7 +112,7 @@
                     </div>
                     <div>
                         <label class="field-label">Contract Days</label>
-                        <input type="number" id="contract_days" name="contract_days" class="field-input {{ $errors->has('contract_days') ? 'has-error' : '' }}"
+                        <input type="number" id="contract_days" onkeydown="return event.key !== '-' && event.key !== 'e' "  name="contract_days" class="field-input {{ $errors->has('contract_days') ? 'has-error' : '' }}"
                             placeholder="Enter number of days" value="{{ old('contract_days') }}" min="0" step="1" required oninput="calculateOriginalExpiry()">
                         @error('contract_days')<p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
                     </div>
@@ -135,7 +135,7 @@
                     <div>
                         <label class="field-label">As Planned <span style="font-weight:400; text-transform:none; letter-spacing:0; color:#9ca3af;">(%)</span></label>
                         <div class="prefix-wrap" style="position:relative;">
-                            <input type="number" name="as_planned" id="as_planned" class="field-input"
+                            <input type="number" onkeydown="return event.key !== '-'&& event.key !== 'e' " name="as_planned" id="as_planned" class="field-input"
                             style="padding-right:2.5rem;" placeholder="0.000"
                             value="{{ old('as_planned', 0) }}"
                             min="0" max="100" step="0.001"
@@ -146,7 +146,7 @@
                     <div>
                         <label class="field-label">Work Done <span style="font-weight:400; text-transform:none; letter-spacing:0; color:#9ca3af;">(%)</span></label>
                         <div style="position:relative;">
-                            <input type="number" name="work_done" id="work_done" class="field-input"
+                            <input type="number" onkeydown="return event.key !== '-'&& event.key !== 'e' " name="work_done" id="work_done" class="field-input"
                             style="padding-right:2.5rem;" placeholder="0.000"
                             value="{{ old('work_done', 0) }}"
                             min="0" max="100" step="0.001"
