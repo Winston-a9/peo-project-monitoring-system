@@ -117,8 +117,6 @@ TO ADD/FIX:
 
 	in financial the "days overdue" only counts the overdued date since the revised expiry or original expiry (depends if the project has extension then it will only count the original expiry) if theres still days left just leave it blanked
 
-	in financial>billing history add if the extensions has cost involve, then compute the cost involve amount in the remaining amount
-
 	Add notification for Contractor Notification
 	create a new billing tab
 		billing updates changes to 171
@@ -129,6 +127,8 @@ TO ADD/FIX:
 ==================================================================================================================================================================================================================================================================================================
 FIXED:
 ADMIN
+	in financial>billing history add if the extensions has cost involve, then compute the cost involve amount in the remaining amount
+
 		LD CALCULATION IS NOT CORRECT
         make Days Overdue only a read-only,
         fill Days Overdue = days remaining

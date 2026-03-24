@@ -26,7 +26,7 @@
 @php
     $today    = now();
     $expiry   = $project->revised_contract_expiry ?? $project->original_contract_expiry;
-    $daysLeft = (int) $today->diffInDays($expiry->endOfDay(), false);
+    $daysLeft = (int) $today->startOfDay()->diffInDays($expiry->startOfDay(), false);
 
     $issuances        = $project->issuances        ?? [];
     $documentsPressed = $project->documents_pressed ?? [];
@@ -503,11 +503,18 @@
                 <span class="dl"><i class="fas fa-percent"></i> Unworked</span>
                 <span class="dv">{{ $project->ld_unworked !== null ? $project->ld_unworked.'%' : '—' }}</span>
             </div>
+            @php
+                $ldExpiryDate  = $project->revised_contract_expiry ?? $project->original_contract_expiry;
+                $ldLiveDays    = (int) now()->startOfDay()->diffInDays($ldExpiryDate->startOfDay(), false);
+                $ldLiveOverdue = $ldLiveDays < 0 ? abs($ldLiveDays) : 0;
+            @endphp
             <div class="dr" style="border-right:1px solid var(--bd);">
                 <span class="dl"><i class="fas fa-calendar-xmark"></i> Days Overdue</span>
-                <span class="dv" style="{{ $project->ld_days_overdue ? 'color:#dc2626;' : '' }}">
-                    {{ $project->ld_days_overdue ? (int)$project->ld_days_overdue . ' days' : '—' }}
-                </span>
+                @if($ldLiveOverdue > 0)
+                    <span class="dv" style="color:#dc2626;">{{ $ldLiveOverdue }} {{ $ldLiveOverdue === 1 ? 'day' : 'days' }}</span>
+                @else
+                    <span style="color:#9ca3af;font-size:0.82rem;">—</span>
+                @endif
             </div>
             <div class="dr">
                 <span class="dl"><i class="fas fa-peso-sign"></i> LD / Day</span>
