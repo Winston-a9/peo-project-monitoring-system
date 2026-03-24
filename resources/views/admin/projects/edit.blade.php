@@ -126,7 +126,7 @@
                 <input type="hidden" name="location"        value="{{ $project->location }}">
                 <input type="hidden" name="contractor"      value="{{ $project->contractor }}">
                 <input type="hidden" name="contract_amount" id="contract_amount" value="{{ $project->contract_amount }}">
-                <input type="hidden" id="original_contract_amount" value="{{ $project->original_contract_amount ?? $project->contract_amount }}">
+                <input type="hidden" id="original_contract_amount" value="{{ (float) ($project->original_contract_amount ?? $project->contract_amount) }}">
                 <div class="section-body">
                     <div class="grid-2col">
                         <div class="field-group">
@@ -280,7 +280,7 @@
                     <div class="field-group">
                     <label class="field-label">Days Overdue <span style="font-weight:400; text-transform:none; letter-spacing:0; color:#9ca3af;">(auto)</span></label>
                     {{-- Hidden input submits the value to the controller --}}
-                    <input type="hidden" id="ld_days_overdue_input" name="ld_days_overdue" value="0">
+                    <input type="hidden" id="ld_days_overdue_input" name="ld_days_overdue" value="{{ old('ld_days_overdue', $project->ld_days_overdue ?? 0) }}">
                     <div style="padding:0.75rem 1rem; border:1.5px solid var(--border); border-radius:9px; background:var(--bg-secondary);">
                         <p style="margin:0; display:flex; align-items:baseline; gap:0.4rem;">
                             <span id="ld_days_overdue_display" style="font-size:1.1rem; font-weight:800; font-family:'Syne',sans-serif; letter-spacing:-0.02em; color:var(--tx2);">—</span>

@@ -87,7 +87,7 @@ window.calculateDaysOverdue = function () {
 
     // Set the hidden input — only positive when actually overdue
     if (hiddenEl) hiddenEl.value = diffDays;
-    if (displayEl) displayEl.textContent = diffDays;if (displayEl) displayEl.textContent = diffDays;
+    if (displayEl) displayEl.textContent = diffDays; if (displayEl) displayEl.textContent = diffDays;
 
     if (isOverdue) {
         if (displayEl) displayEl.style.color = '#dc2626';
@@ -114,18 +114,19 @@ window.calculateDaysOverdue = function () {
  * ld_unworked is kept in sync for display only.
  */
 window.calculateLDPerDay = function () {
-    const acc      = parseFloat(document.getElementById('ld_accomplished').value) || 0;
-    const amt      = parseFloat(document.getElementById('original_contract_amount').value.replace(/,/g, '')) || 0;
-    const unworked = Math.round((100 - acc) * 100) / 100;  // ✅ rounded to 2dp like Excel
-    const perDay   = Math.max(0, unworked) / 100 * amt * 0.001;  // full precision
+    const acc = parseFloat(document.getElementById('ld_accomplished').value) || 0;
+    const amt = parseFloat(document.getElementById('original_contract_amount').value.replace(/,/g, '')) || 0;
+    
+    const unworked = 100 - acc;  // ← NO rounding, keep full precision
+    const perDay = Math.max(0, unworked) / 100 * amt * 0.001;
 
-    document.getElementById('ld_unworked').value = unworked.toFixed(2);
-    document.getElementById('ld_per_day').value  = perDay;  // store full precision for total calc
+    document.getElementById('ld_unworked').value = unworked.toFixed(2);  // store 2dp for display
+    document.getElementById('ld_per_day').value = perDay;  // full precision
 
     const unworkedDisplay = document.getElementById('ld_unworked_display');
-    const perDayDisplay   = document.getElementById('ld_per_day_display');
-    if (unworkedDisplay) unworkedDisplay.textContent = fmtNum(unworked, 2);
-    if (perDayDisplay)   perDayDisplay.textContent   = fmtNum(perDay, 2);  // display 2dp
+    const perDayDisplay = document.getElementById('ld_per_day_display');
+    if (unworkedDisplay) unworkedDisplay.textContent = fmtNum(unworked, 2);  // show 2dp
+    if (perDayDisplay)   perDayDisplay.textContent   = fmtNum(perDay, 2);
 
     window.calculateLDTotal();
 };
@@ -138,9 +139,9 @@ window.calculateLDPerDay = function () {
  * project remains past its expiry without any user input needed.
  */
 window.calculateLDTotal = function () {
-    const perDay  = parseFloat(document.getElementById('ld_per_day').value) || 0;
+    const perDay = parseFloat(document.getElementById('ld_per_day').value) || 0;
     const overdue = parseFloat(document.getElementById('ld_days_overdue_input').value) || 0;
-    const total   = perDay * overdue;  // full precision multiplication
+    const total = perDay * overdue;  // full precision multiplication
 
     document.getElementById('total_ld').value = total.toFixed(2);
 
@@ -305,10 +306,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const issuancesList = document.getElementById('issuances-list');
     if (issuancesList) window.updateCount('issuances-list', 'issuance-count');
 
-    const ldAccomplished = document.getElementById('ld_accomplished');
-    if (ldAccomplished) window.calculateLDPerDay();
+    window.calculateDaysOverdue(); 
 
-    window.calculateDaysOverdue(); // ✅ auto-fills days overdue from expiry date
+    const ldAccomplished = document.getElementById('ld_accomplished');
+    if (ldAccomplished && ldAccomplished.value) {
+        // Restore saved DB values AFTER calculateDaysOverdue has run
+        const savedUnworked = parseFloat(document.getElementById('ld_unworked').value) || 0;
+        const savedPerDay = parseFloat(document.getElementById('ld_per_day').value) || 0;
+        const savedTotal = parseFloat(document.getElementById('total_ld').value) || 0;
+
+        const unworkedDisplay = document.getElementById('ld_unworked_display');
+        const perDayDisplay = document.getElementById('ld_per_day_display');
+        const totalDisplay = document.getElementById('total_ld_display');
+
+        if (unworkedDisplay) unworkedDisplay.textContent = fmtNum(savedUnworked, 2);
+        if (perDayDisplay) perDayDisplay.textContent = fmtNum(savedPerDay, 2);
+        if (totalDisplay) totalDisplay.textContent = fmtNum(savedTotal, 2);  // ← restores correct DB value
+    }
 
     window.checkPerformanceBond();
 
