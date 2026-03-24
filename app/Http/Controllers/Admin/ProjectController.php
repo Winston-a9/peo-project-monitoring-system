@@ -53,6 +53,11 @@ class ProjectController extends Controller
         if ($request->status === 'ongoing') {
             $data['completed_at'] = null;
         }
+        $effectiveExpiry = $data['original_contract_expiry'] ?? null;
+        if ($effectiveExpiry && Carbon::parse($effectiveExpiry)->isPast()) {
+            $data['status']       = 'expired';
+            $data['completed_at'] = null;
+        }
 
         Project::create($data);
 
@@ -390,6 +395,11 @@ class ProjectController extends Controller
                 }
             }
         }
+        $effectiveExpiry = $data['revised_contract_expiry'] ?? $data['original_contract_expiry'] ?? null;
+        if ($effectiveExpiry && Carbon::parse($effectiveExpiry)->isPast() && $data['status'] !== 'completed') {
+            $data['status']       = 'expired';
+            $data['completed_at'] = null;
+    }
 
         $project->update($data);
 

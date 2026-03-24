@@ -20,17 +20,17 @@ class ProjectFactory extends Factory
             'Metro Build Solutions',
         ];
 
-        $dateStarted      = $this->faker->dateTimeBetween('-2 years', '-3 months');
-        $contractDays     = $this->faker->numberBetween(90, 365);
-        $originalExpiry   = Carbon::instance($dateStarted)->addDays($contractDays);
-        $contractAmount   = $this->faker->randomFloat(2, 500000, 50000000);
+        $dateStarted    = $this->faker->dateTimeBetween('-2 years', '-3 months');
+        $contractDays   = $this->faker->numberBetween(90, 365);
+        $originalExpiry = Carbon::instance($dateStarted)->addDays($contractDays);
+        $contractAmount = $this->faker->randomFloat(2, 500000, 50000000); // original amount
 
-        // Randomly decide if this project has extensions
+        // ── Extensions ──────────────────────────────────────────────
         $hasTe = $this->faker->boolean(40);
         $hasVo = $this->faker->boolean(30);
         $hasSo = $this->faker->boolean(20);
 
-        $documentsPresseed = [];
+        $documentsPressed = [];
         $extensionDays    = [];
         $costInvolved     = [];
         $dateRequested    = [];
@@ -45,31 +45,31 @@ class ProjectFactory extends Factory
         if ($hasTe) {
             $teCount = $this->faker->numberBetween(1, 3);
             for ($i = 1; $i <= $teCount; $i++) {
-                $days  = $this->faker->numberBetween(15, 90);
-                $cost  = $this->faker->boolean(60) ? $this->faker->randomFloat(2, 10000, 500000) : null;
-                $documentsPresseed[] = "Time Extension {$i}";
-                $extensionDays[]    = $days;
-                $costInvolved[]     = $cost;
-                $dateRequested[]    = Carbon::instance($dateStarted)->addDays(rand(30, 180))->format('Y-m-d');
-                $totalTeDays += $days;
+                $days             = $this->faker->numberBetween(15, 90);
+                $cost             = $this->faker->boolean(60) ? $this->faker->randomFloat(2, 10000, 500000) : null;
+                $documentsPressed[] = "Time Extension {$i}";
+                $extensionDays[]  = $days;
+                $costInvolved[]   = $cost;
+                $dateRequested[]  = Carbon::instance($dateStarted)->addDays(rand(30, 180))->format('Y-m-d');
+                $totalTeDays     += $days;
             }
         }
 
         if ($hasVo) {
             $voCount = $this->faker->numberBetween(1, 2);
             for ($i = 1; $i <= $voCount; $i++) {
-                $days  = $this->faker->numberBetween(10, 60);
-                $cost  = $this->faker->boolean(50) ? $this->faker->randomFloat(2, 5000, 200000) : null;
-                $documentsPresseed[] = "Variation Order {$i}";
-                $voDays[]           = $days;
-                $voCost[]           = $cost;
-                $dateRequested[]    = Carbon::instance($dateStarted)->addDays(rand(60, 240))->format('Y-m-d');
-                $totalVoDays += $days;
+                $days             = $this->faker->numberBetween(10, 60);
+                $cost             = $this->faker->boolean(50) ? $this->faker->randomFloat(2, 5000, 200000) : null;
+                $documentsPressed[] = "Variation Order {$i}";
+                $voDays[]         = $days;
+                $voCost[]         = $cost;
+                $dateRequested[]  = Carbon::instance($dateStarted)->addDays(rand(60, 240))->format('Y-m-d');
+                $totalVoDays     += $days;
             }
         }
 
         if ($hasSo) {
-            $documentsPresseed[] = 'Suspension Order';
+            $documentsPressed[] = 'Suspension Order';
             $totalSoDays        = $this->faker->numberBetween(10, 45);
             $suspensionDays     = $totalSoDays;
         }
@@ -79,12 +79,12 @@ class ProjectFactory extends Factory
             $revisedExpiry = $originalExpiry->copy()->addDays($totalExtDays)->format('Y-m-d');
         }
 
-        // Adjust contract days and amount
+        // ── Adjusted contract amount (original + TE/VO costs) ────────
         $adjustedContractDays = $contractDays + $totalTeDays + $totalVoDays;
         $totalCostAdjustment  = array_sum(array_filter(array_merge($costInvolved, $voCost)));
         $adjustedAmount       = max(0, $contractAmount + $totalCostAdjustment);
 
-        // Status logic
+        // ── Status ───────────────────────────────────────────────────
         $effectiveExpiry = $revisedExpiry ?? $originalExpiry->format('Y-m-d');
         $isExpired       = Carbon::parse($effectiveExpiry)->isPast();
         $statusOptions   = $isExpired
@@ -99,20 +99,20 @@ class ProjectFactory extends Factory
                 ->format('Y-m-d');
         }
 
-        // Work progress
-        $asPlanned = match($status) {
-            'completed' => 100.00,
-            'expired'   => $this->faker->randomFloat(2, 60, 95),
-            default     => $this->faker->randomFloat(2, 10, 100),
+        // ── Work progress ────────────────────────────────────────────
+        $asPlanned = match ($status) {
+            'completed' => 100.000,
+            'expired'   => round($this->faker->randomFloat(3, 60, 95), 3),
+            default     => round($this->faker->randomFloat(3, 10, 100), 3),
         };
-        $workDone = match($status) {
-            'completed' => 100.00,
-            'expired'   => $this->faker->randomFloat(2, 40, $asPlanned),
-            default     => $this->faker->randomFloat(2, 0, min($asPlanned + 20, 100)),
+        $workDone = match ($status) {
+            'completed' => 100.000,
+            'expired'   => round($this->faker->randomFloat(3, 40, $asPlanned), 3),
+            default     => round($this->faker->randomFloat(3, 0, min($asPlanned + 20, 100)), 3),
         };
-        $slippage = round($workDone - $asPlanned, 2);
+        $slippage = round($workDone - $asPlanned, 3);
 
-        // Issuances
+        // ── Issuances ────────────────────────────────────────────────
         $issuanceOptions = [
             '1st Notice of Negative Slippage',
             '2nd Notice of Negative Slippage',
@@ -126,34 +126,42 @@ class ProjectFactory extends Factory
             ? $this->faker->randomElements($issuanceOptions, $this->faker->numberBetween(1, 3))
             : ($this->faker->boolean(25) ? [$this->faker->randomElement($issuanceOptions)] : []);
 
-        // Billing
-        $billingAmounts = [];
-        $billingDates   = [];
-        $totalBilled    = 0;
+        // ── Billing ──────────────────────────────────────────────────
+        $billingAmounts    = [];
+        $billingDates      = [];
+        $totalBilled       = 0;
+        $remainingBalance  = null;
+        $totalAmountBilled = null;
+
         if ($this->faker->boolean(50)) {
             $billingCount = $this->faker->numberBetween(1, 4);
             for ($b = 0; $b < $billingCount; $b++) {
-                $amt             = $this->faker->randomFloat(2, 50000, $adjustedAmount * 0.3);
+                $amt              = $this->faker->randomFloat(2, 50000, $adjustedAmount * 0.3);
                 $billingAmounts[] = $amt;
                 $billingDates[]   = Carbon::instance($dateStarted)->addDays(rand(30, 300))->format('Y-m-d');
                 $totalBilled     += $amt;
             }
+            $totalAmountBilled = round($totalBilled, 2);
+            // Remaining balance uses ORIGINAL contract amount, not adjusted
+            $remainingBalance  = round($contractAmount - $totalBilled, 2);
         }
-        $remainingBalance   = $totalBilled > 0 ? round($adjustedAmount - $totalBilled, 2) : null;
-        $totalAmountBilled  = $totalBilled > 0 ? round($totalBilled, 2) : null;
 
-        // LD
+        // ── Liquidated Damages ───────────────────────────────────────
+        // Formula: LD/day = (unworked / 100) × ORIGINAL contract amount × 0.001
+        // unworked = 100 - accomplished (full precision, NOT rounded)
         $ldAccomplished = null;
         $ldUnworked     = null;
         $ldPerDay       = null;
         $totalLd        = null;
         $ldDaysOverdue  = null;
+
         if ($status === 'expired' && $this->faker->boolean(60)) {
-            $ldAccomplished = $workDone;
-            $ldUnworked     = round(100 - $ldAccomplished, 2);
-            $ldPerDay       = round(($ldUnworked / 100) * $adjustedAmount * 0.001, 2);
+            $ldAccomplished = round($workDone, 3);                          // 3dp, matches migration 5,3
+            $ldUnworked     = round(100 - $ldAccomplished, 2);             // 2dp for display
+            $ldPerDayFull   = (100 - $ldAccomplished) / 100 * $contractAmount * 0.001; // full precision calc
+            $ldPerDay       = round($ldPerDayFull, 2);
             $ldDaysOverdue  = $this->faker->numberBetween(5, 120);
-            $totalLd        = round($ldPerDay * $ldDaysOverdue, 2);
+            $totalLd        = round($ldPerDayFull * $ldDaysOverdue, 2);
         }
 
         return [
@@ -170,8 +178,8 @@ class ProjectFactory extends Factory
             'revised_contract_expiry'  => $revisedExpiry,
             'status'                   => $status,
             'completed_at'             => $completedAt,
-            'contract_amount'          => $adjustedAmount,
-            'original_contract_amount' => $contractAmount,
+            'contract_amount'          => $adjustedAmount,           // adjusted (original + TE/VO costs)
+            'original_contract_amount' => $contractAmount,           // always the raw original
             'as_planned'               => $asPlanned,
             'work_done'                => $workDone,
             'slippage'                 => $slippage,
@@ -179,7 +187,7 @@ class ProjectFactory extends Factory
 
             // Documents & Extensions
             'issuances'                => empty($issuances) ? null : $issuances,
-            'documents_pressed'        => empty($documentsPresseed) ? null : $documentsPresseed,
+            'documents_pressed'        => empty($documentsPressed) ? null : $documentsPressed,
             'time_extension'           => $hasTe ? count($extensionDays) : null,
             'extension_days'           => empty($extensionDays) ? null : $extensionDays,
             'cost_involved'            => empty($costInvolved) ? null : $costInvolved,
@@ -191,6 +199,8 @@ class ProjectFactory extends Factory
             'performance_bond_date'    => $this->faker->boolean(20)
                 ? Carbon::instance($dateStarted)->addDays(rand(180, 730))->format('Y-m-d')
                 : null,
+
+            // Billing
             'billing_amounts'          => empty($billingAmounts) ? null : $billingAmounts,
             'billing_dates'            => empty($billingDates) ? null : $billingDates,
             'total_amount_billed'      => $totalAmountBilled,
