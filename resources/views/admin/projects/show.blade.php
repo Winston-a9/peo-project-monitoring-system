@@ -855,5 +855,3 @@
     @vite('resources/js/admin/projects/show.js')
 @endpush
 </x-app-layout>
-BLADE_EOF
-echo "done"
