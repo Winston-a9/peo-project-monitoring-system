@@ -101,7 +101,7 @@
 <div style="max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:0.875rem;">
 
 {{-- ══════════ HERO ROW · STATUS + PROGRESS + AMOUNT (always visible) ══════════ --}}
-<div style="display:grid;grid-template-columns:200px 1fr 190px;gap:0.875rem;" class="fu">
+<div style="display:grid;grid-template-columns:200px 1fr;gap:0.875rem;" class="fu">
 
     {{-- Status --}}
     <div class="card" style="padding:1.25rem;display:flex;flex-direction:column;gap:0.65rem;justify-content:center;">
@@ -162,15 +162,6 @@
                 <span style="font-size:0.7rem;font-weight:600;color:{{ $slipColor }};">{{ $slipLabel }}</span>
             </div>
         </div>
-    </div>
-
-    {{-- Contract Amount --}}
-    <div class="card" style="padding:1.25rem;display:flex;flex-direction:column;justify-content:center;gap:0.4rem;">
-        <p class="ey" style="margin:0;">Contract Amount</p>
-        <p style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.25rem;color:var(--tx);letter-spacing:-0.03em;line-height:1.25;word-break:break-word;">
-            ₱{{ number_format($project->original_contract_amount ?? $project->contract_amount, 2) }}
-        </p>
-        <p style="font-size:0.72rem;color:var(--tx2);">{{ $project->contract_days ?? '—' }} contract days</p>
     </div>
 </div>
 

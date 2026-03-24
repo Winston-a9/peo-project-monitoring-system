@@ -601,7 +601,13 @@
     $billingCount   = count($billingAmounts);
     $nextBillingNo  = $billingCount + 1;
     $totalBilled    = array_sum($billingAmounts);
-    $remainingBal   = (float)$project->contract_amount - $totalBilled;
+    $allExtCosts  = array_merge(
+    is_array($project->cost_involved ?? null) ? $project->cost_involved : [],
+    is_array($project->vo_cost ?? null)       ? $project->vo_cost : []
+    );
+    $totalCostAdj  = collect($allExtCosts)->filter(fn($c) => $c !== null && (float)$c != 0)->sum();
+    $adjustedContractAmt = max(0, (float)($project->original_contract_amount ?? $project->contract_amount) + $totalCostAdj);
+    $remainingBal  = $adjustedContractAmt - $totalBilled;
 @endphp
 <div class="form-card" style="margin-bottom:1.5rem; border-color:rgba(34,197,94,0.18);">
     <div class="acc-header" id="acc-billing-hdr" onclick="toggleAcc('billing')"
@@ -678,7 +684,7 @@
                     <i class="fas fa-wallet" style="color:{{ $remainingBal >= 0 ? '#3b82f6' : '#dc2626' }};"></i>
                     Remaining Balance
                     <span style="font-size:0.68rem; color:#9ca3af; font-weight:400;">(Contract − Total Billed)</span>
-                </span>
+
                 <span style="font-family:'Syne',sans-serif; font-size:1.2rem; font-weight:800; color:{{ $remainingBal >= 0 ? '#3b82f6' : '#dc2626' }};">
                     ₱{{ number_format($remainingBal, 2) }}
                 </span>

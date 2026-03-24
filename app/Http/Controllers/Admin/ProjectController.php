@@ -675,8 +675,8 @@ class ProjectController extends Controller
             array_values($data['cost_involved'] ?? $fresh->cost_involved ?? []),
             array_values($data['vo_cost']       ?? $fresh->vo_cost       ?? [])
         );
-        $deduction = collect($allCosts)->filter(fn($c) => $c !== null && (float)$c < 0)->sum();
-        $data['contract_amount'] = max(0, $originalAmount + $deduction);
+        $adjustment = collect($allCosts)->filter(fn($c) => $c !== null && (float)$c != 0)->sum();
+        $data['contract_amount'] = max(0, $originalAmount + $adjustment);
 
         $project->update($data);
 

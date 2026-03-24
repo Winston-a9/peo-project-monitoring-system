@@ -1,4 +1,4 @@
-in create add/change:
+<!-- in create add/change:
 
 input calendar form "contract days"
 
@@ -110,18 +110,29 @@ add a billing information table tab
 
 ==================================================================================================================================================================================================================================================================================================
 TO ADD/FIX:
-	LD CALCULATION IS NOT CORRECT
-        make Days Overdue only a read-only,
-        fill Days Overdue = days remaining
+
+	when work done is 100% LDA is freeze.
+
+	when the user added a extension that extended a expired project the status in index.blade, show.blade, and edit.blade will automatically update into ongoing or expiring depending on how many days are left
+
+	in financial the "days overdue" only counts the overdued date since the revised expiry or original expiry (depends if the project has extension then it will only count the original expiry) if theres still days left just leave it blanked
+
+	in financial>billing history add if the extensions has cost involve, then compute the cost involve amount in the remaining amount
 
 	Add notification for Contractor Notification
+	create a new billing tab
+		billing updates changes to 171
+		adv billin and retention manual user input type: Percentage and Amount form
 
-	Fix the financial computation
-		LD should be available once the project is expired
+	
 	
 ==================================================================================================================================================================================================================================================================================================
 FIXED:
 ADMIN
+		LD CALCULATION IS NOT CORRECT
+        make Days Overdue only a read-only,
+        fill Days Overdue = days remaining
+
 	In LD tab, I only need the view tab, everything else inside it delete, also delete days overdue and total liability display
 
 	If the project is updated its status, it should update all the blade of its new status so it will prevent user confusion - edit.blade, show.blade, index.blade
@@ -131,4 +142,4 @@ ADMIN
 	Activity Log remove unnecessary updates, only show the updated data - show.blade
 
 Status Needs to fix only need one status display, force expired if the user updated the status.
-		in the index.blade change name:Active into On Going
+		in the index.blade change name:Active into On Going -->
