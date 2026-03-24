@@ -542,9 +542,9 @@
         <div id="billing-tab-summary-content" style="display:block;">
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid var(--bd);">
                 <div style="padding:1.25rem;border-right:1px solid var(--bd);">
-                    <p class="ey" style="margin-bottom:0.5rem;">Contract Amount</p>
-                    <p style="font-family:'Syne',sans-serif;font-size:1.35rem;font-weight:800;color:var(--tx);line-height:1;letter-spacing:-0.02em;">₱{{ number_format($project->contract_amount, 2) }}</p>
-                    <p style="font-size:0.7rem;color:#9ca3af;margin-top:0.4rem;">Original contract value</p>
+                    <p class="ey" style="margin-bottom:0.5rem;">Original Contract Amount</p>
+                    <p style="font-family:'Syne',sans-serif;font-size:1.35rem;font-weight:800;color:var(--tx);line-height:1;letter-spacing:-0.02em;">₱{{ number_format($project->original_contract_amount ?? $project->contract_amount, 2) }}</p>
+                    <p style="font-size:0.7rem;color:#9ca3af;margin-top:0.4rem;">Before any cost adjustments</p>
                 </div>
                 <div style="padding:1.25rem;border-right:1px solid var(--bd);">
                     <p class="ey" style="margin-bottom:0.5rem;">Total Amount Billed</p>
