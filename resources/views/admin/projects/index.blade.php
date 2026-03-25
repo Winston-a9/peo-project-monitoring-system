@@ -246,8 +246,16 @@
                             </div>
                         </td>
                         <td style="white-space:nowrap;">
-                            <div style="font-size:0.82rem; font-weight:600; color:{{ $daysLeft<0?'#dc2626':($daysLeft<30?'#b45309':'var(--ink)') }};">
-                                <i class="fas {{ $daysLeft<0?'fa-times-circle':($daysLeft<30?'fa-clock':'fa-calendar-check') }}" style="font-size:0.58rem; margin-right:2px;"></i>
+                            <div style="font-size:0.82rem; font-weight:600; color:{{
+                                $sk === 'completed' ? '#16a34a' :
+                                ($daysLeft < 0 ? '#dc2626' :
+                                ($daysLeft < 30 ? '#b45309' : 'var(--ink)'))
+                            }};">
+                                <i class="fas {{
+                                    $sk === 'completed' ? 'fa-check-circle' :
+                                    ($daysLeft < 0 ? 'fa-times-circle' :
+                                    ($daysLeft < 30 ? 'fa-clock' : 'fa-calendar-check'))
+                                }}" style="font-size:0.58rem; margin-right:2px;"></i>
                                 {{ $expiry->format('M d, Y') }}
                             </div>
                             @if($project->revised_contract_expiry)

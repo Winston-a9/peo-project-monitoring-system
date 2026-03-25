@@ -35,14 +35,14 @@ export default defineConfig({
             refresh: true,
         }),
     ],
-    // server: {
-    //     host: '0.0.0.0', // allow access from network
-    //     port: 5173,
-    //     strictPort: true,
+    server: {
+        host: '0.0.0.0', // allow access from network
+        port: 5173,
+        strictPort: true,
 
-    //     cors: true,
-    //     hmr: {
-    //         host: '192.168.1.24', // 👈 your local IP
-    //     },
-    // },
+        cors: true,
+        hmr: {
+            host: '192.168.1.24', // 👈 your local IP
+        },
+    },
 });

@@ -114,7 +114,7 @@ TO ADD/FIX:
 if complete what happen
 if expired what happen
 
-	make a switch or button that make the project status into ""
+	make a switch or button for reactivation, when the user reactivate a project it will go back to either on going, expiring or expired status, depends on the expiry date
 
 	when work done is 100% LDA is freeze.
 
