@@ -345,27 +345,6 @@
         </div>
     </div>
 </div>
-
-{{-- Delete Modal --}}
-<div id="deleteModal" class="modal-bg" style="display:none;" onclick="if(event.target===this)closeModal()">
-    <div class="modal-box">
-        <div style="text-align:center;">
-            <div style="width:52px; height:52px; background:#fef2f2; border-radius:13px; display:flex; align-items:center; justify-content:center; margin:0 auto 1.1rem;">
-                <i class="fas fa-trash" style="color:#dc2626; font-size:1.1rem;"></i>
-            </div>
-            <p style="font-family:'Syne',sans-serif; font-size:1.15rem; color:var(--ink); margin-bottom:0.35rem;">Delete Project?</p>
-            <p id="deleteProjectName" style="color:var(--ink-muted); font-size:0.845rem; margin-bottom:0.25rem;"></p>
-            <p style="color:#b91c1c; font-size:0.78rem; margin-bottom:1.5rem; background:#fef2f2; padding:0.4rem 0.75rem; border-radius:6px; display:inline-block;">This action cannot be undone.</p>
-            <div style="display:flex; gap:0.65rem; justify-content:center;">
-                <button onclick="closeModal()" style="padding:0.6rem 1.4rem; border:1.5px solid rgba(0,0,0,0.1); border-radius:9px; font-weight:600; font-size:0.845rem; cursor:pointer; background:white; color:var(--ink); font-family:'Instrument Sans',sans-serif;">Cancel</button>
-                <button id="confirmDeleteBtn" style="padding:0.6rem 1.4rem; border-radius:9px; background:#dc2626; color:white; font-weight:600; font-size:0.845rem; cursor:pointer; border:none; font-family:'Instrument Sans',sans-serif; display:inline-flex; align-items:center; gap:0.4rem;">
-                    <i class="fas fa-trash" style="font-size:0.75rem;"></i> Delete
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
 @push('scripts')
     @vite('resources/js/admin/projects/index.js')
 @endpush

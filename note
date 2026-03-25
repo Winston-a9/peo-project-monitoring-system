@@ -111,7 +111,8 @@ add a billing information table tab
 ==================================================================================================================================================================================================================================================================================================
 TO ADD/FIX:
 
-	Should the status be automatic if less than 0 expired date will status "expired", if less than 30 days status is "expiring", if days left is more than 31 days status is "ongoing"
+if complete what happen
+if expired what happen
 
 	make a switch or button that make the project status into ""
 
@@ -131,6 +132,9 @@ TO ADD/FIX:
 ==================================================================================================================================================================================================================================================================================================
 FIXED:
 ADMIN
+
+	Should the status be automatic if less than 0 expired date will status "expired", if less than 30 days status is "expiring", if days left is more than 31 days status is "ongoing"
+
 
 in financial the "days overdue" only counts the overdued date since the revised expiry or original expiry (depends if the project has extension then it will only count the original expiry) if theres still days left just leave it blanked
 
