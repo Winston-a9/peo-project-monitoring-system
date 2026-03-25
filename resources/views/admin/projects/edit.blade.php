@@ -153,13 +153,30 @@
                             <p class="field-hint">Adjusted by TE / VO cost entries</p>
                         </div>
                         <div class="field-group">
-                            <label class="field-label">Status</label>
-                            <select name="status" id="status_sel" class="field-input" onchange="toggleCompletedAt()" style="appearance:none; padding-right:2rem; background-image:url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%236b4f35%22 stroke-width=%222%22%3E%3Cpath d=%22M6 9l6 6 6-6%22/%3E%3C/svg%3E'); background-position:right 0.6rem center; background-repeat:no-repeat; background-size:1.1em; cursor:pointer;">
-                                <option value="ongoing"   {{ old('status',$project->status)=='ongoing'   ? 'selected':'' }}>Ongoing</option>
-                                <option value="completed" {{ old('status',$project->status)=='completed' ? 'selected':'' }}>Completed</option>
-                                <option value="expired"   {{ old('status',$project->status)=='expired'   ? 'selected':'' }}>Expired</option>
-                            </select>
-                        </div>
+                        <label class="field-label">Status <span style="font-weight:400;color:#9ca3af;">(auto)</span></label>
+                        @php
+                            $expiry   = $project->revised_contract_expiry ?? $project->original_contract_expiry;
+                            $daysLeft = now()->startOfDay()->diffInDays($expiry->startOfDay(), false);
+                        @endphp
+                        @if($daysLeft < 0)
+                            <span style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.4rem 0.85rem;border-radius:99px;background:rgba(239,68,68,0.1);color:#dc2626;font-size:0.8rem;font-weight:700;">
+                                <span style="width:7px;height:7px;border-radius:50%;background:#dc2626;"></span> Expired
+                            </span>
+                            <p class="field-hint">{{ abs((int)$daysLeft) }} days past expiry</p>
+                        @elseif($daysLeft <= 30)
+                            <span style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.4rem 0.85rem;border-radius:99px;background:rgba(245,158,11,0.1);color:#d97706;font-size:0.8rem;font-weight:700;">
+                                <span style="width:7px;height:7px;border-radius:50%;background:#f59e0b;animation:pulse 1.5s ease infinite;"></span> Expiring Soon
+                            </span>
+                            <p class="field-hint">{{ (int)$daysLeft }} days remaining</p>
+                        @else
+                            <span style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.4rem 0.85rem;border-radius:99px;background:rgba(34,197,94,0.1);color:#16a34a;font-size:0.8rem;font-weight:700;">
+                                <span style="width:7px;height:7px;border-radius:50%;background:#22c55e;"></span> Ongoing
+                            </span>
+                            <p class="field-hint">{{ (int)$daysLeft }} days remaining</p>
+                        @endif
+                        {{-- Still submit the computed value --}}
+                        <input type="hidden" name="status" value="{{ $project->status }}">
+                    </div>
                     </div>
                 </div>
             </div>

@@ -111,9 +111,14 @@ add a billing information table tab
 ==================================================================================================================================================================================================================================================================================================
 TO ADD/FIX:
 
+	Should the status be automatic if less than 0 expired date will status "expired", if less than 30 days status is "expiring", if days left is more than 31 days status is "ongoing"
+
+	make a switch or button that make the project status into ""
+
 	when work done is 100% LDA is freeze.
 
 	when the user added a extension that extended a expired project the status in index.blade, show.blade, and edit.blade will automatically update into ongoing or expiring depending on how many days are left
+
 		create a new billing tab
 		billing updates changes to 171
 		adv billin and retention manual user input type: Percentage and Amount form

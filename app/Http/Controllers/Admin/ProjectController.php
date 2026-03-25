@@ -36,7 +36,7 @@ class ProjectController extends Controller
             'original_contract_expiry' => 'required|date',
             'as_planned'               => 'required|numeric|min:0|max:100',
             'work_done'                => 'required|numeric|min:0|max:100',
-            'status'                   => 'required|in:ongoing,completed,expired',
+            'status'                   => 'nullable|string',
             'completed_at'             => 'nullable|date',
         ]);
 
@@ -50,14 +50,14 @@ class ProjectController extends Controller
 
         $data['original_contract_amount'] = $request->contract_amount;
 
-        if ($request->status === 'ongoing') {
-            $data['completed_at'] = null;
-        }
-        $effectiveExpiry = $data['original_contract_expiry'] ?? null;
-        if ($effectiveExpiry && Carbon::parse($effectiveExpiry)->isPast()) {
-            $data['status']       = 'expired';
-            $data['completed_at'] = null;
-        }
+        $expiry   = Carbon::parse($data['original_contract_expiry']);
+        $daysLeft = now()->startOfDay()->diffInDays($expiry->startOfDay(), false);
+
+        if ($daysLeft < 0)        $data['status'] = 'expired';
+        elseif ($daysLeft <= 30)  $data['status'] = 'expiring';
+        else                      $data['status'] = 'ongoing';
+
+        $data['completed_at'] = null;
 
         Project::create($data);
 
@@ -158,7 +158,7 @@ class ProjectController extends Controller
             'date_started'             => 'required|date',
             'contract_days'            => 'nullable|integer|min:1',
             'original_contract_expiry' => 'required|date',
-            'status'                   => 'required|in:ongoing,completed,expired',
+            'status'                   => 'nullable|string',
             'contract_amount'          => 'required|numeric|min:0',
             'as_planned'               => 'required|numeric|min:0|max:100',
             'work_done'                => 'required|numeric|min:0|max:100',
@@ -184,7 +184,7 @@ class ProjectController extends Controller
             'original_contract_expiry',
             'as_planned', 'work_done',
             'remarks_recommendation',
-            'status', 'completed_at',
+
             'ld_accomplished', 'ld_days_overdue',
             'performance_bond_date',
         ]);
@@ -395,11 +395,15 @@ class ProjectController extends Controller
                 }
             }
         }
+        // Auto-compute status from effective expiry
         $effectiveExpiry = $data['revised_contract_expiry'] ?? $data['original_contract_expiry'] ?? null;
-        if ($effectiveExpiry && Carbon::parse($effectiveExpiry)->isPast() && $data['status'] !== 'completed') {
-            $data['status']       = 'expired';
-            $data['completed_at'] = null;
-    }
+        if ($effectiveExpiry) {
+            $daysLeft = now()->startOfDay()->diffInDays(Carbon::parse($effectiveExpiry)->startOfDay(), false);
+            if ($daysLeft < 0)        $data['status'] = 'expired';
+            elseif ($daysLeft <= 30)  $data['status'] = 'expiring';
+            else                      $data['status'] = 'ongoing';
+        }
+        $data['completed_at'] = null;
 
         $project->update($data);
 
@@ -564,6 +568,7 @@ class ProjectController extends Controller
             $statusMap = [
                 'completed' => [[240,253,244], [22,163,74],  'Completed'],
                 'expired'   => [[254,242,242], [220,38,38],  'Expired'  ],
+                'expiring'  => [[255,251,235], [217,119,6],  'Expiring'  ], 
                 'ongoing'   => [[239,246,255], [37,99,235],  'Ongoing'  ],
             ];
             [$statusBg, $statusFg, $statusLabel] = $statusMap[$project->status] ?? $statusMap['ongoing'];
