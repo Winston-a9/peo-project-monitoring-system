@@ -153,30 +153,80 @@
                             <p class="field-hint">Adjusted by TE / VO cost entries</p>
                         </div>
                         <div class="field-group">
-                        <label class="field-label">Status <span style="font-weight:400;color:#9ca3af;">(auto)</span></label>
-                        @php
-                            $expiry   = $project->revised_contract_expiry ?? $project->original_contract_expiry;
-                            $daysLeft = now()->startOfDay()->diffInDays($expiry->startOfDay(), false);
-                        @endphp
-                        @if($daysLeft < 0)
-                            <span style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.4rem 0.85rem;border-radius:99px;background:rgba(239,68,68,0.1);color:#dc2626;font-size:0.8rem;font-weight:700;">
-                                <span style="width:7px;height:7px;border-radius:50%;background:#dc2626;"></span> Expired
-                            </span>
-                            <p class="field-hint">{{ abs((int)$daysLeft) }} days past expiry</p>
-                        @elseif($daysLeft <= 30)
-                            <span style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.4rem 0.85rem;border-radius:99px;background:rgba(245,158,11,0.1);color:#d97706;font-size:0.8rem;font-weight:700;">
-                                <span style="width:7px;height:7px;border-radius:50%;background:#f59e0b;animation:pulse 1.5s ease infinite;"></span> Expiring Soon
-                            </span>
-                            <p class="field-hint">{{ (int)$daysLeft }} days remaining</p>
-                        @else
-                            <span style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.4rem 0.85rem;border-radius:99px;background:rgba(34,197,94,0.1);color:#16a34a;font-size:0.8rem;font-weight:700;">
-                                <span style="width:7px;height:7px;border-radius:50%;background:#22c55e;"></span> Ongoing
-                            </span>
-                            <p class="field-hint">{{ (int)$daysLeft }} days remaining</p>
-                        @endif
-                        {{-- Still submit the computed value --}}
-                        <input type="hidden" name="status" value="{{ $project->status }}">
-                    </div>
+                            <label class="field-label">Status <span style="font-weight:400;color:#9ca3af;">(auto)</span></label>
+                            @php
+                                $expiry   = $project->revised_contract_expiry ?? $project->original_contract_expiry;
+                                $daysLeft = now()->startOfDay()->diffInDays($expiry->startOfDay(), false);
+                            @endphp
+
+                            <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
+                                {{-- Status badge --}}
+                                @if($project->status === 'completed')
+                                    <span style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.4rem 0.85rem;border-radius:99px;background:rgba(34,197,94,0.1);color:#16a34a;font-size:0.8rem;font-weight:700;">
+                                        <span style="width:7px;height:7px;border-radius:50%;background:#22c55e;display:inline-block;"></span> Completed
+                                    </span>
+                                @elseif($daysLeft < 0)
+                                    <span style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.4rem 0.85rem;border-radius:99px;background:rgba(239,68,68,0.1);color:#dc2626;font-size:0.8rem;font-weight:700;">
+                                        <span style="width:7px;height:7px;border-radius:50%;background:#dc2626;display:inline-block;"></span> Expired
+                                    </span>
+                                @elseif($daysLeft <= 30)
+                                    <span style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.4rem 0.85rem;border-radius:99px;background:rgba(245,158,11,0.1);color:#d97706;font-size:0.8rem;font-weight:700;">
+                                        <span style="width:7px;height:7px;border-radius:50%;background:#f59e0b;animation:pulse 1.5s ease infinite;display:inline-block;"></span> Expiring Soon
+                                    </span>
+                                @else
+                                    <span style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.4rem 0.85rem;border-radius:99px;background:rgba(34,197,94,0.1);color:#16a34a;font-size:0.8rem;font-weight:700;">
+                                        <span style="width:7px;height:7px;border-radius:50%;background:#22c55e;display:inline-block;"></span> Ongoing
+                                    </span>
+                                @endif
+
+                                {{-- Mark as Completed button — hidden if already completed --}}
+                                @if($project->status !== 'completed')
+                                    <button type="button" onclick="toggleCompleteSection()"
+                                        style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.35rem 0.85rem;border-radius:99px;border:1.5px solid rgba(22,163,74,0.3);background:rgba(22,163,74,0.06);color:#16a34a;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:'Instrument Sans',sans-serif;transition:all 0.15s;"
+                                        onmouseover="this.style.background='rgba(22,163,74,0.14)';this.style.borderColor='rgba(22,163,74,0.5)'"
+                                        onmouseout="this.style.background='rgba(22,163,74,0.06)';this.style.borderColor='rgba(22,163,74,0.3)'">
+                                        <i class="fas fa-check" style="font-size:0.65rem;"></i> Mark as Completed
+                                    </button>
+                                @endif
+                            </div>
+
+                            {{-- Completion date field — slides in when button clicked --}}
+                            <div id="complete-section" style="display:{{ $project->status === 'completed' ? 'block' : 'none' }}; margin-top:0.875rem; padding:1rem; border-radius:10px; border:1.5px solid rgba(22,163,74,0.2); background:rgba(22,163,74,0.04);">
+                                <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.75rem;">
+                                    <i class="fas fa-calendar-check" style="color:#16a34a; font-size:0.8rem;"></i>
+                                    <label class="field-label" style="margin:0; color:#16a34a;">Date Completed</label>
+                                </div>
+                                {{-- Hidden input always submits regardless of parent visibility --}}
+                                <input type="hidden" name="completed_at" id="completed_at_hidden"
+                                    value="{{ old('completed_at', $project->completed_at?->format('Y-m-d')) }}">
+
+                                <input type="date" id="completed_at_input" class="field-input"
+                                    value="{{ old('completed_at', $project->completed_at?->format('Y-m-d')) }}"
+                                    onchange="document.getElementById('completed_at_hidden').value = this.value"
+                                    style="border-color:rgba(22,163,74,0.3);"
+                                    onfocus="this.style.borderColor='#16a34a';this.style.boxShadow='0 0 0 3px rgba(22,163,74,0.1)'"
+                                    onblur="this.style.borderColor='rgba(22,163,74,0.3)';this.style.boxShadow='none'">
+                                <p class="field-hint" style="margin-top:0.4rem; color:#16a34a;">
+                                    <i class="fas fa-info-circle"></i> Saving with this date will mark the project as completed.
+                                </p>
+                                @if($project->status !== 'completed')
+                                <button type="button" onclick="toggleCompleteSection()"
+                                    style="margin-top:0.5rem; font-size:0.72rem; color:#9ca3af; background:none; border:none; cursor:pointer; font-family:'Instrument Sans',sans-serif; padding:0;">
+                                    <i class="fas fa-times" style="font-size:0.65rem;"></i> Cancel
+                                </button>
+                                @endif
+                            </div>
+
+                            <input type="hidden" name="status" value="{{ $project->status }}">
+
+                            @if($project->status !== 'completed')
+                                <p class="field-hint" style="margin-top:0.4rem;">Auto-determined from expiry date · override by marking complete</p>
+                            @else
+                                <p class="field-hint" style="margin-top:0.4rem; color:#16a34a;">
+                                    Completed on {{ $project->completed_at?->format('F d, Y') ?? '—' }}
+                                </p>
+                            @endif
+                        </div>
                     </div>
                 </div>
             </div>
@@ -210,11 +260,6 @@
                             @else
                                 <p style="font-size:0.875rem;color:#9ca3af;margin:0;padding:0.1rem 0;font-style:italic;">Not yet set</p>
                             @endif
-                        </div>
-                        <div id="completed_at_field" class="field-group {{ old('status',$project->status)=='completed' ? '' : 'hidden' }}">
-                            <label class="field-label">Date Completed</label>
-                            <input type="date" name="completed_at" class="field-input {{ $errors->has('completed_at') ? 'has-error':'' }}" value="{{ old('completed_at', $project->completed_at?->format('Y-m-d')) }}">
-                            @error('completed_at')<p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
                         </div>
                     </div>
                 </div>

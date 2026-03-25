@@ -116,7 +116,7 @@ window.calculateDaysOverdue = function () {
 window.calculateLDPerDay = function () {
     const acc = parseFloat(document.getElementById('ld_accomplished').value) || 0;
     const amt = parseFloat(document.getElementById('original_contract_amount').value.replace(/,/g, '')) || 0;
-    
+
     const unworked = 100 - acc;  // ← NO rounding, keep full precision
     const perDay = Math.max(0, unworked) / 100 * amt * 0.001;
 
@@ -126,7 +126,7 @@ window.calculateLDPerDay = function () {
     const unworkedDisplay = document.getElementById('ld_unworked_display');
     const perDayDisplay = document.getElementById('ld_per_day_display');
     if (unworkedDisplay) unworkedDisplay.textContent = fmtNum(unworked, 2);  // show 2dp
-    if (perDayDisplay)   perDayDisplay.textContent   = fmtNum(perDay, 2);
+    if (perDayDisplay) perDayDisplay.textContent = fmtNum(perDay, 2);
 
     window.calculateLDTotal();
 };
@@ -306,7 +306,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const issuancesList = document.getElementById('issuances-list');
     if (issuancesList) window.updateCount('issuances-list', 'issuance-count');
 
-    window.calculateDaysOverdue(); 
+    window.calculateDaysOverdue();
 
     const ldAccomplished = document.getElementById('ld_accomplished');
     if (ldAccomplished && ldAccomplished.value) {
@@ -330,4 +330,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (billingTotalEl && !billingTotalEl.dataset.base) {
         billingTotalEl.dataset.base = billingTotalEl.textContent.replace(/,/g, '');
     }
+    /* ── Mark as Completed toggle ── */
+    window.toggleCompleteSection = function () {
+        const section = document.getElementById('complete-section');
+        if (!section) return;
+        const isHidden = section.style.display === 'none';
+        section.style.display = isHidden ? 'block' : 'none';
+        if (isHidden) {
+            document.getElementById('completed_at_input')?.focus();
+        } else {
+            document.getElementById('completed_at_input').value = '';
+            document.getElementById('completed_at_hidden').value = '';
+        }
+    };
 });

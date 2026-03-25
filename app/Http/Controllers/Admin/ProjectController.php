@@ -183,6 +183,7 @@ class ProjectController extends Controller
             'contract_amount', 'date_started', 'contract_days',
             'original_contract_expiry',
             'as_planned', 'work_done',
+            'status', 'completed_at',
             'remarks_recommendation',
 
             'ld_accomplished', 'ld_days_overdue',
@@ -190,10 +191,6 @@ class ProjectController extends Controller
         ]);
 
         $data['slippage'] = (float) $request->work_done - (float) $request->as_planned;
-
-        if ($request->status === 'ongoing') {
-            $data['completed_at'] = null;
-        }
 
         // ── Step 2: Issuances ──
         $data['issuances'] = array_values(
@@ -395,16 +392,20 @@ class ProjectController extends Controller
                 }
             }
         }
-        // Auto-compute status from effective expiry
-        $effectiveExpiry = $data['revised_contract_expiry'] ?? $data['original_contract_expiry'] ?? null;
-        if ($effectiveExpiry) {
-            $daysLeft = now()->startOfDay()->diffInDays(Carbon::parse($effectiveExpiry)->startOfDay(), false);
-            if ($daysLeft < 0)        $data['status'] = 'expired';
-            elseif ($daysLeft <= 30)  $data['status'] = 'expiring';
-            else                      $data['status'] = 'ongoing';
+       // ── Auto-compute status, but respect manual completion ──
+        if ($request->filled('completed_at')) {
+            $data['status']       = 'completed';
+            $data['completed_at'] = $request->completed_at;
+        } else {
+            $data['completed_at'] = null;
+            $effectiveExpiry = $data['revised_contract_expiry'] ?? $data['original_contract_expiry'] ?? null;
+            if ($effectiveExpiry) {
+                $daysLeft = now()->startOfDay()->diffInDays(Carbon::parse($effectiveExpiry)->startOfDay(), false);
+                if ($daysLeft < 0)        $data['status'] = 'expired';
+                elseif ($daysLeft <= 30)  $data['status'] = 'expiring';
+                else                      $data['status'] = 'ongoing';
+            }
         }
-        $data['completed_at'] = null;
-
         $project->update($data);
 
         return redirect()->route('admin.projects.show', $project)

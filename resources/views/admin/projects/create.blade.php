@@ -83,8 +83,6 @@
                     </span>
                     <p class="field-hint" style="color:#9ca3af;">Auto-determined from expiry date on save</p>
                 </div>
-                    {{-- completed_at not needed on create — status is auto-computed --}}
-
                 </div>
             </div>
 
