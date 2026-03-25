@@ -92,7 +92,12 @@
     $billingCount   = count($billingAmounts);
     $totalBilled    = array_sum($billingAmounts);
     $remainingBal   = (float)$project->contract_amount - $totalBilled;
-    $hasBilling     = $billingCount > 0;
+    $hasExtCosts    = collect(array_merge(
+    is_array($project->cost_involved ?? null) ? $project->cost_involved : [],
+    is_array($project->vo_cost ?? null) ? $project->vo_cost : []
+    ))->filter(fn($c) => $c !== null && (float)$c != 0)->isNotEmpty();
+
+    $hasBilling     = $billingCount > 0 || $hasExtCosts;
 
     $extCount = $teCount + $voCount + ($hasSO ? 1 : 0);
     $logs     = $project->logs()->with('user')->latest()->get();
@@ -182,7 +187,7 @@
         <i class="fas fa-peso-sign"></i>
         <span>Financials</span>
         @if($hasBilling)
-            <span class="show-tab-badge">{{ $billingCount }}</span>
+            <span class="show-tab-badge">{{ $billingCount + ($hasExtCosts && $billingCount === 0 ? 0 : 0) }}</span>
         @endif
     </button>
     <button class="show-tab-btn" onclick="switchShowTab('admin', this)" data-tab="admin">
@@ -539,7 +544,7 @@
             </button>
             <button onclick="toggleBillingTab('table')" id="billing-tab-table"
                 style="flex:1;padding:0.875rem 1.25rem;background:transparent;border:none;cursor:pointer;font-size:0.825rem;font-weight:700;color:var(--tx2);border-bottom:2px solid transparent;transition:all 0.2s;display:flex;align-items:center;gap:0.5rem;font-family:'Instrument Sans',sans-serif;">
-                <i class="fas fa-table" style="font-size:0.75rem;"></i> Financial
+                <i class="fas fa-table" style="font-size:0.75rem;"></i> Financial Entries
             </button>
             <div style="padding:0.875rem 1.25rem;display:flex;align-items:center;gap:0.5rem;border-left:1px solid var(--bd);flex-shrink:0;">
                 <i class="fas fa-file-invoice-dollar" style="color:#16a34a;font-size:0.8rem;"></i>

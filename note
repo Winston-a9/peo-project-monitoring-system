@@ -114,19 +114,21 @@ TO ADD/FIX:
 	when work done is 100% LDA is freeze.
 
 	when the user added a extension that extended a expired project the status in index.blade, show.blade, and edit.blade will automatically update into ongoing or expiring depending on how many days are left
-
-	in financial the "days overdue" only counts the overdued date since the revised expiry or original expiry (depends if the project has extension then it will only count the original expiry) if theres still days left just leave it blanked
-
-	Add notification for Contractor Notification
-	create a new billing tab
+		create a new billing tab
 		billing updates changes to 171
 		adv billin and retention manual user input type: Percentage and Amount form
+
+	Add notification for Contractor Notification
+
 
 	
 	
 ==================================================================================================================================================================================================================================================================================================
 FIXED:
 ADMIN
+
+in financial the "days overdue" only counts the overdued date since the revised expiry or original expiry (depends if the project has extension then it will only count the original expiry) if theres still days left just leave it blanked
+
 	in financial>billing history add if the extensions has cost involve, then compute the cost involve amount in the remaining amount
 
 		LD CALCULATION IS NOT CORRECT
