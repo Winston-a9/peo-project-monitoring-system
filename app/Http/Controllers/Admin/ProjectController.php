@@ -393,7 +393,20 @@ class ProjectController extends Controller
             }
         }
        // ── Auto-compute status, but respect manual completion ──
-        if ($request->filled('completed_at')) {
+        // ── Auto-compute status, but respect manual completion or reactivation ──
+        if ($request->input('status') === 'reactivate') {
+            // Reactivation: clear completion, re-derive status from expiry
+            $data['completed_at'] = null;
+            $effectiveExpiry = $data['revised_contract_expiry'] ?? $data['original_contract_expiry'] ?? null;
+            if ($effectiveExpiry) {
+                $daysLeft = now()->startOfDay()->diffInDays(Carbon::parse($effectiveExpiry)->startOfDay(), false);
+                if ($daysLeft < 0)       $data['status'] = 'expired';
+                elseif ($daysLeft <= 30) $data['status'] = 'expiring';
+                else                     $data['status'] = 'ongoing';
+            } else {
+                $data['status'] = 'ongoing';
+            }
+        } elseif ($request->filled('completed_at')) {
             $data['status']       = 'completed';
             $data['completed_at'] = $request->completed_at;
         } else {
@@ -401,9 +414,9 @@ class ProjectController extends Controller
             $effectiveExpiry = $data['revised_contract_expiry'] ?? $data['original_contract_expiry'] ?? null;
             if ($effectiveExpiry) {
                 $daysLeft = now()->startOfDay()->diffInDays(Carbon::parse($effectiveExpiry)->startOfDay(), false);
-                if ($daysLeft < 0)        $data['status'] = 'expired';
-                elseif ($daysLeft <= 30)  $data['status'] = 'expiring';
-                else                      $data['status'] = 'ongoing';
+                if ($daysLeft < 0)       $data['status'] = 'expired';
+                elseif ($daysLeft <= 30) $data['status'] = 'expiring';
+                else                     $data['status'] = 'ongoing';
             }
         }
         $project->update($data);
@@ -818,6 +831,28 @@ class ProjectController extends Controller
             ->route('admin.projects.edit', $project)
             ->with('success', "{$deletedLabel} deleted. Reason logged to remarks.");
     }
+    public function reactivate(Project $project)
+{
+    $effectiveExpiry = $project->revised_contract_expiry ?? $project->original_contract_expiry;
+
+    $daysLeft = now()->startOfDay()->diffInDays(
+        \Carbon\Carbon::parse($effectiveExpiry)->startOfDay(),
+        false
+    );
+
+    if ($daysLeft < 0)       $status = 'expired';
+    elseif ($daysLeft <= 30) $status = 'expiring';
+    else                     $status = 'ongoing';
+
+    $project->update([
+        'status'       => $status,
+        'completed_at' => null,
+    ]);
+
+    return redirect()
+        ->route('admin.projects.edit', $project)
+        ->with('success', 'Project reactivated successfully. Status set to ' . ucfirst($status) . '.');
+}
 
     public function destroy(Project $project)
     {

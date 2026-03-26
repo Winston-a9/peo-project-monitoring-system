@@ -343,4 +343,15 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('completed_at_hidden').value = '';
         }
     };
+    /* ── Reactivate toggle ── */
+    window.toggleReactivateSection = function () {
+        const section = document.getElementById('reactivate-section');
+        if (!section) return;
+        section.style.display = section.style.display === 'none' ? 'block' : 'none';
+    };
+
+    window.confirmReactivate = function () {
+        const form = document.getElementById('reactivate-form');
+        if (form) form.submit();
+    };
 });

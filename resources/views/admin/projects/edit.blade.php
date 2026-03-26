@@ -187,6 +187,43 @@
                                         onmouseout="this.style.background='rgba(22,163,74,0.06)';this.style.borderColor='rgba(22,163,74,0.3)'">
                                         <i class="fas fa-check" style="font-size:0.65rem;"></i> Mark as Completed
                                     </button>
+                                @else
+                                    {{-- Reactivate button — only shown when project is completed --}}
+                                    <button type="button" onclick="toggleReactivateSection()"
+                                        style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.35rem 0.85rem;border-radius:99px;border:1.5px solid rgba(59,130,246,0.3);background:rgba(59,130,246,0.06);color:#2563eb;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:'Instrument Sans',sans-serif;transition:all 0.15s;"
+                                        onmouseover="this.style.background='rgba(59,130,246,0.14)';this.style.borderColor='rgba(59,130,246,0.5)'"
+                                        onmouseout="this.style.background='rgba(59,130,246,0.06)';this.style.borderColor='rgba(59,130,246,0.3)'">
+                                        <i class="fas fa-rotate-left" style="font-size:0.65rem;"></i> Reactivate Project
+                                    </button>
+                                @endif
+                                {{-- Reactivation confirmation panel — slides in when Reactivate is clicked --}}
+                                @if($project->status === 'completed')
+                                <div id="reactivate-section" style="display:none; margin-top:0.875rem; padding:1rem; border-radius:10px; border:1.5px solid rgba(59,130,246,0.2); background:rgba(59,130,246,0.04);">
+                                    <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.6rem;">
+                                        <i class="fas fa-rotate-left" style="color:#2563eb; font-size:0.8rem;"></i>
+                                        <label class="field-label" style="margin:0; color:#2563eb;">Reactivate this project?</label>
+                                    </div>
+                                    <p style="font-size:0.78rem; color:var(--text-secondary); margin:0 0 0.75rem;">
+                                        Status will be auto-determined from the expiry date:
+                                        <strong style="color:var(--text-primary);">
+                                            {{ $project->revised_contract_expiry
+                                                ? $project->revised_contract_expiry->format('F d, Y')
+                                                : $project->original_contract_expiry->format('F d, Y') }}
+                                        </strong>
+                                    </p>
+                                    <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+                                        <button type="button" onclick="confirmReactivate()"
+                                            style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.4rem 1rem;border-radius:8px;border:none;background:#2563eb;color:white;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:'Instrument Sans',sans-serif;box-shadow:0 2px 6px rgba(37,99,235,0.25);transition:all 0.15s;"
+                                            onmouseover="this.style.background='#1d4ed8'"
+                                            onmouseout="this.style.background='#2563eb'">
+                                            <i class="fas fa-check" style="font-size:0.65rem;"></i> Yes, Reactivate
+                                        </button>
+                                        <button type="button" onclick="toggleReactivateSection()"
+                                            style="font-size:0.72rem; color:#9ca3af; background:none; border:none; cursor:pointer; font-family:'Instrument Sans',sans-serif; padding:0;">
+                                            <i class="fas fa-times" style="font-size:0.65rem;"></i> Cancel
+                                        </button>
+                                    </div>
+                                </div>
                                 @endif
                             </div>
 
@@ -216,6 +253,7 @@
                                 </button>
                                 @endif
                             </div>
+                            <input type="hidden" name="status" id="status_hidden" value="{{ $project->status }}">
 
                             <input type="hidden" name="status" value="{{ $project->status }}">
 
@@ -1101,4 +1139,12 @@ window.submitBillingEdit = function () {
 @push('scripts')
     @vite('resources/js/admin/projects/edit.js')
 @endpush
+
+{{-- Dedicated reactivation form — separate from the main edit form --}}
+@if($project->status === 'completed')
+<form id="reactivate-form" method="POST" action="{{ route('admin.projects.reactivate', $project) }}" style="display:none;">
+    @csrf
+    @method('PATCH')
+</form>
+@endif
     </x-app-layout>

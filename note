@@ -111,18 +111,39 @@ add a billing information table tab
 ==================================================================================================================================================================================================================================================================================================
 TO ADD/FIX:
 
+edit.blade
+	overview
+		make a switch or button for reactivation, when the user reactivate a project it will go back to either on going, expiring or expired status, depends on the expiry date	
+
+		Contract Amount number form put "," every 3 whole digit number
+
+		editable project information - dont make it as read-only
+
+		move performance bond in the overview tab
+	performance
+		date stamp everytime as planned and work done is updated
+
+		FIXED DATE START TO FINISH in LD
+
+		when work done is 100% LDA is read-only.
+
+	extensions
+		add a reason/coverage modal everytime date extension is updated
+
+	billing
+		create a new billing tab
+
+		billing updates changes to 171
+
+		adv billin and retention manual user input type: Percentage and Amount form
+		
+	admin
+
+
+
+
 if complete what happen
 if expired what happen
-
-	make a switch or button for reactivation, when the user reactivate a project it will go back to either on going, expiring or expired status, depends on the expiry date
-
-	when work done is 100% LDA is freeze.
-
-	when the user added a extension that extended a expired project the status in index.blade, show.blade, and edit.blade will automatically update into ongoing or expiring depending on how many days are left
-
-		create a new billing tab
-		billing updates changes to 171
-		adv billin and retention manual user input type: Percentage and Amount form
 
 	Add notification for Contractor Notification
 
@@ -132,6 +153,7 @@ if expired what happen
 ==================================================================================================================================================================================================================================================================================================
 FIXED:
 ADMIN
+	when the user added a extension that extended a expired project the status in index.blade, show.blade, and edit.blade will automatically update into ongoing or expiring depending on how many days are left
 
 	Should the status be automatic if less than 0 expired date will status "expired", if less than 30 days status is "expiring", if days left is more than 31 days status is "ongoing"
 

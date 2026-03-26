@@ -28,17 +28,16 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
 
-    // Custom project entry routes — must come BEFORE resource
-    Route::patch('/projects/{project}/entry', [ProjectController::class, 'updateEntry'])->name('projects.updateEntry');
-    Route::delete('/projects/{project}/entry', [ProjectController::class, 'destroyEntry'])->name('projects.destroyEntry');
-    Route::patch('/projects/{project}/billing', [ProjectController::class, 'updateBilling'])->name('projects.updateBilling');
+    Route::patch('/projects/{project}/entry',      [ProjectController::class, 'updateEntry'])->name('projects.updateEntry');
+    Route::delete('/projects/{project}/entry',     [ProjectController::class, 'destroyEntry'])->name('projects.destroyEntry');
+    Route::patch('/projects/{project}/billing',    [ProjectController::class, 'updateBilling'])->name('projects.updateBilling');
+    Route::patch('/projects/{project}/reactivate', [ProjectController::class, 'reactivate'])->name('projects.reactivate'); // ✅
 
     Route::resource('projects', ProjectController::class);
 
-    Route::get('/reports', [ProjectController::class, 'reports'])->name('reports.index');
+    Route::get('/reports',          [ProjectController::class, 'reports'])->name('reports.index');
     Route::get('/reports/generate', [ProjectController::class, 'generateReport'])->name('reports.generate');
 });
-
 // User Routes
 Route::middleware(['auth', 'role:user'])->prefix('user')->name('user.')->group(function () {
     Route::get('/dashboard', function () {
