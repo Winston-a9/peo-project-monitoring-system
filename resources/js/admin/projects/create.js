@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', function () {
     liveSlippage();          // Set initial slippage display state
     calculateOriginalExpiry(); // Calculate expiry if old() values are present
     toggleCompletedAt();     // Show/hide the Date Completed field on load
+    initContractAmount();     // Format the Contract Amount field on load
 });
 
 
@@ -121,4 +122,55 @@ window.calculateOriginalExpiry = function () {
     const day   = String(originalExpiry.getDate()).padStart(2, '0');
 
     originalExpiryInput.value = `${year}-${month}-${day}`;
+};
+// ─────────────────────────────────────────────
+// CONTRACT AMOUNT FORMATTER
+// Displays commas every 3 whole digits while keeping
+// a clean numeric value in the hidden input for Laravel.
+// ─────────────────────────────────────────────
+window.formatContractAmount = function (input) {
+    // Strip everything except digits and one decimal point
+    let raw = input.value.replace(/[^0-9.]/g, '');
+
+    // Prevent multiple decimal points
+    const parts = raw.split('.');
+    if (parts.length > 2) raw = parts[0] + '.' + parts.slice(1).join('');
+
+    // Limit to 2 decimal places
+    const wholePart   = (parts[0] || '').replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    const decimalPart = parts[1] !== undefined ? '.' + parts[1].slice(0, 2) : '';
+
+    // Update display input with formatted value
+    input.value = wholePart + decimalPart;
+
+    // Store clean numeric value in hidden input for form submission
+    const cleanRaw = (parts[0] || '') + (parts[1] !== undefined ? '.' + parts[1].slice(0, 2) : '');
+    document.getElementById('contract_amount_raw').value = cleanRaw;
+};
+
+// ─────────────────────────────────────────────
+// INIT CONTRACT AMOUNT
+// On page load, if there's an old() value (after a
+// validation error), re-apply the comma formatting.
+// ─────────────────────────────────────────────
+window.initContractAmount = function () {
+    const display = document.getElementById('contract_amount_display');
+    const raw     = document.getElementById('contract_amount_raw');
+    if (!display || !raw) return;
+
+    // If there's already a value (from old()), format it
+    if (display.value) {
+        formatContractAmount(display);
+    }
+
+    // Keep raw input in sync if user somehow edits display directly
+    display.addEventListener('blur', function () {
+        // Pad to 2 decimal places on blur for a cleaner look
+        const rawVal = parseFloat(raw.value);
+        if (!isNaN(rawVal)) {
+            const parts      = rawVal.toFixed(2).split('.');
+            const wholePart  = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            display.value    = wholePart + '.' + parts[1];
+        }
+    });
 };

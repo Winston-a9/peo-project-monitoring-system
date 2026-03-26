@@ -70,10 +70,19 @@
                     <div>
                         <label class="field-label">Contract Amount</label>
                         <div class="prefix-wrap">
-                            <span class="prefix">₱</span>
-                            <input type="number" name="contract_amount" onkeydown="return event.key !=='-' && event.key !=='e' " class="field-input {{ $errors->has('contract_amount') ? 'has-error' : '' }}"
-                                placeholder="0.00" value="{{ old('contract_amount', 0) }}" min="0" step="0.01" required>
-                        </div>
+                        <span class="prefix">₱</span>
+                        {{-- Display input: shows formatted number with commas --}}
+                        <input type="text" id="contract_amount_display"
+                            class="field-input {{ $errors->has('contract_amount') ? 'has-error' : '' }}"
+                            placeholder="0.00"
+                            value="{{ old('contract_amount') ? number_format((float) old('contract_amount'), 2) : '' }}"
+                            inputmode="decimal"
+                            autocomplete="off"
+                            oninput="formatContractAmount(this)">
+                        {{-- Hidden input: clean numeric value submitted to Laravel --}}
+                        <input type="hidden" name="contract_amount" id="contract_amount_raw"
+                            value="{{ old('contract_amount', '') }}">
+                    </div>
                         @error('contract_amount')<p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
                     </div>
                 <div>

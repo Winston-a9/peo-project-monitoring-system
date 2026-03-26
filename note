@@ -113,7 +113,6 @@ TO ADD/FIX:
 
 edit.blade
 	overview
-		make a switch or button for reactivation, when the user reactivate a project it will go back to either on going, expiring or expired status, depends on the expiry date	
 
 		Contract Amount number form put "," every 3 whole digit number
 
@@ -153,6 +152,8 @@ if expired what happen
 ==================================================================================================================================================================================================================================================================================================
 FIXED:
 ADMIN
+		make a switch or button for reactivation, when the user reactivate a project it will go back to either on going, expiring or expired status, depends on the expiry date	
+
 	when the user added a extension that extended a expired project the status in index.blade, show.blade, and edit.blade will automatically update into ongoing or expiring depending on how many days are left
 
 	Should the status be automatic if less than 0 expired date will status "expired", if less than 30 days status is "expiring", if days left is more than 31 days status is "ongoing"
