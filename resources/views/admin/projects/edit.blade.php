@@ -116,160 +116,159 @@
 
             {{-- PROJECT INFORMATION — read-only fields shown as plain text --}}
             <div class="form-card" style="margin-bottom:1.5rem;">
-                <div class="form-card" style="margin-bottom:1.5rem;">
-    <div class="section-header">
-        <i class="fas fa-box"></i>
-        <span>Project Information</span>
-        <span style="margin-left:auto; font-size:0.7rem; color:#9ca3af; font-weight:400;">Read-only</span>
-    </div>
-    <input type="hidden" name="contract_amount" id="contract_amount" value="{{ $project->contract_amount }}">
-    <input type="hidden" id="original_contract_amount" value="{{ (float) ($project->original_contract_amount ?? $project->contract_amount) }}">
-    <div class="section-body">
-        <div class="grid-2col">
-            <div class="field-group">
-                <label class="field-label">In Charge</label>
-                <input type="text" name="in_charge" class="field-input"
-                    value="{{ old('in_charge', $project->in_charge) }}"
-                    placeholder="Who is responsible?" required>
-                @error('in_charge')<p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
-            </div>
-            <div class="field-group">
-                <label class="field-label">Project Title</label>
-                <input type="text" name="project_title" class="field-input"
-                    value="{{ old('project_title', $project->project_title) }}"
-                    placeholder="Project name" required>
-                @error('project_title')<p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
-            </div>
-            <div class="field-group">
-                <label class="field-label">Location</label>
-                <input type="text" name="location" class="field-input"
-                    value="{{ old('location', $project->location) }}"
-                    placeholder="Project location" required>
-                @error('location')<p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
-            </div>
-            <div class="field-group">
-                <label class="field-label">Contractor</label>
-                <input type="text" name="contractor" class="field-input"
-                    value="{{ old('contractor', $project->contractor) }}"
-                    placeholder="Contractor company" required>
-                @error('contractor')<p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
-            </div>
-            <div class="field-group">
-                <label class="field-label">Contract Amount <span style="font-weight:400; color:#9ca3af;">(read-only)</span></label>
-                <p style="font-size:0.9rem;font-weight:700;color:var(--text-primary);margin:0;padding:0.1rem 0;font-family:'Syne',sans-serif;letter-spacing:-0.01em;">
-                    ₱{{ number_format($project->contract_amount, 2) }}
-                </p>
-                <p class="field-hint">Adjusted by TE / VO cost entries</p>
-            </div>
-            <div class="field-group">
-                <label class="field-label">Status <span style="font-weight:400;color:#9ca3af;">(auto)</span></label>
-                @php
-                    $expiry   = $project->revised_contract_expiry ?? $project->original_contract_expiry;
-                    $daysLeft = now()->startOfDay()->diffInDays($expiry->startOfDay(), false);
-                @endphp
-                <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
-                    @if($project->status === 'completed')
-                        <span style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.4rem 0.85rem;border-radius:99px;background:rgba(34,197,94,0.1);color:#16a34a;font-size:0.8rem;font-weight:700;">
-                            <span style="width:7px;height:7px;border-radius:50%;background:#22c55e;display:inline-block;"></span> Completed
-                        </span>
-                    @elseif($daysLeft < 0)
-                        <span style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.4rem 0.85rem;border-radius:99px;background:rgba(239,68,68,0.1);color:#dc2626;font-size:0.8rem;font-weight:700;">
-                            <span style="width:7px;height:7px;border-radius:50%;background:#dc2626;display:inline-block;"></span> Expired
-                        </span>
-                    @elseif($daysLeft <= 30)
-                        <span style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.4rem 0.85rem;border-radius:99px;background:rgba(245,158,11,0.1);color:#d97706;font-size:0.8rem;font-weight:700;">
-                            <span style="width:7px;height:7px;border-radius:50%;background:#f59e0b;animation:pulse 1.5s ease infinite;display:inline-block;"></span> Expiring Soon
-                        </span>
-                    @else
-                        <span style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.4rem 0.85rem;border-radius:99px;background:rgba(34,197,94,0.1);color:#16a34a;font-size:0.8rem;font-weight:700;">
-                            <span style="width:7px;height:7px;border-radius:50%;background:#22c55e;display:inline-block;"></span> Ongoing
-                        </span>
-                    @endif
-
-                    @if($project->status !== 'completed')
-                        <button type="button" onclick="toggleCompleteSection()"
-                            style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.35rem 0.85rem;border-radius:99px;border:1.5px solid rgba(22,163,74,0.3);background:rgba(22,163,74,0.06);color:#16a34a;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:'Instrument Sans',sans-serif;transition:all 0.15s;"
-                            onmouseover="this.style.background='rgba(22,163,74,0.14)';this.style.borderColor='rgba(22,163,74,0.5)'"
-                            onmouseout="this.style.background='rgba(22,163,74,0.06)';this.style.borderColor='rgba(22,163,74,0.3)'">
-                            <i class="fas fa-check" style="font-size:0.65rem;"></i> Mark as Completed
-                        </button>
-                    @else
-                        <button type="button" onclick="toggleReactivateSection()"
-                            style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.35rem 0.85rem;border-radius:99px;border:1.5px solid rgba(59,130,246,0.3);background:rgba(59,130,246,0.06);color:#2563eb;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:'Instrument Sans',sans-serif;transition:all 0.15s;"
-                            onmouseover="this.style.background='rgba(59,130,246,0.14)';this.style.borderColor='rgba(59,130,246,0.5)'"
-                            onmouseout="this.style.background='rgba(59,130,246,0.06)';this.style.borderColor='rgba(59,130,246,0.3)'">
-                            <i class="fas fa-rotate-left" style="font-size:0.65rem;"></i> Reactivate Project
-                        </button>
-                    @endif
+                <div class="section-header">
+                    <i class="fas fa-box"></i>
+                    <span>Project Information</span>
+                    <span style="margin-left:auto; font-size:0.7rem; color:#9ca3af; font-weight:400;">Read-only</span>
                 </div>
+                <input type="hidden" name="contract_amount" id="contract_amount" value="{{ $project->contract_amount }}">
+                <input type="hidden" id="original_contract_amount" value="{{ (float) ($project->original_contract_amount ?? $project->contract_amount) }}">
+                <div class="section-body">
+                    <div class="grid-2col">
+                        <div class="field-group">
+                            <label class="field-label">In Charge</label>
+                            <input type="text" name="in_charge" class="field-input"
+                                value="{{ old('in_charge', $project->in_charge) }}"
+                                placeholder="Who is responsible?" required>
+                            @error('in_charge')<p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">Project Title</label>
+                            <input type="text" name="project_title" class="field-input"
+                                value="{{ old('project_title', $project->project_title) }}"
+                                placeholder="Project name" required>
+                            @error('project_title')<p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">Location</label>
+                            <input type="text" name="location" class="field-input"
+                                value="{{ old('location', $project->location) }}"
+                                placeholder="Project location" required>
+                            @error('location')<p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">Contractor</label>
+                            <input type="text" name="contractor" class="field-input"
+                                value="{{ old('contractor', $project->contractor) }}"
+                                placeholder="Contractor company" required>
+                            @error('contractor')<p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">Contract Amount <span style="font-weight:400; color:#9ca3af;">(read-only)</span></label>
+                            <p style="font-size:0.9rem;font-weight:700;color:var(--text-primary);margin:0;padding:0.1rem 0;font-family:'Syne',sans-serif;letter-spacing:-0.01em;">
+                                ₱{{ number_format($project->contract_amount, 2) }}
+                            </p>
+                            <p class="field-hint">Adjusted by TE / VO cost entries</p>
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">Status <span style="font-weight:400;color:#9ca3af;">(auto)</span></label>
+                            @php
+                                $expiry   = $project->revised_contract_expiry ?? $project->original_contract_expiry;
+                                $daysLeft = now()->startOfDay()->diffInDays($expiry->startOfDay(), false);
+                            @endphp
+                            <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
+                                @if($project->status === 'completed')
+                                    <span style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.4rem 0.85rem;border-radius:99px;background:rgba(34,197,94,0.1);color:#16a34a;font-size:0.8rem;font-weight:700;">
+                                        <span style="width:7px;height:7px;border-radius:50%;background:#22c55e;display:inline-block;"></span> Completed
+                                    </span>
+                                @elseif($daysLeft < 0)
+                                    <span style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.4rem 0.85rem;border-radius:99px;background:rgba(239,68,68,0.1);color:#dc2626;font-size:0.8rem;font-weight:700;">
+                                        <span style="width:7px;height:7px;border-radius:50%;background:#dc2626;display:inline-block;"></span> Expired
+                                    </span>
+                                @elseif($daysLeft <= 30)
+                                    <span style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.4rem 0.85rem;border-radius:99px;background:rgba(245,158,11,0.1);color:#d97706;font-size:0.8rem;font-weight:700;">
+                                        <span style="width:7px;height:7px;border-radius:50%;background:#f59e0b;animation:pulse 1.5s ease infinite;display:inline-block;"></span> Expiring Soon
+                                    </span>
+                                @else
+                                    <span style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.4rem 0.85rem;border-radius:99px;background:rgba(34,197,94,0.1);color:#16a34a;font-size:0.8rem;font-weight:700;">
+                                        <span style="width:7px;height:7px;border-radius:50%;background:#22c55e;display:inline-block;"></span> Ongoing
+                                    </span>
+                                @endif
 
-                @if($project->status === 'completed')
-                <div id="reactivate-section" style="display:none; margin-top:0.875rem; padding:1rem; border-radius:10px; border:1.5px solid rgba(59,130,246,0.2); background:rgba(59,130,246,0.04);">
-                    <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.6rem;">
-                        <i class="fas fa-rotate-left" style="color:#2563eb; font-size:0.8rem;"></i>
-                        <label class="field-label" style="margin:0; color:#2563eb;">Reactivate this project?</label>
-                    </div>
-                    <p style="font-size:0.78rem; color:var(--text-secondary); margin:0 0 0.75rem;">
-                        Status will be auto-determined from the expiry date:
-                        <strong style="color:var(--text-primary);">
-                            {{ $project->revised_contract_expiry
-                                ? $project->revised_contract_expiry->format('F d, Y')
-                                : $project->original_contract_expiry->format('F d, Y') }}
-                        </strong>
-                    </p>
-                    <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
-                        <button type="button" onclick="confirmReactivate()"
-                            style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.4rem 1rem;border-radius:8px;border:none;background:#2563eb;color:white;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:'Instrument Sans',sans-serif;box-shadow:0 2px 6px rgba(37,99,235,0.25);transition:all 0.15s;"
-                            onmouseover="this.style.background='#1d4ed8'"
-                            onmouseout="this.style.background='#2563eb'">
-                            <i class="fas fa-check" style="font-size:0.65rem;"></i> Yes, Reactivate
-                        </button>
-                        <button type="button" onclick="toggleReactivateSection()"
-                            style="font-size:0.72rem; color:#9ca3af; background:none; border:none; cursor:pointer; font-family:'Instrument Sans',sans-serif; padding:0;">
-                            <i class="fas fa-times" style="font-size:0.65rem;"></i> Cancel
-                        </button>
-                    </div>
-                </div>
-                @endif
+                                @if($project->status !== 'completed')
+                                    <button type="button" onclick="toggleCompleteSection()"
+                                        style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.35rem 0.85rem;border-radius:99px;border:1.5px solid rgba(22,163,74,0.3);background:rgba(22,163,74,0.06);color:#16a34a;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:'Instrument Sans',sans-serif;transition:all 0.15s;"
+                                        onmouseover="this.style.background='rgba(22,163,74,0.14)';this.style.borderColor='rgba(22,163,74,0.5)'"
+                                        onmouseout="this.style.background='rgba(22,163,74,0.06)';this.style.borderColor='rgba(22,163,74,0.3)'">
+                                        <i class="fas fa-check" style="font-size:0.65rem;"></i> Mark as Completed
+                                    </button>
+                                @else
+                                    <button type="button" onclick="toggleReactivateSection()"
+                                        style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.35rem 0.85rem;border-radius:99px;border:1.5px solid rgba(59,130,246,0.3);background:rgba(59,130,246,0.06);color:#2563eb;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:'Instrument Sans',sans-serif;transition:all 0.15s;"
+                                        onmouseover="this.style.background='rgba(59,130,246,0.14)';this.style.borderColor='rgba(59,130,246,0.5)'"
+                                        onmouseout="this.style.background='rgba(59,130,246,0.06)';this.style.borderColor='rgba(59,130,246,0.3)'">
+                                        <i class="fas fa-rotate-left" style="font-size:0.65rem;"></i> Reactivate Project
+                                    </button>
+                                @endif
+                            </div>
 
-                <div id="complete-section" style="display:{{ $project->status === 'completed' ? 'block' : 'none' }}; margin-top:0.875rem; padding:1rem; border-radius:10px; border:1.5px solid rgba(22,163,74,0.2); background:rgba(22,163,74,0.04);">
-                    <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.75rem;">
-                        <i class="fas fa-calendar-check" style="color:#16a34a; font-size:0.8rem;"></i>
-                        <label class="field-label" style="margin:0; color:#16a34a;">Date Completed</label>
-                    </div>
-                    <input type="hidden" name="completed_at" id="completed_at_hidden"
-                        value="{{ old('completed_at', $project->completed_at?->format('Y-m-d')) }}">
-                    <input type="date" id="completed_at_input" class="field-input"
-                        value="{{ old('completed_at', $project->completed_at?->format('Y-m-d')) }}"
-                        onchange="document.getElementById('completed_at_hidden').value = this.value"
-                        style="border-color:rgba(22,163,74,0.3);"
-                        onfocus="this.style.borderColor='#16a34a';this.style.boxShadow='0 0 0 3px rgba(22,163,74,0.1)'"
-                        onblur="this.style.borderColor='rgba(22,163,74,0.3)';this.style.boxShadow='none'">
-                    <p class="field-hint" style="margin-top:0.4rem; color:#16a34a;">
-                        <i class="fas fa-info-circle"></i> Saving with this date will mark the project as completed.
-                    </p>
-                    @if($project->status !== 'completed')
-                    <button type="button" onclick="toggleCompleteSection()"
-                        style="margin-top:0.5rem; font-size:0.72rem; color:#9ca3af; background:none; border:none; cursor:pointer; font-family:'Instrument Sans',sans-serif; padding:0;">
-                        <i class="fas fa-times" style="font-size:0.65rem;"></i> Cancel
-                    </button>
-                    @endif
-                </div>
+                            @if($project->status === 'completed')
+                            <div id="reactivate-section" style="display:none; margin-top:0.875rem; padding:1rem; border-radius:10px; border:1.5px solid rgba(59,130,246,0.2); background:rgba(59,130,246,0.04);">
+                                <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.6rem;">
+                                    <i class="fas fa-rotate-left" style="color:#2563eb; font-size:0.8rem;"></i>
+                                    <label class="field-label" style="margin:0; color:#2563eb;">Reactivate this project?</label>
+                                </div>
+                                <p style="font-size:0.78rem; color:var(--text-secondary); margin:0 0 0.75rem;">
+                                    Status will be auto-determined from the expiry date:
+                                    <strong style="color:var(--text-primary);">
+                                        {{ $project->revised_contract_expiry
+                                            ? $project->revised_contract_expiry->format('F d, Y')
+                                            : $project->original_contract_expiry->format('F d, Y') }}
+                                    </strong>
+                                </p>
+                                <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+                                    <button type="button" onclick="confirmReactivate()"
+                                        style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.4rem 1rem;border-radius:8px;border:none;background:#2563eb;color:white;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:'Instrument Sans',sans-serif;box-shadow:0 2px 6px rgba(37,99,235,0.25);transition:all 0.15s;"
+                                        onmouseover="this.style.background='#1d4ed8'"
+                                        onmouseout="this.style.background='#2563eb'">
+                                        <i class="fas fa-check" style="font-size:0.65rem;"></i> Yes, Reactivate
+                                    </button>
+                                    <button type="button" onclick="toggleReactivateSection()"
+                                        style="font-size:0.72rem; color:#9ca3af; background:none; border:none; cursor:pointer; font-family:'Instrument Sans',sans-serif; padding:0;">
+                                        <i class="fas fa-times" style="font-size:0.65rem;"></i> Cancel
+                                    </button>
+                                </div>
+                            </div>
+                            @endif
 
-                <input type="hidden" name="status" id="status_hidden" value="{{ $project->status }}">
-                <input type="hidden" name="status" value="{{ $project->status }}">
+                            <div id="complete-section" style="display:{{ $project->status === 'completed' ? 'block' : 'none' }}; margin-top:0.875rem; padding:1rem; border-radius:10px; border:1.5px solid rgba(22,163,74,0.2); background:rgba(22,163,74,0.04);">
+                                <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.75rem;">
+                                    <i class="fas fa-calendar-check" style="color:#16a34a; font-size:0.8rem;"></i>
+                                    <label class="field-label" style="margin:0; color:#16a34a;">Date Completed</label>
+                                </div>
+                                <input type="hidden" name="completed_at" id="completed_at_hidden"
+                                    value="{{ old('completed_at', $project->completed_at?->format('Y-m-d')) }}">
+                                <input type="date" id="completed_at_input" class="field-input"
+                                    value="{{ old('completed_at', $project->completed_at?->format('Y-m-d')) }}"
+                                    onchange="document.getElementById('completed_at_hidden').value = this.value"
+                                    style="border-color:rgba(22,163,74,0.3);"
+                                    onfocus="this.style.borderColor='#16a34a';this.style.boxShadow='0 0 0 3px rgba(22,163,74,0.1)'"
+                                    onblur="this.style.borderColor='rgba(22,163,74,0.3)';this.style.boxShadow='none'">
+                                <p class="field-hint" style="margin-top:0.4rem; color:#16a34a;">
+                                    <i class="fas fa-info-circle"></i> Saving with this date will mark the project as completed.
+                                </p>
+                                @if($project->status !== 'completed')
+                                <button type="button" onclick="toggleCompleteSection()"
+                                    style="margin-top:0.5rem; font-size:0.72rem; color:#9ca3af; background:none; border:none; cursor:pointer; font-family:'Instrument Sans',sans-serif; padding:0;">
+                                    <i class="fas fa-times" style="font-size:0.65rem;"></i> Cancel
+                                </button>
+                                @endif
+                            </div>
 
-                @if($project->status !== 'completed')
-                    <p class="field-hint" style="margin-top:0.4rem;">Auto-determined from expiry date · override by marking complete</p>
-                @else
-                    <p class="field-hint" style="margin-top:0.4rem; color:#16a34a;">
-                        Completed on {{ $project->completed_at?->format('F d, Y') ?? '—' }}
-                    </p>
-                @endif
-            </div>
-        </div>{{-- closes grid-2col --}}
-    </div>{{-- closes section-body --}}
-</div>{{-- closes form-card --}}
+                            <input type="hidden" name="status" id="status_hidden" value="{{ $project->status }}">
+                            <input type="hidden" name="status" value="{{ $project->status }}">
+
+                            @if($project->status !== 'completed')
+                                <p class="field-hint" style="margin-top:0.4rem;">Auto-determined from expiry date · override by marking complete</p>
+                            @else
+                                <p class="field-hint" style="margin-top:0.4rem; color:#16a34a;">
+                                    Completed on {{ $project->completed_at?->format('F d, Y') ?? '—' }}
+                                </p>
+                            @endif
+                        </div>
+                    </div>{{-- closes grid-2col --}}
+                </div>{{-- closes section-body --}}
+            </div>{{-- closes form-card --}}
                 {{-- CONTRACT DATES — move this INSIDE tab-overview, before its closing div --}}
             <div class="form-card" style="margin-bottom:1.5rem;">
                 <div class="section-header">
