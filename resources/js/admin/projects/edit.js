@@ -354,4 +354,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const form = document.getElementById('reactivate-form');
         if (form) form.submit();
     };
+    window.calcAdvanceRetention = function () {
+    const originalAmt = parseFloat(
+        document.getElementById('original_contract_amount')?.value || 0
+    );
+
+    const advPct = parseFloat(document.getElementById('advance_billing_pct')?.value) || 0;
+    const retPct = parseFloat(document.getElementById('retention_pct')?.value) || 0;
+
+    const advAmt = advPct > 0 ? (advPct / 100) * originalAmt : 0;
+    const retAmt = retPct > 0 ? (retPct / 100) * originalAmt : 0;
+
+    const advDisplay = document.getElementById('advance_billing_amount_display');
+    const retDisplay = document.getElementById('retention_amount_display');
+
+    if (advDisplay) advDisplay.textContent = advAmt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    if (retDisplay) retDisplay.textContent = retAmt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
 });

@@ -118,7 +118,6 @@ edit.blade
 		move performance bond in the overview tab
 
 	performance
-		date stamp everytime as planned and work done is updated
 
 		when work done is 100% LDA is read-only.
 
@@ -150,6 +149,7 @@ if expired what happen
 ==================================================================================================================================================================================================================================================================================================
 FIXED:
 ADMIN
+		date stamp everytime as planned and work done is updated
 
 		Contract Amount number form put "," every 3 whole digit number
 		make a switch or button for reactivation, when the user reactivate a project it will go back to either on going, expiring or expired status, depends on the expiry date	

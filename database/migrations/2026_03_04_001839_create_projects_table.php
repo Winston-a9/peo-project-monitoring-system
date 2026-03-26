@@ -44,6 +44,10 @@ return new class extends Migration
             $table->json('billing_dates')->nullable();          // parallel array of billing update dates
             $table->decimal('remaining_balance', 15, 2)->nullable();         // remaining contract balance after last billing update
             $table->decimal('total_amount_billed', 15, 2)->nullable();      // total amount billed to date
+            $table->decimal('advance_billing_pct', 5, 2)->nullable();         // percentage of contract amount billed in advance
+            $table->decimal('advance_billing_amount', 15, 2)->nullable();      // amount billed in advance
+            $table->decimal('retention_pct', 5, 2)->nullable();              // retention percentage
+            $table->decimal('retention_amount', 15, 2)->nullable();             // retention amount based on total billed
 
             // Liquidated Damages
             $table->decimal('ld_accomplished', 5, 3)->nullable();

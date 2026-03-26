@@ -175,6 +175,8 @@ class ProjectController extends Controller
             'ld_accomplished'          => 'nullable|numeric|min:0|max:100',
             'ld_days_overdue'          => 'nullable|integer|min:0',
             'performance_bond_date'     => 'nullable|date',
+            'advance_billing_pct'    => 'nullable|numeric|min:0|max:100',
+            'retention_pct'            => 'nullable|numeric|min:0|max:100',
         ]);
 
         // ── Step 1: Basic scalar fields ──
@@ -341,6 +343,25 @@ class ProjectController extends Controller
 
         // ── Step 7b: Adjust contract amount based on cost involved ──
         $originalAmount = (float) ($fresh->original_contract_amount ?? $request->contract_amount);
+        // ── Advance Billing ──
+        $advPct = $request->input('advance_billing_pct');
+        if ($advPct !== null && $advPct !== '') {
+            $data['advance_billing_pct']    = (float) $advPct;
+            $data['advance_billing_amount'] = round((float)$advPct / 100 * $originalAmount, 2);
+        } else {
+            $data['advance_billing_pct']    = null;
+            $data['advance_billing_amount'] = null;
+        }
+
+        // ── Retention ──
+        $retPct = $request->input('retention_pct');
+        if ($retPct !== null && $retPct !== '') {
+            $data['retention_pct']    = (float) $retPct;
+            $data['retention_amount'] = round((float)$retPct / 100 * $originalAmount, 2);
+        } else {
+            $data['retention_pct']    = null;
+            $data['retention_amount'] = null;
+        }
 
         $totalAdjustment = 0;
         foreach ($data['cost_involved'] as $cost) {
@@ -353,6 +374,7 @@ class ProjectController extends Controller
                 $totalAdjustment += (float)$cost;
             }
         }
+        
 
         $data['contract_amount'] = max(0, $originalAmount + $totalAdjustment);
 
@@ -696,6 +718,7 @@ class ProjectController extends Controller
         );
         $adjustment = collect($allCosts)->filter(fn($c) => $c !== null && (float)$c != 0)->sum();
         $data['contract_amount'] = max(0, $originalAmount + $adjustment);
+
 
         $project->update($data);
 

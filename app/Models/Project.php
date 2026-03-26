@@ -10,6 +10,8 @@ class Project extends Model
     use HasFactory;
 
     protected $fillable = [
+        'remaining_balance',
+        //Overview
         'in_charge',
         'project_title',
         'location',
@@ -20,16 +22,20 @@ class Project extends Model
         'contract_days',
         'original_contract_expiry',
         'revised_contract_expiry',
+        'status',
+        'completed_at',
+        'performance_bond_date',
+        //Performance
         'as_planned',
         'work_done',
         'slippage',
         'progress_updated_at',
-        'status',
-        'completed_at',
-        'remarks_recommendation',
-        // Documents & Extensions
-        'issuances',
-        'documents_pressed',
+        'ld_accomplished',
+        'ld_unworked',
+        'ld_per_day',
+        'total_ld',
+        'ld_days_overdue',
+        //Extension
         'time_extension',
         'extension_days',
         'cost_involved',
@@ -38,17 +44,18 @@ class Project extends Model
         'vo_days',
         'vo_cost',
         'date_requested',
-        'performance_bond_date',
+        //Billing updates
+        'advance_billing_pct',
+        'advance_billing_amount',
+        'retention_pct',
+        'retention_amount',
         'billing_amounts',
         'billing_dates',
-        'remaining_balance',
         'total_amount_billed',
-        // Liquidated Damages
-        'ld_accomplished',
-        'ld_unworked',
-        'ld_per_day',
-        'total_ld',
-        'ld_days_overdue',
+        //Admin
+        'remarks_recommendation',
+        'issuances',
+        'documents_pressed',
     ];
 
     protected function casts(): array
@@ -58,19 +65,23 @@ class Project extends Model
             'original_contract_expiry' => 'date',
             'revised_contract_expiry'  => 'date',
             'completed_at'             => 'date',
+            'performance_bond_date'    => 'date',
             'progress_updated_at'      => 'datetime',
             'contract_amount'          => 'decimal:2',
             'original_contract_amount' => 'decimal:2',
             'as_planned'               => 'decimal:3',
             'work_done'                => 'decimal:3',
             'slippage'                 => 'decimal:3',
-            'performance_bond_date'    => 'date',
             'remaining_balance'        => 'decimal:2',
             'total_amount_billed'      => 'decimal:2',
             'ld_accomplished'          => 'decimal:3',
             'ld_unworked'              => 'decimal:2',
             'ld_per_day'               => 'decimal:2',
             'total_ld'                 => 'decimal:2',
+            'advance_billing_pct'     => 'decimal:2',
+            'advance_billing_amount'   => 'decimal:2',
+            'retention_pct'            => 'decimal:2',
+            'retention_amount'         => 'decimal:2',
             'contract_days'            => 'integer',
             'suspension_days'          => 'integer',
             'time_extension'           => 'integer',

@@ -99,6 +99,10 @@
                 <i class="fas fa-file-alt" style="font-size:0.8rem;"></i>
                 <span>Extensions</span>
             </button>
+            <button type="button" class="tab-btn" data-tab="tab-171" onclick="switchTab('tab-171', this)">
+                <i class="fas fa-file-invoice-dollar" style="font-size:0.8rem;"></i>
+                <span>Billing</span>
+            </button>
             <button type="button" class="tab-btn" data-tab="tab-admin" onclick="switchTab('tab-admin', this)">
                 <i class="fas fa-cog" style="font-size:0.8rem;"></i>
                 <span>Admin</span>
@@ -255,7 +259,7 @@
                                 @endif
                             </div>
 
-                            <input type="hidden" name="status" id="status_hidden" value="{{ $project->status }}">
+                            <input type="hidden" name="status" value="{{ $project->status }}">
                             <input type="hidden" name="status" value="{{ $project->status }}">
 
                             @if($project->status !== 'completed')
@@ -707,159 +711,245 @@
             </div>
             </div>
         </div>
-
-        {{-- BILLING UPDATE ACCORDION --}}
-@php
-    $billingAmounts = is_array($project->billing_amounts) ? array_map('floatval', $project->billing_amounts) : [];
-    $billingDates   = is_array($project->billing_dates)   ? $project->billing_dates : [];
-    $billingCount   = count($billingAmounts);
-    $nextBillingNo  = $billingCount + 1;
-    $totalBilled    = array_sum($billingAmounts);
-    $allExtCosts  = array_merge(
-    is_array($project->cost_involved ?? null) ? $project->cost_involved : [],
-    is_array($project->vo_cost ?? null)       ? $project->vo_cost : []
-    );
-    $totalCostAdj  = collect($allExtCosts)->filter(fn($c) => $c !== null && (float)$c != 0)->sum();
-    $adjustedContractAmt = max(0, (float)($project->original_contract_amount ?? $project->contract_amount) + $totalCostAdj);
-    $remainingBal  = $adjustedContractAmt - $totalBilled;
-@endphp
-<div class="form-card" style="margin-bottom:1.5rem; border-color:rgba(34,197,94,0.18);">
-    <div class="acc-header" id="acc-billing-hdr" onclick="toggleAcc('billing')"
-         role="button" aria-expanded="true" aria-controls="acc-billing-bdy"
-         style="border-bottom-color:rgba(34,197,94,0.15);">
-        <i class="fas fa-file-invoice-dollar" style="color:#16a34a; font-size:0.85rem; flex-shrink:0;"></i>
-        <span class="acc-title">Billing Updates</span>
-        @if($billingCount > 0)
-            <span class="tag-chip" style="margin-left:0.4rem; background:rgba(34,197,94,0.1); color:#16a34a; border-color:rgba(34,197,94,0.25);">{{ $billingCount }} recorded</span>
-        @else
-            <span style="font-size:0.7rem; color:#9ca3af; margin-left:0.4rem; font-weight:400;">No entries yet</span>
-        @endif
-        <div class="acc-status-dot" style="background:{{ $billingCount > 0 ? '#16a34a' : '#d1d5db' }};"></div>
-        <div class="acc-chevron" style="border-color:rgba(34,197,94,0.2);"><i class="fas fa-chevron-down"></i></div>
-    </div>
-    <div class="acc-body is-collapsed" id="acc-billing-bdy">
-    <div class="acc-body-inner">
-    <div class="section-body">
-
-        @if($billingCount > 0)
-        <div style="margin-bottom:1.5rem;">
-            <p style="font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#9ca3af; margin-bottom:0.75rem; display:flex; align-items:center; gap:0.5rem;">
-                <i class="fas fa-history" style="color:#16a34a;"></i> Billing History
-            </p>
-            {{-- Column headers --}}
-            <div style="display:grid; grid-template-columns:18px 1fr 5rem 5rem; gap:0 0.75rem; padding:0 0.25rem; margin-bottom:0.4rem;">
-                <span></span>
-                <p class="h-col-hdr">Billing</p>
-                <p class="h-col-hdr" style="text-align:center;">Action</p>
-                <p class="h-col-hdr" style="text-align:right;">Amount</p>
-            </div>
-            <div class="history-timeline">
-                @foreach($billingAmounts as $bi => $amount)
-                @php $bIsLast = $bi === $billingCount - 1; @endphp
-                <div style="display:grid; grid-template-columns:18px 1fr 5rem 5rem; gap:0 0.75rem; align-items:start;">
-                    <div class="h-spine">
-                        <div class="h-dot" style="background:#16a34a; box-shadow:0 0 0 3px rgba(34,197,94,0.18);"></div>
-                        @if(!$bIsLast)<div class="h-line" style="background:rgba(34,197,94,0.18);"></div>@endif
-                    </div>
-                    <div class="h-label {{ $bIsLast ? 'last' : '' }}" style="display:flex; flex-direction:column; gap:0.2rem;">
-                        <span>Billing No. {{ $bi + 1 }}</span>
-                        @if(!empty($billingDates[$bi]))
-                            <span style="font-size:0.72rem; font-weight:500; color:#9ca3af;">{{ \Carbon\Carbon::parse($billingDates[$bi])->format('M d, Y') }}</span>
-                        @endif
-                    </div>
-                    <div style="display:flex; justify-content:center; padding-top:2px;">
-                        <button type="button"
-                            onclick="openBillingEditModal({{ $bi }}, {{ $amount }}, '{{ $billingDates[$bi] ?? '' }}')"
-                            style="display:inline-flex; align-items:center; gap:0.3rem; padding:3px 10px; border-radius:6px; border:1.5px solid rgba(34,197,94,0.25); background:rgba(34,197,94,0.06); color:#16a34a; font-size:0.68rem; font-weight:700; cursor:pointer; font-family:'Instrument Sans',sans-serif; transition:all 0.15s; white-space:nowrap;"
-                            onmouseover="this.style.background='rgba(34,197,94,0.15)';this.style.borderColor='rgba(34,197,94,0.45)'"
-                            onmouseout="this.style.background='rgba(34,197,94,0.06)';this.style.borderColor='rgba(34,197,94,0.25)'">
-                            <i class="fas fa-pen" style="font-size:0.55rem;"></i> Edit
-                        </button>
-                    </div>
-                    <div style="display:flex; justify-content:flex-end; padding-top:2px;">
-                        <span style="font-size:0.82rem; font-weight:700; color:#16a34a;">₱{{ number_format($amount, 2) }}</span>
-                    </div>
-                </div>
-                @endforeach
-            </div>
-
-            {{-- Total billed summary --}}
-            <div class="h-summary" style="margin-top:1rem; border-color:rgba(34,197,94,0.2);">
-                <span style="font-size:0.8rem; font-weight:600; color:var(--ink-muted); display:flex; align-items:center; gap:0.4rem;">
-                    <i class="fas fa-sigma" style="color:#16a34a; font-size:0.75rem;"></i>
-                    Total across {{ $billingCount }} {{ $billingCount === 1 ? 'billing' : 'billings' }}
-                </span>
-                <span style="font-family:'Syne',sans-serif; font-size:1.2rem; font-weight:800; color:#16a34a;">₱{{ number_format($totalBilled, 2) }}</span>
-            </div>
-
-            {{-- Remaining balance --}}
-            <div style="margin-top:0.75rem; padding:0.875rem 1rem; border-radius:10px; background:{{ $remainingBal >= 0 ? 'rgba(59,130,246,0.04)' : 'rgba(239,68,68,0.04)' }}; border:1px solid {{ $remainingBal >= 0 ? 'rgba(59,130,246,0.18)' : 'rgba(239,68,68,0.18)' }}; display:flex; align-items:center; justify-content:space-between;">
-                <span style="font-size:0.8rem; font-weight:600; color:var(--ink-muted); display:flex; align-items:center; gap:0.4rem;">
-                    <i class="fas fa-wallet" style="color:{{ $remainingBal >= 0 ? '#3b82f6' : '#dc2626' }};"></i>
-                    Remaining Balance
-                    <span style="font-size:0.68rem; color:#9ca3af; font-weight:400;">(Contract − Total Billed)</span>
-
-                <span style="font-family:'Syne',sans-serif; font-size:1.2rem; font-weight:800; color:{{ $remainingBal >= 0 ? '#3b82f6' : '#dc2626' }};">
-                    ₱{{ number_format($remainingBal, 2) }}
-                </span>
-            </div>
-        </div>
-        <div style="border-top:1px dashed rgba(34,197,94,0.2); margin-bottom:1.5rem;"></div>
-        @endif
-
-        {{-- Add new billing --}}
-        <p style="font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#9ca3af; margin-bottom:0.875rem; display:flex; align-items:center; gap:0.5rem;">
-            <i class="fas fa-plus-circle" style="color:#16a34a;"></i>
-            Add Billing No. {{ $nextBillingNo }}
-        </p>
-        <div class="grid-2col">
-            <div class="field-group">
-                <label class="field-label">Billing Amount (₱) <span style="color:#ef4444;">*</span></label>
-                <div style="position:relative;">
-                    <span style="position:absolute; left:1rem; top:50%; transform:translateY(-50%); color:var(--ink-muted); font-weight:600; pointer-events:none;">₱</span>
-                    <input type="number" onkeydown="return event.key !== '-' && event.key !== 'e'" name="new_billing_amount" id="new_billing_amount" class="field-input"
-                           min="0" step="0.01" placeholder="0.00"
-                           style="padding-left:1.75rem; border-color:rgba(34,197,94,0.25);"
-                           oninput="updateBillingPreview()">
-                </div>
-                <p class="field-hint">Amount billed in this update</p>
-            </div>
-            <div class="field-group">
-                <label class="field-label">Billing Date</label>
-                <input type="date" name="new_billing_date" class="field-input"
-                       style="border-color:rgba(34,197,94,0.25);">
-                <p class="field-hint">Date of this billing update</p>
-            </div>
-
-            {{-- Live preview --}}
-            <div class="field-group" style="grid-column:1/-1;">
-                <label class="field-label">After This Billing (Preview)</label>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
-                    <div style="padding:0.875rem 1rem; border:1.5px solid rgba(34,197,94,0.2); border-radius:9px; background:rgba(34,197,94,0.04);">
-                        <p style="font-size:0.62rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#9ca3af; margin-bottom:0.3rem;">Total Amount Billed</p>
-                        <p style="font-family:'Syne',sans-serif; font-size:1rem; font-weight:800; color:#16a34a; margin:0;">
-                            ₱<span id="billing_total_preview" data-base="{{ $totalBilled }}">{{ number_format($totalBilled, 2) }}</span>
-                        </p>
-                    </div>
-                    <div style="padding:0.875rem 1rem; border:1.5px solid rgba(59,130,246,0.2); border-radius:9px; background:rgba(59,130,246,0.04);">
-                        <p style="font-size:0.62rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#9ca3af; margin-bottom:0.3rem;">Remaining Balance</p>
-                        <p id="billing_remaining_preview" style="font-family:'Syne',sans-serif; font-size:1rem; font-weight:800; color:#3b82f6; margin:0;">
-                            ₱<span id="billing_remaining_val">{{ number_format($remainingBal, 2) }}</span>
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-    </div>
-    </div>
-    </div>
-</div>
         </div>
 
         {{-- end tab-extensions --}}
 
-        {{-- TAB 4: ADMIN --}}
+        {{-- TAB 4: 171 --}}
+        <div id="tab-171" class="tab-content">
+        @php
+            $billingAmounts = is_array($project->billing_amounts) ? array_map('floatval', $project->billing_amounts) : [];
+            $billingDates   = is_array($project->billing_dates)   ? $project->billing_dates : [];
+            $billingCount   = count($billingAmounts);
+            $nextBillingNo  = $billingCount + 1;
+            $totalBilled    = array_sum($billingAmounts);
+            $allExtCosts  = array_merge(
+                is_array($project->cost_involved ?? null) ? $project->cost_involved : [],
+                is_array($project->vo_cost ?? null)       ? $project->vo_cost : []
+            );
+            $totalCostAdj  = collect($allExtCosts)->filter(fn($c) => $c !== null && (float)$c != 0)->sum();
+            $adjustedContractAmt = max(0, (float)($project->original_contract_amount ?? $project->contract_amount) + $totalCostAdj);
+            $remainingBal  = $adjustedContractAmt - $totalBilled;
+        @endphp
+        <div class="form-card" style="margin-bottom:1.5rem; border-color:rgba(34,197,94,0.18);">
+            <div class="acc-header" id="acc-billing-hdr" onclick="toggleAcc('billing')"
+                 role="button" aria-expanded="true" aria-controls="acc-billing-bdy"
+                 style="border-bottom-color:rgba(34,197,94,0.15);">
+                <i class="fas fa-file-invoice-dollar" style="color:#16a34a; font-size:0.85rem; flex-shrink:0;"></i>
+                <span class="acc-title">Billing Updates</span>
+                @if($billingCount > 0)
+                    <span class="tag-chip" style="margin-left:0.4rem; background:rgba(34,197,94,0.1); color:#16a34a; border-color:rgba(34,197,94,0.25);">{{ $billingCount }} recorded</span>
+                @else
+                    <span style="font-size:0.7rem; color:#9ca3af; margin-left:0.4rem; font-weight:400;">No entries yet</span>
+                @endif
+                <div class="acc-status-dot" style="background:{{ $billingCount > 0 ? '#16a34a' : '#d1d5db' }};"></div>
+                <div class="acc-chevron" style="border-color:rgba(34,197,94,0.2);"><i class="fas fa-chevron-down"></i></div>
+            </div>
+            <div class="acc-body is-collapsed" id="acc-billing-bdy">
+            <div class="acc-body-inner">
+            <div class="section-body">
+
+                @if($billingCount > 0)
+                <div style="margin-bottom:1.5rem;">
+                    <p style="font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#9ca3af; margin-bottom:0.75rem; display:flex; align-items:center; gap:0.5rem;">
+                        <i class="fas fa-history" style="color:#16a34a;"></i> Billing History
+                    </p>
+                    <div style="display:grid; grid-template-columns:18px 1fr 5rem 5rem; gap:0 0.75rem; padding:0 0.25rem; margin-bottom:0.4rem;">
+                        <span></span>
+                        <p class="h-col-hdr">Billing</p>
+                        <p class="h-col-hdr" style="text-align:center;">Action</p>
+                        <p class="h-col-hdr" style="text-align:right;">Amount</p>
+                    </div>
+                    <div class="history-timeline">
+                        @foreach($billingAmounts as $bi => $amount)
+                        @php $bIsLast = $bi === $billingCount - 1; @endphp
+                        <div style="display:grid; grid-template-columns:18px 1fr 5rem 5rem; gap:0 0.75rem; align-items:start;">
+                            <div class="h-spine">
+                                <div class="h-dot" style="background:#16a34a; box-shadow:0 0 0 3px rgba(34,197,94,0.18);"></div>
+                                @if(!$bIsLast)<div class="h-line" style="background:rgba(34,197,94,0.18);"></div>@endif
+                            </div>
+                            <div class="h-label {{ $bIsLast ? 'last' : '' }}" style="display:flex; flex-direction:column; gap:0.2rem;">
+                                <span>Billing No. {{ $bi + 1 }}</span>
+                                @if(!empty($billingDates[$bi]))
+                                    <span style="font-size:0.72rem; font-weight:500; color:#9ca3af;">{{ \Carbon\Carbon::parse($billingDates[$bi])->format('M d, Y') }}</span>
+                                @endif
+                            </div>
+                            <div style="display:flex; justify-content:center; padding-top:2px;">
+                                <button type="button"
+                                    onclick="openBillingEditModal({{ $bi }}, {{ $amount }}, '{{ $billingDates[$bi] ?? '' }}')"
+                                    style="display:inline-flex; align-items:center; gap:0.3rem; padding:3px 10px; border-radius:6px; border:1.5px solid rgba(34,197,94,0.25); background:rgba(34,197,94,0.06); color:#16a34a; font-size:0.68rem; font-weight:700; cursor:pointer; font-family:'Instrument Sans',sans-serif; transition:all 0.15s; white-space:nowrap;"
+                                    onmouseover="this.style.background='rgba(34,197,94,0.15)';this.style.borderColor='rgba(34,197,94,0.45)'"
+                                    onmouseout="this.style.background='rgba(34,197,94,0.06)';this.style.borderColor='rgba(34,197,94,0.25)'">
+                                    <i class="fas fa-pen" style="font-size:0.55rem;"></i> Edit
+                                </button>
+                            </div>
+                            <div style="display:flex; justify-content:flex-end; padding-top:2px;">
+                                <span style="font-size:0.82rem; font-weight:700; color:#16a34a;">₱{{ number_format($amount, 2) }}</span>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+
+                    <div class="h-summary" style="margin-top:1rem; border-color:rgba(34,197,94,0.2);">
+                        <span style="font-size:0.8rem; font-weight:600; color:var(--ink-muted); display:flex; align-items:center; gap:0.4rem;">
+                            <i class="fas fa-sigma" style="color:#16a34a; font-size:0.75rem;"></i>
+                            Total across {{ $billingCount }} {{ $billingCount === 1 ? 'billing' : 'billings' }}
+                        </span>
+                        <span style="font-family:'Syne',sans-serif; font-size:1.2rem; font-weight:800; color:#16a34a;">₱{{ number_format($totalBilled, 2) }}</span>
+                    </div>
+
+                    <div style="margin-top:0.75rem; padding:0.875rem 1rem; border-radius:10px; background:{{ $remainingBal >= 0 ? 'rgba(59,130,246,0.04)' : 'rgba(239,68,68,0.04)' }}; border:1px solid {{ $remainingBal >= 0 ? 'rgba(59,130,246,0.18)' : 'rgba(239,68,68,0.18)' }}; display:flex; align-items:center; justify-content:space-between;">
+                        <span style="font-size:0.8rem; font-weight:600; color:var(--ink-muted); display:flex; align-items:center; gap:0.4rem;">
+                            <i class="fas fa-wallet" style="color:{{ $remainingBal >= 0 ? '#3b82f6' : '#dc2626' }};"></i>
+                            Remaining Balance
+                            <span style="font-size:0.68rem; color:#9ca3af; font-weight:400;">(Contract − Total Billed)</span>
+                        </span>
+                        <span style="font-family:'Syne',sans-serif; font-size:1.2rem; font-weight:800; color:{{ $remainingBal >= 0 ? '#3b82f6' : '#dc2626' }};">
+                            ₱{{ number_format($remainingBal, 2) }}
+                        </span>
+                    </div>
+                </div>
+                <div style="border-top:1px dashed rgba(34,197,94,0.2); margin-bottom:1.5rem;"></div>
+                @endif
+                {{-- ── Advance Billing & Retention ── --}}
+<div style="margin-bottom:1.5rem;">
+    <p style="font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#9ca3af; margin-bottom:0.875rem; display:flex; align-items:center; gap:0.5rem;">
+        <i class="fas fa-sliders" style="color:#16a34a;"></i>
+        Deductions & Guarantees
+    </p>
+    <div class="grid-2col">
+
+        {{-- Advance Billing --}}
+        <div style="padding:1rem; border-radius:10px; border:1.5px solid rgba(59,130,246,0.2); background:rgba(59,130,246,0.03);">
+            <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.875rem;">
+                <div style="width:28px; height:28px; background:rgba(59,130,246,0.12); border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                    <i class="fas fa-money-bill-trend-up" style="color:#2563eb; font-size:0.7rem;"></i>
+                </div>
+                <label class="field-label" style="margin:0; color:#2563eb;">Advance Billing</label>
+            </div>
+            <div class="grid-2col" style="gap:0.75rem;">
+                <div class="field-group" style="margin-bottom:0;">
+                    <label class="field-label">Percentage (%)</label>
+                    <div style="position:relative;">
+                        <input type="number"
+                               onkeydown="return event.key !== '-' && event.key !== 'e'"
+                               name="advance_billing_pct"
+                               id="advance_billing_pct"
+                               class="field-input"
+                               min="0" max="100" step="0.01"
+                               placeholder="e.g. 15"
+                               value="{{ old('advance_billing_pct', $project->advance_billing_pct ?? '') }}"
+                               oninput="calcAdvanceRetention()"
+                               style="border-color:rgba(59,130,246,0.3); padding-right:2rem;"
+                               onfocus="this.style.borderColor='#2563eb';this.style.boxShadow='0 0 0 3px rgba(59,130,246,0.1)'"
+                               onblur="this.style.borderColor='rgba(59,130,246,0.3)';this.style.boxShadow='none'">
+                        <span style="position:absolute; right:0.75rem; top:50%; transform:translateY(-50%); font-size:0.75rem; font-weight:700; color:#9ca3af; pointer-events:none;">%</span>
+                    </div>
+                </div>
+                <div class="field-group" style="margin-bottom:0;">
+                    <label class="field-label">Amount (₱) <span style="font-weight:400; color:#9ca3af;">(auto)</span></label>
+                    <p style="font-size:0.9rem; font-weight:800; color:#2563eb; margin:0; padding:0.78rem 0; font-family:'Syne',sans-serif; letter-spacing:-0.01em;">
+                        ₱<span id="advance_billing_amount_display">{{ number_format((float)($project->advance_billing_amount ?? 0), 2) }}</span>
+                    </p>
+                </div>
+            </div>
+            <p class="field-hint" style="margin-top:0.5rem; color:#2563eb;">
+                <i class="fas fa-info-circle"></i> Calculated from original contract amount
+            </p>
+        </div>
+
+        {{-- Retention --}}
+        <div style="padding:1rem; border-radius:10px; border:1.5px solid rgba(168,85,247,0.2); background:rgba(168,85,247,0.03);">
+            <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.875rem;">
+                <div style="width:28px; height:28px; background:rgba(168,85,247,0.12); border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                    <i class="fas fa-shield-halved" style="color:#9333ea; font-size:0.7rem;"></i>
+                </div>
+                <label class="field-label" style="margin:0; color:#9333ea;">Retention</label>
+            </div>
+            <div class="grid-2col" style="gap:0.75rem;">
+                <div class="field-group" style="margin-bottom:0;">
+                    <label class="field-label">Percentage (%)</label>
+                    <div style="position:relative;">
+                        <input type="number"
+                               onkeydown="return event.key !== '-' && event.key !== 'e'"
+                               name="retention_pct"
+                               id="retention_pct"
+                               class="field-input"
+                               min="0" max="100" step="0.01"
+                               placeholder="e.g. 10"
+                               value="{{ old('retention_pct', $project->retention_pct ?? '') }}"
+                               oninput="calcAdvanceRetention()"
+                               style="border-color:rgba(168,85,247,0.3); padding-right:2rem;"
+                               onfocus="this.style.borderColor='#9333ea';this.style.boxShadow='0 0 0 3px rgba(168,85,247,0.1)'"
+                               onblur="this.style.borderColor='rgba(168,85,247,0.3)';this.style.boxShadow='none'">
+                        <span style="position:absolute; right:0.75rem; top:50%; transform:translateY(-50%); font-size:0.75rem; font-weight:700; color:#9ca3af; pointer-events:none;">%</span>
+                    </div>
+                </div>
+                <div class="field-group" style="margin-bottom:0;">
+                    <label class="field-label">Amount (₱) <span style="font-weight:400; color:#9ca3af;">(auto)</span></label>
+                    <p style="font-size:0.9rem; font-weight:800; color:#9333ea; margin:0; padding:0.78rem 0; font-family:'Syne',sans-serif; letter-spacing:-0.01em;">
+                        ₱<span id="retention_amount_display">{{ number_format((float)($project->retention_amount ?? 0), 2) }}</span>
+                    </p>
+                </div>
+            </div>
+            <p class="field-hint" style="margin-top:0.5rem; color:#9333ea;">
+                <i class="fas fa-info-circle"></i> Calculated from original contract amount
+            </p>
+        </div>
+
+    </div>
+</div>
+<div style="border-top:1px dashed rgba(34,197,94,0.2); margin-bottom:1.5rem;"></div>
+
+                <p style="font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#9ca3af; margin-bottom:0.875rem; display:flex; align-items:center; gap:0.5rem;">
+                    <i class="fas fa-plus-circle" style="color:#16a34a;"></i>
+                    Add Billing No. {{ $nextBillingNo }}
+                </p>
+                <div class="grid-2col">
+                    <div class="field-group">
+                        <label class="field-label">Billing Amount (₱) <span style="color:#ef4444;">*</span></label>
+                        <div style="position:relative;">
+                            <span style="position:absolute; left:1rem; top:50%; transform:translateY(-50%); color:var(--ink-muted); font-weight:600; pointer-events:none;">₱</span>
+                            <input type="number" onkeydown="return event.key !== '-' && event.key !== 'e'" name="new_billing_amount" id="new_billing_amount" class="field-input"
+                                   min="0" step="0.01" placeholder="0.00"
+                                   style="padding-left:1.75rem; border-color:rgba(34,197,94,0.25);"
+                                   oninput="updateBillingPreview()">
+                        </div>
+                        <p class="field-hint">Amount billed in this update</p>
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Billing Date</label>
+                        <input type="date" name="new_billing_date" class="field-input"
+                               style="border-color:rgba(34,197,94,0.25);">
+                        <p class="field-hint">Date of this billing update</p>
+                    </div>
+
+                    <div class="field-group" style="grid-column:1/-1;">
+                        <label class="field-label">After This Billing (Preview)</label>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+                            <div style="padding:0.875rem 1rem; border:1.5px solid rgba(34,197,94,0.2); border-radius:9px; background:rgba(34,197,94,0.04);">
+                                <p style="font-size:0.62rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#9ca3af; margin-bottom:0.3rem;">Total Amount Billed</p>
+                                <p style="font-family:'Syne',sans-serif; font-size:1rem; font-weight:800; color:#16a34a; margin:0;">
+                                    ₱<span id="billing_total_preview" data-base="{{ $totalBilled }}">{{ number_format($totalBilled, 2) }}</span>
+                                </p>
+                            </div>
+                            <div style="padding:0.875rem 1rem; border:1.5px solid rgba(59,130,246,0.2); border-radius:9px; background:rgba(59,130,246,0.04);">
+                                <p style="font-size:0.62rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#9ca3af; margin-bottom:0.3rem;">Remaining Balance</p>
+                                <p id="billing_remaining_preview" style="font-family:'Syne',sans-serif; font-size:1rem; font-weight:800; color:#3b82f6; margin:0;">
+                                    ₱<span id="billing_remaining_val">{{ number_format($remainingBal, 2) }}</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            </div>
+            </div>
+        </div>
+        </div>
+
+        {{-- TAB 5: ADMIN --}}
         <div id="tab-admin" class="tab-content">
         @php
             $issuanceOptions = ['1st Notice of Negative Slippage','2nd Notice of Negative Slippage','3rd Notice of Negative Slippage','Liquidated Damages','Notice to Terminate','Notice of Expiry','Performance Bond'];
@@ -932,7 +1022,6 @@
 </div>
 
 {{-- PHP-rendered runtime variables required by edit.js --}}
-{{-- ✅ These MUST be in @push so they render in the same stack, before edit.js --}}
 @push('scripts')
 <script>
     const originalExpiry = '{{ $project->original_contract_expiry->format("Y-m-d") }}';
@@ -1150,9 +1239,6 @@ window.submitBillingEdit = function () {
     form.submit();
 };
 </script>
-@push('scripts')
-    @vite('resources/js/admin/projects/edit.js')
-@endpush
 
 {{-- Dedicated reactivation form — separate from the main edit form --}}
 @if($project->status === 'completed')
