@@ -23,6 +23,7 @@ class Project extends Model
         'as_planned',
         'work_done',
         'slippage',
+        'progress_updated_at',
         'status',
         'completed_at',
         'remarks_recommendation',
@@ -57,6 +58,7 @@ class Project extends Model
             'original_contract_expiry' => 'date',
             'revised_contract_expiry'  => 'date',
             'completed_at'             => 'date',
+            'progress_updated_at'      => 'datetime',
             'contract_amount'          => 'decimal:2',
             'original_contract_amount' => 'decimal:2',
             'as_planned'               => 'decimal:3',
@@ -91,6 +93,13 @@ class Project extends Model
     {
         static::updated(function (Project $project) {
             $dirty    = $project->getDirty();
+
+            // ── Auto-stamp when progress fields change ──
+            if (array_key_exists('as_planned', $dirty) || array_key_exists('work_done', $dirty)) {
+                \Illuminate\Support\Facades\DB::table('projects')
+                    ->where('id', $project->id)
+                    ->update(['progress_updated_at' => now()]);
+            }
             $original = collect($dirty)->mapWithKeys(fn($v, $k) => [$k => $project->getOriginal($k)])->toArray();
 
             $skip    = ['updated_at'];

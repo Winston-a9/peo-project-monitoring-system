@@ -346,6 +346,20 @@
                         <span id="slippage-value" style="font-family:'Syne',sans-serif; font-size:1.25rem; font-weight:800; color:#9ca3af;">—</span>
                     </div>
                 </div>
+                @if($project->progress_updated_at)
+                <div class="field-group">
+                    <label class="field-label">Progress Last Updated</label>
+                    <div class="info-box">
+                        <i class="fas fa-clock"></i>
+                        <span style="font-size:0.845rem; color:var(--text-secondary);">
+                            {{ $project->progress_updated_at->format('F d, Y \a\t h:i A') }}
+                            — <span style="color:var(--orange-600); font-weight:600;">
+                                {{ $project->progress_updated_at->diffForHumans() }}
+                            </span>
+                        </span>
+                    </div>
+                </div>
+                @endif
             </div>
         </div>
 

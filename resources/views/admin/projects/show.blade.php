@@ -142,29 +142,62 @@
     </div>
 
     {{-- Progress --}}
-    <div class="card" style="display:grid;grid-template-columns:1fr 1fr 1fr;overflow:hidden;">
-        <div class="sb" style="border-right:1px solid var(--bd);">
-            <p class="ey">As Planned</p>
-            <p class="sn" style="font-size:2.4rem;color:var(--or5);">{{ $project->as_planned }}<span style="font-size:1rem;color:var(--ink2);">%</span></p>
-            <div style="height:3px;background:rgba(249,115,22,0.1);border-radius:99px;margin-top:0.75rem;overflow:hidden;">
-                <div style="height:100%;width:{{ $project->as_planned }}%;background:#f97316;border-radius:99px;"></div>
-            </div>
-        </div>
-        <div class="sb" style="border-right:1px solid var(--bd);">
-            <p class="ey">Work Done</p>
-            <p class="sn" style="font-size:2.4rem;color:#3b82f6;">{{ $project->work_done }}<span style="font-size:1rem;color:var(--ink2);">%</span></p>
-            <div style="height:3px;background:rgba(59,130,246,0.1);border-radius:99px;margin-top:0.75rem;overflow:hidden;">
-                <div style="height:100%;width:{{ $project->work_done }}%;background:#3b82f6;border-radius:99px;"></div>
-            </div>
-        </div>
-        <div class="sb">
-            <p class="ey">Slippage</p>
-            <p class="sn" style="font-size:2.4rem;color:{{ $slipColor }};">{{ $slip > 0 ? '+' : '' }}{{ $project->slippage }}<span style="font-size:1rem;">%</span></p>
-            <div style="display:flex;align-items:center;gap:0.35rem;margin-top:0.75rem;">
-                <div style="width:20px;height:20px;border-radius:6px;background:{{ $slipBg }};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                    <i class="fas {{ $slipIcon }}" style="font-size:0.65rem;color:{{ $slipColor }};"></i>
+    <div class="card" style="overflow:hidden;">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;">
+            {{-- As Planned --}}
+            <div style="padding:1.25rem 1.5rem;border-right:1px solid var(--bd);">
+                <p class="ey" style="margin:0 0 0.5rem;">As Planned</p>
+                <p class="sn" style="font-size:2rem;color:var(--or5);">{{ $project->as_planned }}<span style="font-size:0.9rem;color:var(--ink2);">%</span></p>
+                <div style="height:3px;background:rgba(249,115,22,0.1);border-radius:99px;margin-top:0.75rem;overflow:hidden;">
+                    <div style="height:100%;width:{{ $project->as_planned }}%;background:#f97316;border-radius:99px;"></div>
                 </div>
-                <span style="font-size:0.7rem;font-weight:600;color:{{ $slipColor }};">{{ $slipLabel }}</span>
+            </div>
+            {{-- Work Done --}}
+            <div style="padding:1.25rem 1.5rem;border-right:1px solid var(--bd);">
+                <p class="ey" style="margin:0 0 0.5rem;">Work Done</p>
+                <p class="sn" style="font-size:2rem;color:#3b82f6;">{{ $project->work_done }}<span style="font-size:0.9rem;color:var(--ink2);">%</span></p>
+                <div style="height:3px;background:rgba(59,130,246,0.1);border-radius:99px;margin-top:0.75rem;overflow:hidden;">
+                    <div style="height:100%;width:{{ $project->work_done }}%;background:#3b82f6;border-radius:99px;"></div>
+                </div>
+            </div>
+            {{-- Slippage --}}
+            <div style="padding:1.25rem 1.5rem;border-right:1px solid var(--bd);">
+                <p class="ey" style="margin:0 0 0.5rem;">Slippage</p>
+                <p class="sn" style="font-size:2rem;color:{{ $slipColor }};">{{ $slip > 0 ? '+' : '' }}{{ $project->slippage }}<span style="font-size:0.9rem;">%</span></p>
+                <div style="display:flex;align-items:center;gap:0.35rem;margin-top:0.75rem;">
+                    <i class="fas {{ $slipIcon }}" style="font-size:0.65rem;color:{{ $slipColor }};"></i>
+                    <span style="font-size:0.7rem;font-weight:600;color:{{ $slipColor }};">{{ $slipLabel }}</span>
+                </div>
+            </div>
+            {{-- PROGRESS LAST UPDATED --}}
+            <div style="padding:1.25rem 1.5rem;">
+                <p class="ey" style="margin:0 0 0.5rem;">Progress Last Updated</p>
+                @if($project->progress_updated_at)
+                    <p style="font-size:0.875rem;font-weight:700;color:var(--tx);margin:0;line-height:1.3;">
+                        {{ $project->progress_updated_at->format('M d, Y') }}
+                    </p>
+                    <p style="font-size:0.7rem;color:var(--tx2);margin:4px 0 0;">
+                        {{ $project->progress_updated_at->format('h:i A') }}
+                    </p>
+                    <p style="font-size:0.7rem;color:var(--tx2);margin:2px 0 0;font-style:italic;">
+                        {{ $project->progress_updated_at->diffForHumans() }}
+                    </p>
+                @else
+                    <p style="font-size:0.875rem;font-weight:600;color:#9ca3af;margin:0;font-style:italic;">
+                        Not yet tracked
+                    </p>
+                    <p style="font-size:0.7rem;color:#9ca3af;margin:4px 0 0;">
+                        Progress hasn't been updated yet
+                    </p>
+                @endif
+            </div>
+        </div>
+        {{-- Combined progress bar footer --}}
+        <div style="padding:0.6rem 1.5rem;border-top:1px solid var(--bd);background:var(--bg2);display:flex;align-items:center;gap:0.75rem;">
+            <span style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--ink2);white-space:nowrap;">Overall</span>
+            <div style="flex:1;height:3px;border-radius:99px;background:rgba(249,115,22,0.08);overflow:hidden;position:relative;">
+                <div style="position:absolute;top:0;left:0;height:100%;width:{{ $project->as_planned }}%;background:rgba(249,115,22,0.25);border-radius:99px;"></div>
+                <div style="position:absolute;top:0;left:0;height:100%;width:{{ $project->work_done }}%;background:#3b82f6;border-radius:99px;"></div>
             </div>
         </div>
     </div>

@@ -25,6 +25,7 @@ return new class extends Migration
             $table->decimal('as_planned', 5, 2)->default(0);
             $table->decimal('work_done', 5, 2)->default(0);
             $table->decimal('slippage', 5, 2)->default(0);
+            $table->string('progress_updated_at')->nullable();
             $table->text('remarks_recommendation')->nullable();
 
             // Documents & Extensions

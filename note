@@ -120,9 +120,11 @@ edit.blade
 	performance
 		date stamp everytime as planned and work done is updated
 
+		when work done is 100% LDA is read-only.
+
 		FIXED DATE START TO FINISH in LD
 
-		when work done is 100% LDA is read-only.
+		change ld calculation from Formula: (Unworked % ÷ 100) × Original Contract Amount × 0.001 to Formula: (Unworked % ÷ 100) × Remaining Contract Amount or in the data table "original_amount" × 0.001
 
 	extensions
 		add a reason/coverage modal everytime date extension is updated
