@@ -113,12 +113,10 @@ TO ADD/FIX:
 
 edit.blade
 	overview
-
-		Contract Amount number form put "," every 3 whole digit number
-
-		editable project information - dont make it as read-only
+		contract amount editable(to prevent bugs didnt include project information inputtable update)
 
 		move performance bond in the overview tab
+
 	performance
 		date stamp everytime as planned and work done is updated
 
@@ -145,13 +143,13 @@ if complete what happen
 if expired what happen
 
 	Add notification for Contractor Notification
-
-
 	
 	
 ==================================================================================================================================================================================================================================================================================================
 FIXED:
 ADMIN
+
+		Contract Amount number form put "," every 3 whole digit number
 		make a switch or button for reactivation, when the user reactivate a project it will go back to either on going, expiring or expired status, depends on the expiry date	
 
 	when the user added a extension that extended a expired project the status in index.blade, show.blade, and edit.blade will automatically update into ongoing or expiring depending on how many days are left
