@@ -128,7 +128,7 @@ edit.blade
 	extensions
 		add a reason/coverage modal everytime date extension is updated
 
-	billing
+	billing (advance billing and retention data not yet displayed in show.blade)
 		create a new billing tab
 
 		billing updates changes to 171
