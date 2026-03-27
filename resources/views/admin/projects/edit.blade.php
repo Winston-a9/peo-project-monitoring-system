@@ -42,6 +42,7 @@
                 'days'           => $existingDays[$teIndex]  ?? 0,
                 'cost'           => $existingCosts[$teIndex] ?? null,
                 'date_requested' => $existingDates[$teIndex] ?? null,
+                'reason'         => $existingTEReasons[$teIndex] ?? null,
             ];
             $teIndex++;
         }
@@ -59,6 +60,7 @@
                 'days'           => $existingVoDays[$voIndex]  ?? 0,
                 'cost'           => $existingVoCosts[$voIndex] ?? null,
                 'date_requested' => $existingDates[$voDateOffset + $voIndex] ?? null,
+                'reason'         => $existingVOReasons[$voIndex] ?? null,
             ];
             $voIndex++;
         }
@@ -67,6 +69,7 @@
     $nextVoNumber = $voCount + 1;
 
     $hasSO = collect($existingDocs)->contains('Suspension Order');
+
 
     $existingTETotal = collect($teHistory)->sum('days');
     $existingVOTotal = collect($voHistory)->sum('days');
@@ -481,8 +484,7 @@
                             </div>
                             <div style="display:flex; align-items:flex-start; justify-content:center; padding-top:2px;">
                                 <button type="button"
-                                    onclick="openEditModal('te', {{ $ti }}, '{{ addslashes($entry['label']) }}', {{ $entry['days'] }}, '{{ $entry['cost'] ?? '' }}', '{{ $entry['date_requested'] ?? '' }}')"
-                                    style="display:inline-flex; align-items:center; gap:0.3rem; padding:3px 10px; border-radius:6px; border:1.5px solid rgba(249,115,22,0.25); background:rgba(249,115,22,0.06); color:#ea580c; font-size:0.68rem; font-weight:700; cursor:pointer; font-family:'Instrument Sans',sans-serif; transition:all 0.15s; white-space:nowrap;"
+                                onclick="openEditModal('te', {{ $ti }}, '{{ addslashes($entry['label']) }}', {{ $entry['days'] }}, '{{ $entry['cost'] ?? '' }}', '{{ $entry['date_requested'] ?? '' }}', '{{ addslashes($entry['reason'] ?? '') }}')"                                    style="display:inline-flex; align-items:center; gap:0.3rem; padding:3px 10px; border-radius:6px; border:1.5px solid rgba(249,115,22,0.25); background:rgba(249,115,22,0.06); color:#ea580c; font-size:0.68rem; font-weight:700; cursor:pointer; font-family:'Instrument Sans',sans-serif; transition:all 0.15s; white-space:nowrap;"
                                     onmouseover="this.style.background='rgba(249,115,22,0.15)';this.style.borderColor='rgba(249,115,22,0.45)'"
                                     onmouseout="this.style.background='rgba(249,115,22,0.06)';this.style.borderColor='rgba(249,115,22,0.25)'">
                                     <i class="fas fa-pen" style="font-size:0.55rem;"></i> Edit
@@ -591,8 +593,7 @@
                             </div>
                             <div style="display:flex; align-items:flex-start; justify-content:center; padding-top:2px;">
                                 <button type="button"
-                                    onclick="openEditModal('vo', {{ $vi }}, '{{ addslashes($entry['label']) }}', {{ $entry['days'] }}, '{{ $entry['cost'] ?? '' }}', '{{ $entry['date_requested'] ?? '' }}')"
-                                    style="display:inline-flex; align-items:center; gap:0.3rem; padding:3px 10px; border-radius:6px; border:1.5px solid rgba(99,102,241,0.25); background:rgba(99,102,241,0.06); color:#6366f1; font-size:0.68rem; font-weight:700; cursor:pointer; font-family:'Instrument Sans',sans-serif; transition:all 0.15s; white-space:nowrap;"
+                                    onclick="openEditModal('vo', {{ $vi }}, '{{ addslashes($entry['label']) }}', {{ $entry['days'] }}, '{{ $entry['cost'] ?? '' }}', '{{ $entry['date_requested'] ?? '' }}', '{{ addslashes($entry['reason'] ?? '') }}')"                                    style="display:inline-flex; align-items:center; gap:0.3rem; padding:3px 10px; border-radius:6px; border:1.5px solid rgba(99,102,241,0.25); background:rgba(99,102,241,0.06); color:#6366f1; font-size:0.68rem; font-weight:700; cursor:pointer; font-family:'Instrument Sans',sans-serif; transition:all 0.15s; white-space:nowrap;"
                                     onmouseover="this.style.background='rgba(99,102,241,0.15)';this.style.borderColor='rgba(99,102,241,0.45)'"
                                     onmouseout="this.style.background='rgba(99,102,241,0.06)';this.style.borderColor='rgba(99,102,241,0.25)'">
                                     <i class="fas fa-pen" style="font-size:0.55rem;"></i> Edit
@@ -1105,6 +1106,7 @@
                 </div>
             </div>
             <div>
+        <div>
                 <label for="edit_cost" style="display:block; font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-muted); margin-bottom:0.4rem;">Cost Involved (₱)</label>
                 <div style="position:relative;">
                     <span style="position:absolute; left:1rem; top:50%; transform:translateY(-50%); color:var(--ink-muted); font-weight:600; pointer-events:none; font-size:0.9rem;">₱</span>
@@ -1115,6 +1117,25 @@
                 </div>
                 <p style="font-size:0.68rem; color:#9ca3af; margin-top:0.3rem;">Optional</p>
             </div>
+
+            {{-- ── Reason / Coverage ── --}}
+            <div>
+                <label for="edit_reason" style="display:block; font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-muted); margin-bottom:0.4rem;">
+                    Reason / Coverage <span style="color:#ef4444;">*</span>
+                </label>
+                <textarea id="edit_reason" name="edit_reason" rows="3" placeholder="Describe the reason or scope covered by this extension…"
+                    style="width:100%; padding:0.72rem 1rem; border:1.5px solid var(--border); border-radius:9px; font-size:0.875rem; color:var(--text-primary); background:var(--bg-primary); outline:none; font-family:'Instrument Sans',sans-serif; resize:vertical; transition:border-color 0.2s,box-shadow 0.2s; box-sizing:border-box; min-height:80px; line-height:1.5;"
+                    onfocus="this.style.borderColor='var(--orange-500)';this.style.boxShadow='0 0 0 3px rgba(249,115,22,0.1)'"
+                    onblur="this.style.borderColor='var(--border)';this.style.boxShadow='none'"
+                    oninput="document.getElementById('edit_reason_count').textContent=this.value.length"></textarea>
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-top:0.3rem;">
+                    <p id="edit_reason_error" style="display:none; font-size:0.68rem; color:#ef4444; margin:0; align-items:center; gap:0.3rem;">
+                        <i class="fas fa-exclamation-circle"></i> Please provide a reason or coverage description.
+                    </p>
+                    <span style="margin-left:auto; font-size:0.65rem; color:#9ca3af;"><span id="edit_reason_count">0</span> chars</span>
+                </div>
+            </div>
+
         </div>
     </form>
     <x-slot name="footer">
@@ -1131,7 +1152,7 @@
 
 {{-- Modal-specific JS (uses blade-rendered routes & tokens — cannot move to edit.js) --}}
 <script>
-function openEditModal(type, index, label, days, cost, dateRequested) {
+function openEditModal(type, index, label, days, cost, dateRequested, reason) {
     const panel  = document.getElementById('edit-entry-modal-panel');
     const isVO   = type === 'vo';
     const accent = isVO ? '#6366f1' : '#f97316';
@@ -1149,6 +1170,23 @@ function openEditModal(type, index, label, days, cost, dateRequested) {
     document.getElementById('edit_days').value           = days || '';
     document.getElementById('edit_cost').value           = cost || '';
     document.getElementById('edit_date_requested').value = dateRequested || '';
+
+    const reasonEl = document.getElementById('edit_reason');
+    const reasonCountEl = document.getElementById('edit_reason_count');
+    if (reasonEl) {
+        reasonEl.value = reason || '';
+        reasonEl.style.borderColor = 'var(--border)';
+        reasonEl.style.boxShadow   = 'none';
+        if (reasonCountEl) reasonCountEl.textContent = (reason || '').length;
+    }
+    const reasonErrEl = document.getElementById('edit_reason_error');
+    if (reasonErrEl) reasonErrEl.style.display = 'none';
+
+    if (reasonEl) {
+        reasonEl.onfocus = () => { reasonEl.style.borderColor = accent; reasonEl.style.boxShadow = `0 0 0 3px ${isVO ? 'rgba(99,102,241,0.1)' : 'rgba(249,115,22,0.1)'}`; };
+        reasonEl.onblur  = () => { reasonEl.style.borderColor = 'var(--border)'; reasonEl.style.boxShadow = 'none'; };
+    }
+
     document.getElementById('edit_days').style.borderColor = isVO ? 'rgba(99,102,241,0.3)' : 'rgba(249,115,22,0.25)';
     const saveBtn = document.getElementById('edit-entry-save-btn');
     saveBtn.style.background = isVO ? '#6366f1' : 'var(--orange-500)';
@@ -1157,23 +1195,43 @@ function openEditModal(type, index, label, days, cost, dateRequested) {
     saveBtn.onmouseout  = () => saveBtn.style.background = isVO ? '#6366f1' : 'var(--orange-500)';
     openModal('edit-entry-modal');
 }
+
 function submitEditEntry() {
-    const type  = document.getElementById('edit_entry_type').value;
-    const index = document.getElementById('edit_entry_index').value;
-    const days  = document.getElementById('edit_days').value;
+    const type   = document.getElementById('edit_entry_type').value;
+    const index  = document.getElementById('edit_entry_index').value;
+    const days   = document.getElementById('edit_days').value;
+    const reason = document.getElementById('edit_reason').value.trim();
+
     if (!days || parseInt(days) < 1) {
         document.getElementById('edit_days').style.borderColor = '#ef4444';
         document.getElementById('edit_days').focus();
         return;
     }
+
+    if (!reason) {
+        const errEl    = document.getElementById('edit_reason_error');
+        const reasonEl = document.getElementById('edit_reason');
+        if (errEl)    errEl.style.display = 'flex';
+        if (reasonEl) {
+            reasonEl.style.borderColor = '#ef4444';
+            reasonEl.style.boxShadow   = '0 0 0 3px rgba(239,68,68,0.1)';
+            reasonEl.focus();
+        }
+        return;
+    }
+
     const form  = document.createElement('form');
     form.method = 'POST';
     form.action = '{{ route("admin.projects.updateEntry", $project) }}';
     const fields = {
-        '_token': '{{ csrf_token() }}', '_method': 'PATCH',
-        'edit_entry_type': type, 'edit_entry_index': index, 'edit_days': days,
-        'edit_cost': document.getElementById('edit_cost').value,
+        '_token':              '{{ csrf_token() }}',
+        '_method':             'PATCH',
+        'edit_entry_type':     type,
+        'edit_entry_index':    index,
+        'edit_days':           days,
+        'edit_cost':           document.getElementById('edit_cost').value,
         'edit_date_requested': document.getElementById('edit_date_requested').value,
+        'edit_reason':         reason,
     };
     Object.entries(fields).forEach(([name, value]) => {
         const input = document.createElement('input');

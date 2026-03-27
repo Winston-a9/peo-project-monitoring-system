@@ -177,6 +177,7 @@ class ProjectController extends Controller
             'performance_bond_date'     => 'nullable|date',
             'advance_billing_pct'    => 'nullable|numeric|min:0|max:100',
             'retention_pct'            => 'nullable|numeric|min:0|max:100',
+            'edit_reason'               => 'nullable|string|max:1000',
         ]);
 
         // ── Step 1: Basic scalar fields ──
@@ -641,14 +642,16 @@ class ProjectController extends Controller
             'edit_days'           => 'required|integer|min:1|max:9999',
             'edit_cost'           => 'nullable|numeric',
             'edit_date_requested' => 'nullable|date',
+            'edit_reason'         => 'required|string|max:1000',
         ]);
 
         $fresh = $project->fresh();
         $type  = $request->input('edit_entry_type');
         $index = (int) $request->input('edit_entry_index');
-        $days  = (int) $request->input('edit_days');
-        $cost  = $request->input('edit_cost');
-        $date  = $request->input('edit_date_requested');
+        $days   = (int) $request->input('edit_days');
+        $cost   = $request->input('edit_cost');
+        $date   = $request->input('edit_date_requested');
+        $reason = trim($request->input('edit_reason'));
 
         $existingDocs  = is_array($fresh->documents_pressed) ? $fresh->documents_pressed : [];
         $dateRequested = is_array($fresh->date_requested)    ? $fresh->date_requested    : [];
@@ -667,9 +670,9 @@ class ProjectController extends Controller
                 return back()->with('error', 'Time Extension entry not found.');
             }
 
-            $extensionDays[$index]  = $days;
-            $costInvolved[$index]   = ($cost !== null && $cost !== '') ? (float) $cost : null;
-            $dateRequested[$index]  = $date ?: null;
+            $extensionDays[$index] = $days;
+            $costInvolved[$index]  = ($cost !== null && $cost !== '') ? (float) $cost : null;
+            $dateRequested[$index] = $date ?: null;
 
             $data['extension_days'] = array_values($extensionDays);
             $data['cost_involved']  = array_values($costInvolved);
@@ -682,6 +685,7 @@ class ProjectController extends Controller
             if (!isset($voDays[$index])) {
                 return back()->with('error', 'Variation Order entry not found.');
             }
+
 
             $voDays[$index]  = $days;
             $voCosts[$index] = ($cost !== null && $cost !== '') ? (float) $cost : null;
@@ -719,6 +723,27 @@ class ProjectController extends Controller
         $adjustment = collect($allCosts)->filter(fn($c) => $c !== null && (float)$c != 0)->sum();
         $data['contract_amount'] = max(0, $originalAmount + $adjustment);
 
+
+        // Log the edit reason into remarks_recommendation
+        $entryLabel = $type === 'te'
+            ? ($existingDocs[array_search(true, array_map(fn($d) => str_starts_with((string)$d, 'Time Extension'), $existingDocs))] ?? "Time Extension " . ($index + 1))
+            : ($existingDocs[array_search(true, array_map(fn($d) => str_starts_with((string)$d, 'Variation Order'), $existingDocs))] ?? "Variation Order " . ($index + 1));
+
+        // Find the actual label by counting TE/VO entries up to $index
+        $labelCounter = 0;
+        $resolvedLabel = ($type === 'te' ? 'Time Extension' : 'Variation Order') . ' ' . ($index + 1);
+        foreach ($existingDocs as $doc) {
+            $prefix = $type === 'te' ? 'Time Extension' : 'Variation Order';
+            if (str_starts_with((string) $doc, $prefix)) {
+                if ($labelCounter === $index) { $resolvedLabel = $doc; break; }
+                $labelCounter++;
+            }
+        }
+
+        $existing  = trim($fresh->remarks_recommendation ?? '');
+        $timestamp = now()->format('F d, Y \a\t h:i A');
+        $note      = "[{$timestamp}] {$resolvedLabel} edited — Reason: {$reason}";
+        $data['remarks_recommendation'] = $existing !== '' ? $existing . "\n\n" . $note : $note;
 
         $project->update($data);
 

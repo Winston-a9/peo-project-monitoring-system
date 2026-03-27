@@ -128,12 +128,8 @@ edit.blade
 	extensions
 		add a reason/coverage modal everytime date extension is updated
 
-	billing (advance billing and retention data not yet displayed in show.blade)
-		create a new billing tab
+	billing 
 
-		billing updates changes to 171
-
-		adv billin and retention manual user input type: Percentage and Amount form
 		
 	admin
 
@@ -147,8 +143,13 @@ if expired what happen
 	
 	
 ==================================================================================================================================================================================================================================================================================================
-FIXED:
+FIXED/added:
 ADMIN
+		create a new billing tab
+
+		billing updates changes to 171
+
+		adv billin and retention manual user input type: Percentage and Amount form
 		date stamp everytime as planned and work done is updated
 
 		Contract Amount number form put "," every 3 whole digit number
