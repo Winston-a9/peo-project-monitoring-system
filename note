@@ -130,14 +130,21 @@ edit.blade
 
 	billing 
 
+		advance billing and retention amount form change to manual user input (dont need to be automated since theres no proper formula)
+		bug: billing edit modal not working
+
 		
 	admin
 
+show.blade 
+	financial 
+		bug: amount total of TE and VO cost involved not being calculated and display
 
 
+if complete
 
-if complete what happen
-if expired what happen
+if expired
+	
 
 	Add notification for Contractor Notification
 	

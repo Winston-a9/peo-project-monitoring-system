@@ -1115,7 +1115,7 @@
                            onfocus="this.style.borderColor='var(--orange-500)';this.style.boxShadow='0 0 0 3px rgba(249,115,22,0.1)'"
                            onblur="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
                 </div>
-                <p style="font-size:0.68rem; color:#9ca3af; margin-top:0.3rem;">Optional</p>
+                <p style="font-size:0.68rem; color:#9ca3af; margin-top:0.3rem;"></p>
             </div>
 
             {{-- ── Reason / Coverage ── --}}
@@ -1269,7 +1269,7 @@ function submitEditEntry() {
                        style="width:100%; padding:0.72rem 1rem; border:1.5px solid var(--border); border-radius:9px; font-size:0.875rem; color:var(--text-primary); background:var(--bg-primary); outline:none; font-family:'Instrument Sans',sans-serif; box-sizing:border-box; transition:border-color 0.2s, box-shadow 0.2s;"
                        onfocus="this.style.borderColor='#16a34a';this.style.boxShadow='0 0 0 3px rgba(34,197,94,0.1)'"
                        onblur="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
-                <p style="font-size:0.68rem; color:#9ca3af; margin-top:0.3rem;">Optional</p>
+                <p style="font-size:0.68rem; color:#9ca3af; margin-top:0.3rem;"></p>
             </div>
         </div>
         <p id="billing-edit-error" style="display:none; font-size:0.75rem; color:#ef4444; align-items:center; gap:0.3rem;">
