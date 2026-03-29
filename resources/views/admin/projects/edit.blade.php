@@ -132,6 +132,12 @@
                 <input type="hidden" id="original_contract_amount" value="{{ (float) ($project->original_contract_amount ?? $project->contract_amount) }}">
                 <div class="section-body">
                     <div class="grid-2col">
+                        <div class="field-group" style="grid-column:1/-1;">
+                            <label class="field-label">Contract ID <span style="font-weight:400; color:#9ca3af;"></span></label>
+                            <p style="font-size:0.9rem; font-weight:800; color:var(--text-primary); margin:0; padding:0.1rem 0; font-family:'Syne',sans-serif; letter-spacing:-0.01em;">
+                                #{{ $project->contract_id }}
+                            </p>
+                        </div>
                         <div class="field-group">
                             <label class="field-label">In Charge</label>
                             <input type="text" name="in_charge" class="field-input"

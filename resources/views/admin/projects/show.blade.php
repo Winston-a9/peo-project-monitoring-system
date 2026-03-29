@@ -250,6 +250,10 @@
                 <span class="ct">Project Information</span>
             </div>
             <div class="dr">
+                <span class="dl"><i class="fas fa-hashtag"></i> Contract ID</span>
+                <span class="dv" style="font-family:'Syne',sans-serif; font-weight:800;">#{{ $project->contract_id }}</span>
+            </div>
+            <div class="dr">
                 <span class="dl"><i class="fas fa-user-tie"></i> In Charge</span>
                 <span class="dv">{{ $project->in_charge }}</span>
             </div>

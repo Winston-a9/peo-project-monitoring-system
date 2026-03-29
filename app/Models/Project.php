@@ -12,6 +12,7 @@ class Project extends Model
     protected $fillable = [
         'remaining_balance',
         //Overview
+        'contract_id',
         'in_charge',
         'project_title',
         'location',

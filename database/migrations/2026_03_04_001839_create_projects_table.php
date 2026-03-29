@@ -10,6 +10,7 @@ return new class extends Migration
     {
         Schema::create('projects', function (Blueprint $table) {
             $table->id();
+            $table->integer('contract_id')->unique();
             $table->string('in_charge');
             $table->string('project_title');
             $table->string('location');

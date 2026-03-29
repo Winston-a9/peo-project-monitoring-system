@@ -111,6 +111,9 @@ add a billing information table tab
 ==================================================================================================================================================================================================================================================================================================
 TO ADD/FIX:
 
+create.blade
+	add contract id
+
 edit.blade
 	overview
 		contract amount editable(to prevent bugs didnt include project information inputtable update)

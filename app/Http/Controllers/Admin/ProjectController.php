@@ -58,6 +58,7 @@ class ProjectController extends Controller
     {
         $request->validate([
             'in_charge'                => 'required|string|max:255',
+            'contract_id'              => 'required|integer|unique:projects,contract_id',
             'project_title'            => 'required|string|max:255',
             'location'                 => 'required|string|max:255',
             'contractor'               => 'required|string|max:255',
@@ -72,7 +73,7 @@ class ProjectController extends Controller
         ]);
 
         $data = $request->only([
-            'in_charge', 'project_title', 'location', 'contractor',
+            'in_charge', 'contract_id', 'project_title', 'location', 'contractor',
             'contract_amount', 'date_started', 'contract_days',
             'original_contract_expiry',
             'as_planned', 'work_done',

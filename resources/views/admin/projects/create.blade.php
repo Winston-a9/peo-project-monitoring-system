@@ -38,6 +38,19 @@
                     <span>Project Information</span>
                 </div>
                 <div class="section-body" style="display:grid; grid-template-columns:1fr 1fr; gap:1.25rem;">
+                    <div style="grid-column:1/-1;">
+                        <label class="field-label">Contract ID</label>
+                        <input type="number" name="contract_id"
+                            class="field-input {{ $errors->has('contract_id') ? 'has-error' : '' }}"
+                            placeholder="Enter unique contract ID"
+                            value="{{ old('contract_id') }}"
+                            min="1" step="1"
+                            onkeydown="return event.key !== '-' && event.key !== 'e'"
+                            required>
+                        @error('contract_id')
+                            <p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</p>
+                        @enderror
+                    </div>
 
                     <div>
                         <label class="field-label">In Charge</label>
