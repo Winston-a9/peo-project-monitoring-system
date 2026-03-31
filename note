@@ -129,7 +129,6 @@ edit.blade
 		change ld calculation from Formula: (Unworked % ÷ 100) × Original Contract Amount × 0.001 to Formula: (Unworked % ÷ 100) × Remaining Contract Amount or in the data table "original_amount" × 0.001
 
 	extensions
-		add a reason/coverage everytime date extension is updated
 
 	billing 
 
@@ -156,6 +155,8 @@ if expired
 ==================================================================================================================================================================================================================================================================================================
 FIXED/added:
 ADMIN
+		add a reason/coverage everytime date extension is updated
+
 	add contract id
 		create a new billing tab
 
