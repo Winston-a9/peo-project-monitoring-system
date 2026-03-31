@@ -177,6 +177,42 @@ class ProjectController extends Controller
         $hasSO   = collect($existingDocs)->contains('Suspension Order');
         $soCount = $hasSO ? 1 : 0;
 
+        $remarksText = $fresh->remarks_recommendation ?? '';
+
+        $teReasonMap = [];
+        $voReasonMap = [];
+
+        preg_match_all(
+            '/\[.*?\]\s+(Time Extension\s+\d+)\s+(?:edited|added)\s+—\s+Reason:\s+(.+?)(?=\n\n|\z)/s',
+            $remarksText,
+            $teMatches,
+            PREG_SET_ORDER
+        );
+        foreach ($teMatches as $match) {
+            $teReasonMap[trim($match[1])] = trim($match[2]);
+        }
+
+        preg_match_all(
+            '/\[.*?\]\s+(Variation Order\s+\d+)\s+(?:edited|added)\s+—\s+Reason:\s+(.+?)(?=\n\n|\z)/s',
+            $remarksText,
+            $voMatches,
+            PREG_SET_ORDER
+        );
+        foreach ($voMatches as $match) {
+            $voReasonMap[trim($match[1])] = trim($match[2]);
+        }
+
+        foreach ($teHistory as &$entry) {
+            $entry['reason'] = $teReasonMap[$entry['label']] ?? null;
+        }
+        unset($entry);
+
+        foreach ($voHistory as &$entry) {
+            $entry['reason'] = $voReasonMap[$entry['label']] ?? null;
+        }
+        unset($entry);
+
+
         return view('admin.projects.edit', [
             'project'      => $fresh,
             'teHistory'    => $teHistory,
@@ -236,6 +272,8 @@ class ProjectController extends Controller
             'advance_billing_pct'      => 'nullable|numeric|min:0|max:100',
             'retention_pct'            => 'nullable|numeric|min:0|max:100',
             'edit_reason'              => 'nullable|string|max:1000',
+            'new_te_reason'             => 'nullable|string|max:1000',
+            'new_vo_reason'             => 'nullable|string|max:1000',
         ]);
 
         // ── Step 1: Basic scalar fields ───────────────────────────
@@ -299,11 +337,20 @@ class ProjectController extends Controller
         $newTECost = $request->input('new_te_cost');
         $newTEDate = $request->input('new_te_date');
 
+        $newTEReason = trim ($request->input('new_te_reason', ''));
+
         if ($newTEDays > 0) {
             $nextNumber      = $currentTECount + 1;
-            $existingDocs[]  = "Time Extension {$nextNumber}";
+            $newTELabel  = "Time Extension {$nextNumber}";
+            $existingDocs[]  = $newTELabel;
             $existingDays[]  = $newTEDays;
             $existingCosts[] = ($newTECost !== null && $newTECost !== '') ? (float) $newTECost : null;
+            if ($newTEReason !== '') {
+                $existing  = trim($fresh->remarks_recommendation ?? '');
+                $timestamp = now()->format('F d, Y \a\t h:i A');
+                $note      = "[{$timestamp}] {$newTELabel} added — Reason: {$newTEReason}";
+                $data['remarks_recommendation'] = $existing !== '' ? $existing . "\n\n" . $note : $note;
+            }
 
             // Insert TE date before VO dates in the shared date_requested array
             $teDates   = array_slice($existingDates, 0, $currentTECount);
@@ -317,15 +364,24 @@ class ProjectController extends Controller
         $newVoCost = $request->input('new_vo_cost');
         $newVODate = $request->input('new_vo_date');
 
+        $newVOReason = trim($request->input('new_vo_reason', ''));
+
         if ($newVoDays > 0) {
             $currentVOCount    = collect($existingDocs)
                 ->filter(fn($d) => str_starts_with((string) $d, 'Variation Order'))
                 ->count();
             $nextVONumber      = $currentVOCount + 1;
-            $existingDocs[]    = "Variation Order {$nextVONumber}";
+            $newVOLabel        = "Variation Order {$nextVONumber}";  
+            $existingDocs[]    = $newVOLabel;
             $existingVoDays[]  = $newVoDays;
             $existingVoCosts[] = ($newVoCost !== null && $newVoCost !== '') ? (float) $newVoCost : null;
             $existingDates[]   = $newVODate ?: null;
+            if ($newVOReason !== '') {
+                $existing  = trim($data['remarks_recommendation'] ?? $fresh->remarks_recommendation ?? '');
+                $timestamp = now()->format('F d, Y \a\t h:i A');
+                $note      = "[{$timestamp}] {$newVOLabel} added — Reason: {$newVOReason}";
+                $data['remarks_recommendation'] = $existing !== '' ? $existing . "\n\n" . $note : $note;
+            }
         }
 
         $data['vo_days']        = array_values($existingVoDays);

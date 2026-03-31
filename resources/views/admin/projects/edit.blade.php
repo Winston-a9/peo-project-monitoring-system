@@ -1054,6 +1054,8 @@
                 <i class="fas fa-times"></i> Cancel
             </a>
         </div>
+        <input type="hidden" name="new_te_reason" id="new_te_reason_hidden" value="">
+        <input type="hidden" name="new_vo_reason" id="new_vo_reason_hidden" value="">
     </form>
 </div>
 
@@ -1080,6 +1082,59 @@
 </script>
 @vite('resources/js/admin/projects/edit.js')
 @endpush
+
+{{-- REASON INTERCEPT MODAL --}}
+<x-modal id="reason-intercept-modal" title="Reason / Coverage" type="default" icon="fa-comment-alt" size="md">
+    <div style="display:flex; flex-direction:column; gap:1rem;">
+
+        {{-- Dynamic label showing which entry is being added --}}
+        <div style="display:flex; align-items:center; gap:0.6rem; padding:0.75rem 1rem; border-radius:9px; background:var(--bg-secondary); border:1.5px solid var(--border);">
+            <i id="rim-icon" class="fas fa-clock" style="color:var(--orange-500); font-size:0.85rem;"></i>
+            <span id="rim-label" style="font-size:0.875rem; font-weight:700; color:var(--text-primary);">—</span>
+        </div>
+
+        {{-- Reason textarea --}}
+        <div>
+            <label style="display:block; font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-muted); margin-bottom:0.4rem;">
+                Reason / Coverage <span style="color:#ef4444;">*</span>
+            </label>
+            <textarea id="rim-reason" rows="4"
+                placeholder="Describe the reason or scope covered by this extension…"
+                style="width:100%; padding:0.72rem 1rem; border:1.5px solid var(--border); border-radius:9px; font-size:0.875rem; color:var(--text-primary); background:var(--bg-primary); outline:none; font-family:'Instrument Sans',sans-serif; resize:vertical; transition:border-color 0.2s, box-shadow 0.2s; box-sizing:border-box; min-height:100px; line-height:1.5;"
+                onfocus="this.style.borderColor='var(--orange-500)';this.style.boxShadow='0 0 0 3px rgba(249,115,22,0.1)'"
+                onblur="this.style.borderColor='var(--border)';this.style.boxShadow='none'"
+                oninput="document.getElementById('rim-char-count').textContent=this.value.length"></textarea>
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-top:0.3rem;">
+                <p id="rim-error" style="display:none; font-size:0.72rem; color:#ef4444; margin:0; align-items:center; gap:0.3rem;">
+                    <i class="fas fa-exclamation-circle"></i> Please provide a reason before saving.
+                </p>
+                <span style="margin-left:auto; font-size:0.65rem; color:#9ca3af;">
+                    <span id="rim-char-count">0</span> chars
+                </span>
+            </div>
+        </div>
+
+        <div style="padding:0.75rem 1rem; border-left:3px solid var(--orange-500); background:rgba(249,115,22,0.04); border-radius:6px;">
+            <p style="font-size:0.75rem; color:var(--text-secondary); margin:0; line-height:1.6;">
+                <i class="fas fa-info-circle" style="color:var(--orange-500); margin-right:0.4rem;"></i>
+                This reason will be logged to <strong style="color:var(--text-primary);">Remarks &amp; Observations</strong> with a timestamp.
+            </p>
+        </div>
+    </div>
+
+    <x-slot name="footer">
+        <button type="button" onclick="rimCancel()"
+            style="padding:0.6rem 1.2rem; border:1.5px solid var(--border); border-radius:9px; background:var(--bg-primary); color:var(--text-secondary); font-weight:600; font-size:0.85rem; cursor:pointer; font-family:'Instrument Sans',sans-serif; transition:all 0.15s;"
+            onmouseover="this.style.borderColor='var(--orange-500)'" onmouseout="this.style.borderColor='var(--border)'">
+            Cancel
+        </button>
+        <button type="button" id="rim-confirm-btn" onclick="rimConfirm()"
+            style="padding:0.6rem 1.4rem; background:var(--orange-500); color:white; border:none; border-radius:9px; font-weight:700; font-size:0.85rem; cursor:pointer; font-family:'Instrument Sans',sans-serif; box-shadow:0 2px 8px rgba(249,115,22,0.3); transition:all 0.15s;"
+            onmouseover="this.style.background='#ea580c'" onmouseout="this.style.background='var(--orange-500)'">
+            <i class="fas fa-save" style="margin-right:0.35rem; font-size:0.75rem;"></i> Confirm &amp; Save
+        </button>
+    </x-slot>
+</x-modal>
 
 {{-- EDIT ENTRY MODAL --}}
 <x-modal id="edit-entry-modal" title="Edit Entry" type="default" icon="fa-pen" size="md">

@@ -112,7 +112,7 @@ add a billing information table tab
 TO ADD/FIX:
 
 create.blade
-	add contract id
+
 
 edit.blade
 	overview
@@ -129,7 +129,7 @@ edit.blade
 		change ld calculation from Formula: (Unworked % ÷ 100) × Original Contract Amount × 0.001 to Formula: (Unworked % ÷ 100) × Remaining Contract Amount or in the data table "original_amount" × 0.001
 
 	extensions
-		add a reason/coverage modal everytime date extension is updated
+		add a reason/coverage everytime date extension is updated
 
 	billing 
 
@@ -140,21 +140,23 @@ edit.blade
 	admin
 
 show.blade 
+	extensions
+		sort by earliest date request
 	financial 
 		bug: amount total of TE and VO cost involved not being calculated and display
+	admin
+		performance bond date not being shown
 
 
 if complete
 
 if expired
 	
-
-	Add notification for Contractor Notification
-	
 	
 ==================================================================================================================================================================================================================================================================================================
 FIXED/added:
 ADMIN
+	add contract id
 		create a new billing tab
 
 		billing updates changes to 171

@@ -371,4 +371,122 @@ document.addEventListener('DOMContentLoaded', () => {
     if (advDisplay) advDisplay.textContent = advAmt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     if (retDisplay) retDisplay.textContent = retAmt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
+
+// ── Reason intercept modal ────────────────────────────────
+    const mainForm = document.querySelector('form[action*="projects"][method="POST"]');
+
+    // Track which type is being submitted so rimConfirm knows which hidden to fill
+    window._rimType = null; // 'te' | 'vo' | null
+
+    if (mainForm) {
+        mainForm.addEventListener('submit', function (e) {
+            const teDays = parseInt(document.getElementById('new_te_days')?.value) || 0;
+            const voDays = parseInt(document.getElementById('new_vo_days')?.value) || 0;
+
+            // Only intercept when a new TE or VO is actually being added
+            if (teDays < 1 && voDays < 1) return; // nothing to intercept — let submit through
+
+            // If reason is already filled (re-submission after modal), let through
+            const teReason = document.getElementById('new_te_reason_hidden')?.value.trim();
+            const voReason = document.getElementById('new_vo_reason_hidden')?.value.trim();
+            if ((teDays > 0 && teReason !== '') || (voDays > 0 && voReason !== '')) return;
+
+            e.preventDefault(); // block the submit
+
+            // Figure out which type to ask about first
+            // If both are filled, ask TE first, then VO on second submit
+            if (teDays > 0 && teReason === '') {
+                window._rimType = 'te';
+            } else if (voDays > 0 && voReason === '') {
+                window._rimType = 'vo';
+            }
+
+            openRIM();
+        });
+    }
+
+    function openRIM() {
+        const isVO   = window._rimType === 'vo';
+        const accent = isVO ? '#6366f1' : 'var(--orange-500)';
+
+        // Set icon and label
+        const icon = document.getElementById('rim-icon');
+        const lbl  = document.getElementById('rim-label');
+        if (icon) {
+            icon.className = 'fas ' + (isVO ? 'fa-file-signature' : 'fa-clock');
+            icon.style.color = accent;
+        }
+        if (lbl) {
+            const days  = isVO
+                ? (parseInt(document.getElementById('new_vo_days')?.value) || 0)
+                : (parseInt(document.getElementById('new_te_days')?.value) || 0);
+            const count = isVO
+                ? (_totalVOCount + 1)
+                : (_totalTECount + 1);
+            const type  = isVO ? 'Variation Order' : 'Time Extension';
+            lbl.textContent = `${type} ${count} — ${days} day${days !== 1 ? 's' : ''}`;
+        }
+
+        // Style confirm button to match type
+        const btn = document.getElementById('rim-confirm-btn');
+        if (btn) {
+            btn.style.background  = isVO ? '#6366f1' : 'var(--orange-500)';
+            btn.style.boxShadow   = isVO ? '0 2px 8px rgba(99,102,241,0.3)' : '0 2px 8px rgba(249,115,22,0.3)';
+            btn.onmouseover = () => btn.style.background = isVO ? '#4f46e5' : '#ea580c';
+            btn.onmouseout  = () => btn.style.background = isVO ? '#6366f1' : 'var(--orange-500)';
+        }
+
+        // Style textarea focus color
+        const ta = document.getElementById('rim-reason');
+        if (ta) {
+            ta.value = '';
+            ta.style.borderColor = 'var(--border)';
+            ta.style.boxShadow   = 'none';
+            ta.onfocus = () => { ta.style.borderColor = accent; ta.style.boxShadow = `0 0 0 3px ${isVO ? 'rgba(99,102,241,0.1)' : 'rgba(249,115,22,0.1)'}`; };
+            ta.onblur  = () => { ta.style.borderColor = 'var(--border)'; ta.style.boxShadow = 'none'; };
+        }
+
+        document.getElementById('rim-char-count').textContent = '0';
+        document.getElementById('rim-error').style.display = 'none';
+
+        openModal('reason-intercept-modal');
+        setTimeout(() => ta?.focus(), 150);
+    }
+
+    window.rimCancel = function () {
+        closeModal('reason-intercept-modal');
+        window._rimType = null;
+        // Clear the hidden inputs so intercept fires again next time
+        const teH = document.getElementById('new_te_reason_hidden');
+        const voH = document.getElementById('new_vo_reason_hidden');
+        if (teH) teH.value = '';
+        if (voH) voH.value = '';
+    };
+
+    window.rimConfirm = function () {
+        const reason = document.getElementById('rim-reason')?.value.trim();
+        const errEl  = document.getElementById('rim-error');
+        const ta     = document.getElementById('rim-reason');
+
+        if (!reason) {
+            errEl.style.display = 'flex';
+            ta.style.borderColor = '#ef4444';
+            ta.style.boxShadow   = '0 0 0 3px rgba(239,68,68,0.1)';
+            ta.focus();
+            return;
+        }
+
+        // Fill the correct hidden input
+        if (window._rimType === 'te') {
+            document.getElementById('new_te_reason_hidden').value = reason;
+        } else {
+            document.getElementById('new_vo_reason_hidden').value = reason;
+        }
+
+        closeModal('reason-intercept-modal');
+        window._rimType = null;
+
+        // Re-trigger the form submit — this time hidden inputs are filled so it passes through
+        document.querySelector('form[action*="projects"][method="POST"]')?.submit();
+    };
 });
