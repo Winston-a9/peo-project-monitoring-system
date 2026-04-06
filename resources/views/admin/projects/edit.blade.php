@@ -107,6 +107,7 @@
         {{-- Hidden reason inputs populated by the intercept modal --}}
         <input type="hidden" name="new_te_reason" id="new_te_reason_hidden" value="">
         <input type="hidden" name="new_vo_reason" id="new_vo_reason_hidden" value="">
+        <input type="hidden" name="new_so_reason" id="new_so_reason_hidden" value="">
 
         {{-- ── TAB NAVIGATION ── --}}
         <div style="display:flex; gap:0.5rem; margin-bottom:1.5rem; border-bottom:1px solid var(--border); padding-bottom:0;">

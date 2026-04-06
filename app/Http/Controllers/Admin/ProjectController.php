@@ -274,6 +274,7 @@ class ProjectController extends Controller
             'edit_reason'              => 'nullable|string|max:1000',
             'new_te_reason'             => 'nullable|string|max:1000',
             'new_vo_reason'             => 'nullable|string|max:1000',
+            'new_so_reason'             => 'nullable|string|max:1000',
         ]);
 
         // ── Step 1: Basic scalar fields ───────────────────────────
@@ -391,8 +392,9 @@ class ProjectController extends Controller
             : array_values(array_map(fn($d) => ($d !== '' ? $d : null), $existingDates));
 
         // ── Step 5: Handle Suspension Order ──────────────────────
-        $newSODays = (int) $request->input('new_so_days', 0);
-        $hasSO     = collect($existingDocs)->contains('Suspension Order');
+        $newSODays   = (int) $request->input('new_so_days', 0);
+        $newSOReason = trim($request->input('new_so_reason', ''));
+        $hasSO       = collect($existingDocs)->contains('Suspension Order');
 
         if ($newSODays > 0) {
             if (!$hasSO) {
@@ -400,6 +402,15 @@ class ProjectController extends Controller
                 $hasSO          = true;
             }
             $data['suspension_days'] = $existingSuspDay + $newSODays;
+
+            if ($newSOReason !== '') {
+                $existing  = trim($data['remarks_recommendation'] ?? $fresh->remarks_recommendation ?? '');
+                $timestamp = now()->format('F d, Y \a\t h:i A');
+                $note      = "[{$timestamp}] Suspension Order added — Reason: {$newSOReason}";
+                $data['remarks_recommendation'] = $existing !== ''
+                    ? $existing . "\n\n" . $note
+                    : $note;
+            }
         } else {
             $data['suspension_days'] = $existingSuspDay ?: null;
         }

@@ -41,7 +41,7 @@ window.toggleLDAReadOnly = function (isComplete) {
         inputs.forEach(input => {
             input.setAttribute('readonly', true);
             input.style.opacity = '0.5';
-            input.style.cursor  = 'not-allowed';
+            input.style.cursor = 'not-allowed';
             input.style.pointerEvents = 'none';
         });
 
@@ -82,8 +82,8 @@ window.toggleLDAReadOnly = function (isComplete) {
         // Unlock
         inputs.forEach(input => {
             input.removeAttribute('readonly');
-            input.style.opacity       = '';
-            input.style.cursor        = '';
+            input.style.opacity = '';
+            input.style.cursor = '';
             input.style.pointerEvents = '';
         });
 
@@ -386,16 +386,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (ldAccomplished && ldAccomplished.value && initialWD < 100) {
         // Only restore saved DB values if NOT locked (work_done < 100)
         const savedUnworked = parseFloat(document.getElementById('ld_unworked').value) || 0;
-        const savedPerDay   = parseFloat(document.getElementById('ld_per_day').value)   || 0;
-        const savedTotal    = parseFloat(document.getElementById('total_ld').value)     || 0;
+        const savedPerDay = parseFloat(document.getElementById('ld_per_day').value) || 0;
+        const savedTotal = parseFloat(document.getElementById('total_ld').value) || 0;
 
         const unworkedDisplay = document.getElementById('ld_unworked_display');
-        const perDayDisplay   = document.getElementById('ld_per_day_display');
-        const totalDisplay    = document.getElementById('total_ld_display');
+        const perDayDisplay = document.getElementById('ld_per_day_display');
+        const totalDisplay = document.getElementById('total_ld_display');
 
         if (unworkedDisplay) unworkedDisplay.textContent = fmtNum(savedUnworked, 2);
-        if (perDayDisplay)   perDayDisplay.textContent   = fmtNum(savedPerDay,   2);
-        if (totalDisplay)    totalDisplay.textContent     = fmtNum(savedTotal,    2);
+        if (perDayDisplay) perDayDisplay.textContent = fmtNum(savedPerDay, 2);
+        if (totalDisplay) totalDisplay.textContent = fmtNum(savedTotal, 2);
     }
 
     window.checkPerformanceBond();
@@ -414,7 +414,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isHidden) {
             document.getElementById('completed_at_input')?.focus();
         } else {
-            document.getElementById('completed_at_input').value  = '';
+            document.getElementById('completed_at_input').value = '';
             document.getElementById('completed_at_hidden').value = '';
         }
     };
@@ -438,7 +438,7 @@ document.addEventListener('DOMContentLoaded', () => {
         );
 
         const advPct = parseFloat(document.getElementById('advance_billing_pct')?.value) || 0;
-        const retPct = parseFloat(document.getElementById('retention_pct')?.value)       || 0;
+        const retPct = parseFloat(document.getElementById('retention_pct')?.value) || 0;
 
         const advAmt = advPct > 0 ? (advPct / 100) * originalAmt : 0;
         const retAmt = retPct > 0 ? (retPct / 100) * originalAmt : 0;
@@ -450,27 +450,39 @@ document.addEventListener('DOMContentLoaded', () => {
         if (retDisplay) retDisplay.textContent = retAmt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     };
 
-    /* ── Reason intercept modal ── */
+    // ── Reason intercept modal ────────────────────────────────
     const mainForm = document.querySelector('form[action*="projects"][method="POST"]');
-    window._rimType = null;
+    window._rimType = null; // 'te' | 'vo' | 'so' | null
 
     if (mainForm) {
         mainForm.addEventListener('submit', function (e) {
             const teDays = parseInt(document.getElementById('new_te_days')?.value) || 0;
             const voDays = parseInt(document.getElementById('new_vo_days')?.value) || 0;
+            const soDays = parseInt(document.getElementById('new_so_days')?.value) || 0;
 
-            if (teDays < 1 && voDays < 1) return;
+            // Only intercept when a new TE, VO, or SO is actually being added
+            if (teDays < 1 && voDays < 1 && soDays < 1) return;
 
             const teReason = document.getElementById('new_te_reason_hidden')?.value.trim();
             const voReason = document.getElementById('new_vo_reason_hidden')?.value.trim();
-            if ((teDays > 0 && teReason !== '') || (voDays > 0 && voReason !== '')) return;
+            const soReason = document.getElementById('new_so_reason_hidden')?.value.trim();
+
+            // If all filled reasons match their days, let through
+            if (
+                (teDays < 1 || teReason !== '') &&
+                (voDays < 1 || voReason !== '') &&
+                (soDays < 1 || soReason !== '')
+            ) return;
 
             e.preventDefault();
 
+            // Ask in order: TE → VO → SO
             if (teDays > 0 && teReason === '') {
                 window._rimType = 'te';
             } else if (voDays > 0 && voReason === '') {
                 window._rimType = 'vo';
+            } else if (soDays > 0 && soReason === '') {
+                window._rimType = 'so';
             }
 
             openRIM();
@@ -478,43 +490,75 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function openRIM() {
-        const isVO   = window._rimType === 'vo';
-        const accent = isVO ? '#6366f1' : 'var(--orange-500)';
+        const isVO = window._rimType === 'vo';
+        const isSO = window._rimType === 'so';
+        const isTE = window._rimType === 'te';
+
+        const accent = isVO ? '#6366f1' : isSO ? '#d97706' : 'var(--orange-500)';
 
         const icon = document.getElementById('rim-icon');
-        const lbl  = document.getElementById('rim-label');
+        const lbl = document.getElementById('rim-label');
         if (icon) {
-            icon.className   = 'fas ' + (isVO ? 'fa-file-signature' : 'fa-clock');
+            icon.className = 'fas ' + (isVO ? 'fa-file-signature' : isSO ? 'fa-pause-circle' : 'fa-clock');
             icon.style.color = accent;
         }
         if (lbl) {
-            const days  = isVO
-                ? (parseInt(document.getElementById('new_vo_days')?.value) || 0)
-                : (parseInt(document.getElementById('new_te_days')?.value) || 0);
-            const count = isVO ? (_totalVOCount + 1) : (_totalTECount + 1);
-            const type  = isVO ? 'Variation Order' : 'Time Extension';
-            lbl.textContent = `${type} ${count} — ${days} day${days !== 1 ? 's' : ''}`;
+            let days, label;
+            if (isVO) {
+                days = parseInt(document.getElementById('new_vo_days')?.value) || 0;
+                label = `Variation Order ${_totalVOCount + 1} — ${days} day${days !== 1 ? 's' : ''}`;
+            } else if (isSO) {
+                days = parseInt(document.getElementById('new_so_days')?.value) || 0;
+                label = `Suspension Order — ${days} day${days !== 1 ? 's' : ''}`;
+            } else {
+                days = parseInt(document.getElementById('new_te_days')?.value) || 0;
+                label = `Time Extension ${_totalTECount + 1} — ${days} day${days !== 1 ? 's' : ''}`;
+            }
+            lbl.textContent = label;
         }
 
         const btn = document.getElementById('rim-confirm-btn');
         if (btn) {
-            btn.style.background = isVO ? '#6366f1' : 'var(--orange-500)';
-            btn.style.boxShadow  = isVO ? '0 2px 8px rgba(99,102,241,0.3)' : '0 2px 8px rgba(249,115,22,0.3)';
-            btn.onmouseover = () => btn.style.background = isVO ? '#4f46e5' : '#ea580c';
-            btn.onmouseout  = () => btn.style.background = isVO ? '#6366f1' : 'var(--orange-500)';
+            btn.style.background = isVO ? '#6366f1' : isSO ? '#d97706' : 'var(--orange-500)';
+            btn.style.boxShadow = isVO
+                ? '0 2px 8px rgba(99,102,241,0.3)'
+                : isSO
+                    ? '0 2px 8px rgba(217,119,6,0.3)'
+                    : '0 2px 8px rgba(249,115,22,0.3)';
+            btn.onmouseover = () => btn.style.background = isVO ? '#4f46e5' : isSO ? '#b45309' : '#ea580c';
+            btn.onmouseout = () => btn.style.background = isVO ? '#6366f1' : isSO ? '#d97706' : 'var(--orange-500)';
         }
 
         const ta = document.getElementById('rim-reason');
         if (ta) {
-            ta.value             = '';
+            ta.value = '';
             ta.style.borderColor = 'var(--border)';
-            ta.style.boxShadow   = 'none';
-            ta.onfocus = () => { ta.style.borderColor = accent; ta.style.boxShadow = `0 0 0 3px ${isVO ? 'rgba(99,102,241,0.1)' : 'rgba(249,115,22,0.1)'}`; };
-            ta.onblur  = () => { ta.style.borderColor = 'var(--border)'; ta.style.boxShadow = 'none'; };
+            ta.style.boxShadow = 'none';
+            ta.onfocus = () => {
+                ta.style.borderColor = accent;
+                ta.style.boxShadow = `0 0 0 3px ${isVO ? 'rgba(99,102,241,0.1)' :
+                        isSO ? 'rgba(217,119,6,0.1)' :
+                            'rgba(249,115,22,0.1)'
+                    }`;
+            };
+            ta.onblur = () => { ta.style.borderColor = 'var(--border)'; ta.style.boxShadow = 'none'; };
         }
 
-        document.getElementById('rim-char-count').textContent  = '0';
-        document.getElementById('rim-error').style.display     = 'none';
+        // Update the info note color to match type
+        const infoNote = document.querySelector('#reason-intercept-modal [style*="border-left"]');
+        if (infoNote) {
+            infoNote.style.borderLeftColor = accent;
+            infoNote.style.background = isVO
+                ? 'rgba(99,102,241,0.04)'
+                : isSO
+                    ? 'rgba(217,119,6,0.04)'
+                    : 'rgba(249,115,22,0.04)';
+            const noteIcon = infoNote.querySelector('i');
+            if (noteIcon) noteIcon.style.color = accent;
+        }
+
+        document.getElementById('rim-char-count').textContent = '0';
+        document.getElementById('rim-error').style.display = 'none';
 
         openModal('reason-intercept-modal');
         setTimeout(() => ta?.focus(), 150);
@@ -525,31 +569,37 @@ document.addEventListener('DOMContentLoaded', () => {
         window._rimType = null;
         const teH = document.getElementById('new_te_reason_hidden');
         const voH = document.getElementById('new_vo_reason_hidden');
+        const soH = document.getElementById('new_so_reason_hidden');
         if (teH) teH.value = '';
         if (voH) voH.value = '';
+        if (soH) soH.value = '';
     };
 
     window.rimConfirm = function () {
         const reason = document.getElementById('rim-reason')?.value.trim();
-        const errEl  = document.getElementById('rim-error');
-        const ta     = document.getElementById('rim-reason');
+        const errEl = document.getElementById('rim-error');
+        const ta = document.getElementById('rim-reason');
 
         if (!reason) {
-            errEl.style.display  = 'flex';
+            errEl.style.display = 'flex';
             ta.style.borderColor = '#ef4444';
-            ta.style.boxShadow   = '0 0 0 3px rgba(239,68,68,0.1)';
+            ta.style.boxShadow = '0 0 0 3px rgba(239,68,68,0.1)';
             ta.focus();
             return;
         }
 
         if (window._rimType === 'te') {
             document.getElementById('new_te_reason_hidden').value = reason;
-        } else {
+        } else if (window._rimType === 'vo') {
             document.getElementById('new_vo_reason_hidden').value = reason;
+        } else if (window._rimType === 'so') {
+            document.getElementById('new_so_reason_hidden').value = reason;
         }
 
         closeModal('reason-intercept-modal');
         window._rimType = null;
+
+        // Re-trigger — loop back through until all reasons are filled
         document.querySelector('form[action*="projects"][method="POST"]')?.submit();
     };
 });
