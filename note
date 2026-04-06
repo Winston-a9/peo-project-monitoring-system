@@ -124,12 +124,7 @@ edit.blade
 
 	performance
 
-		when work done is 100% LDA is read-only.
-
 		FIXED DATE START TO FINISH in LD
-
-		ask sa 
-
 
 	extensions
 		include suspension order on the reason modal pop up
@@ -144,9 +139,10 @@ edit.blade
 
 show.blade 
 	extensions
-		sort by earliest date request
+		sort by earliest in date request
 	financial 
-		bug: amount total of TE and VO cost involved not being calculated and display
+		bug: amount total of TE and VO cost involved not being calculated and display 
+			 total in amount determine if deduction is greater than addition add "-" before the pesos sign
 	admin
 		performance bond date not being shown
 
@@ -159,6 +155,8 @@ if expired
 ==================================================================================================================================================================================================================================================================================================
 FIXED/added:
 ADMIN
+		when work done is 100% LDA is read-only.
+
 		change ld calculation from Formula: (Unworked % ÷ 100) × Original Contract Amount × 0.001 to Formula: (Unworked % ÷ 100) × Remaining Contract Amount or in the data table "original_amount" × 0.001
 
 		add a reason/coverage everytime date extension is updated
