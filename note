@@ -111,8 +111,10 @@ add a billing information table tab
 ==================================================================================================================================================================================================================================================================================================
 TO ADD/FIX:
 
-create.blade
 
+
+create.blade
+	change my formula when calculating original expiry date from -1 to +1 day (SUBJECT FOR CHANGE)
 
 edit.blade
 	overview
@@ -126,9 +128,9 @@ edit.blade
 
 		FIXED DATE START TO FINISH in LD
 
-		change ld calculation from Formula: (Unworked % ÷ 100) × Original Contract Amount × 0.001 to Formula: (Unworked % ÷ 100) × Remaining Contract Amount or in the data table "original_amount" × 0.001
 
 	extensions
+		include suspension order on the reason modal pop up
 
 	billing 
 
@@ -155,6 +157,8 @@ if expired
 ==================================================================================================================================================================================================================================================================================================
 FIXED/added:
 ADMIN
+		change ld calculation from Formula: (Unworked % ÷ 100) × Original Contract Amount × 0.001 to Formula: (Unworked % ÷ 100) × Remaining Contract Amount or in the data table "original_amount" × 0.001
+
 		add a reason/coverage everytime date extension is updated
 
 	add contract id

@@ -517,7 +517,7 @@
                             <p style="font-size:0.9rem; font-weight:700; color:var(--text-primary); margin:0; padding:0.1rem 0; font-family:'Syne',sans-serif; letter-spacing:-0.01em;">
                                 ₱<span id="ld_per_day_display">{{ number_format((float) old('ld_per_day', $project->ld_per_day ?? 0), 2) }}</span>
                             </p>
-                            <p class="field-hint">Formula: (Unworked % ÷ 100) × Original Contract Amount × 0.001</p>
+                            <p class="field-hint">Formula: (Unworked % ÷ 100) × Adjusted Contract Amount × 0.001</p>
                         </div>
 
                         {{-- Total LD (auto) --}}
