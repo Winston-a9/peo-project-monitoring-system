@@ -37,11 +37,11 @@
     $sortCol    = request('sort','updated_at');
     $sortDir    = request('dir','desc') === 'asc' ? 'asc' : 'desc';
 
-    $allowed = ['project_title','in_charge','contractor','location','work_done','slippage','original_contract_expiry','updated_at'];
+    $allowed = ['project_title','contract_id','in_charge','contractor','location','work_done','slippage','original_contract_expiry','updated_at'];
     $sortCol = in_array($sortCol, $allowed) ? $sortCol : 'updated_at';
 
     $q = \App\Models\Project::query();
-    if ($search)   $q->where(fn($x) => $x->where('project_title','like',"%$search%")->orWhere('contractor','like',"%$search%")->orWhere('location','like',"%$search%"));
+    if ($search)   $q->where(fn($x) => $x->where('project_title','like',"%$search%")->orWhere('contract_id','like',"%$search%")->orWhere('contractor','like',"%$search%")->orWhere('location','like',"%$search%"));
     if ($inCharge) $q->where('in_charge', $inCharge);
     if ($slipFilter === 'ahead')  $q->where('slippage','>',0);
     if ($slipFilter === 'behind') $q->where('slippage','<',0);
@@ -162,7 +162,7 @@
                 <div style="display:grid; grid-template-columns:1fr auto auto auto auto auto; gap:0.65rem; align-items:end;">
                     <div style="position:relative;">
                         <i class="fas fa-search" style="position:absolute; left:0.72rem; top:50%; transform:translateY(-50%); color:#9ca3af; font-size:0.7rem; pointer-events:none;"></i>
-                        <input type="text" name="search" id="searchInput" value="{{ $search }}" class="filter-input" placeholder="Search title, contractor, location…">
+                        <input type="text" name="search" id="searchInput" value="{{ $search }}" class="filter-input" placeholder="Search title, contract ID, contractor, location…">
                     </div>
                     <select name="in_charge" class="filter-select" style="width:auto; min-width:138px;" onchange="this.form.submit()">
                         <option value="">All In Charge</option>
@@ -198,6 +198,7 @@
                         @php
                             $cols = [
                                 ['project_title','Project Title',true],
+                                ['contract_id','Contract ID',true],
                                 ['in_charge','In Charge',true],
                                 ['contractor','Contractor',true],
                                 ['location','Location',false],
@@ -231,6 +232,12 @@
                         <td>
                             <div style="font-weight:700; color:var(--ink); max-width:190px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ $project->project_title }}</div>
                             <div style="font-size:0.68rem; color:#9ca3af; margin-top:2px;">{{ $project->updated_at->diffForHumans() }}</div>
+                        </td>
+                        <td>
+                            <div style="display:flex; align-items:center; gap:0.45rem;">
+                                <div style="font-family:'Syne',sans-serif; font-weight:800; font-size:0.68rem; color:var(--orange-600);">#</div>
+                                <span style="color:var(--ink); font-weight:600; white-space:nowrap;">{{ $project->contract_id }}</span>
+                            </div>
                         </td>
                         <td>
                             <div style="display:flex; align-items:center; gap:0.45rem;">
@@ -286,7 +293,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="9">
+                        <td colspan="10">
                             <div class="empty-state">
                                 <div style="width:56px; height:56px; background:rgba(249,115,22,0.07); border-radius:14px; display:flex; align-items:center; justify-content:center; margin:0 auto 1rem;">
                                     <i class="fas fa-folder-open" style="font-size:1.4rem; color:rgba(249,115,22,0.35);"></i>

@@ -154,6 +154,7 @@ if expired
 ==================================================================================================================================================================================================================================================================================================
 FIXED/added:
 ADMIN
+render the adv billing and retention in the show.blade
 		in contract dates add days and how much days has been extended
 
 		sort by earliest in date request
