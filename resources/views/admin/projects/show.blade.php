@@ -436,12 +436,46 @@
                         $runningDays  = 0;
                         $allRows      = [];
                         $costInvolved = is_array($project->cost_involved ?? null) ? $project->cost_involved : [];
+
+                        $remarksText = $project->remarks_recommendation ?? '';
+                        $teReasonMap = [];
+                        $voReasonMap = [];
+
+                        preg_match_all(
+                            '/\[.*?\]\s+(Time Extension\s+\d+)\s+(?:edited|added)\s+—\s+Reason:\s+(.+?)(?=\n\n|\z)/s',
+                            $remarksText,
+                            $teMatches,
+                            PREG_SET_ORDER
+                        );
+                        foreach ($teMatches as $match) {
+                            $teReasonMap[trim($match[1])] = trim($match[2]);
+                        }
+
+                        preg_match_all(
+                            '/\[.*?\]\s+(Variation Order\s+\d+)\s+(?:edited|added)\s+—\s+Reason:\s+(.+?)(?=\n\n|\z)/s',
+                            $remarksText,
+                            $voMatches,
+                            PREG_SET_ORDER
+                        );
+                        foreach ($voMatches as $match) {
+                            $voReasonMap[trim($match[1])] = trim($match[2]);
+                        }
+
                         foreach ($teEntries as $idx => $label) {
                             $days = (int)($extensionDays[$idx] ?? 0);
                             $cost = $costInvolved[$idx] ?? null;
                             $date = $dateRequested[$idx] ?? null;
                             $runningDays += $days;
-                            $allRows[] = ['type'=>'te','label'=>$label,'days'=>$days,'running'=>$runningDays,'cost'=>$cost,'date_requested'=>$date,'revised'=>(clone $baseDate)->addDays($runningDays)];
+                            $allRows[] = [
+                                'type'          => 'te',
+                                'label'         => $label,
+                                'days'          => $days,
+                                'running'       => $runningDays,
+                                'cost'          => $cost,
+                                'date_requested'=> $date,
+                                'revised'       => (clone $baseDate)->addDays($runningDays),
+                                'reason'        => $teReasonMap[$label] ?? null,
+                            ];
                         }
                         $voDateOffset = $teEntries->count();
                         foreach ($voEntries as $vIdx => $label) {
@@ -449,8 +483,22 @@
                             $cost = $voCosts[$vIdx] ?? null;
                             $date = $dateRequested[$voDateOffset + $vIdx] ?? null;
                             $runningDays += $days;
-                            $allRows[] = ['type'=>'vo','label'=>$label,'days'=>$days,'running'=>$runningDays,'cost'=>$cost,'date_requested'=>$date,'revised'=>(clone $baseDate)->addDays($runningDays)];
+                            $allRows[] = [
+                                'type'          => 'vo',
+                                'label'         => $label,
+                                'days'          => $days,
+                                'running'       => $runningDays,
+                                'cost'          => $cost,
+                                'date_requested'=> $date,
+                                'revised'       => (clone $baseDate)->addDays($runningDays),
+                                'reason'        => $voReasonMap[$label] ?? null,
+                            ];
                         }
+                        usort($allRows, function($a, $b) {
+                            $dateA = $a['date_requested'] ? strtotime($a['date_requested']) : PHP_INT_MAX;
+                            $dateB = $b['date_requested'] ? strtotime($b['date_requested']) : PHP_INT_MAX;
+                            return $dateA - $dateB;
+                        });
                     @endphp
                     @foreach($allRows as $ri => $row)
                     @php $isEven = $ri % 2 === 0; $isLast = $ri === count($allRows) - 1; @endphp
@@ -470,7 +518,11 @@
                             <span style="font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:800;color:{{ $row['type']==='te' ? '#f97316' : '#6366f1' }};">{{ $row['days'] }}</span>
                         </td>
                         <td style="text-align:center;color:var(--tx2);font-size:0.8rem;">
-                            @if($row['type']==='vo')<span style="font-style:italic;">{{ $row['label'] }}</span>@else<span style="color:#9ca3af;">—</span>@endif
+                            @if(!empty($row['reason']))
+                                <span style="color:var(--tx);">{{ $row['reason'] }}</span>
+                            @else
+                                <span style="color:#9ca3af;">—</span>
+                            @endif
                         </td>
                         <td style="text-align:center;color:var(--tx2);font-size:0.8rem;white-space:nowrap;">
                             @if($row['date_requested']){{ \Carbon\Carbon::parse($row['date_requested'])->format('m/d/y') }}@else<span style="color:#9ca3af;">—</span>@endif

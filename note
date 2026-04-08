@@ -111,10 +111,10 @@ add a billing information table tab
 ==================================================================================================================================================================================================================================================================================================
 TO ADD/FIX:
 
-all amount input add "," every 3 whole digit number so the user can easily deterimine how much its amount inputted
 
 create.blade
 	Contract ID range value adjust (debugg subject for change)
+	accept "-" in contract id input
 	change my formula when calculating original expiry date from -1 to +1 day (SUBJECT FOR CHANGE)
 
 edit.blade
@@ -125,10 +125,11 @@ edit.blade
 
 	performance
 
-		FIXED DATE START TO FINISH in LD (modal)
+		FIXED DATE START TO FINISH in LD
 
 	extensions
 		cost involve should also add or decrease the remaining balance
+		cost involve add a negative sign "-" means the amount is being deducted
 
 	billing 
 		advance billing and retention edit modal
@@ -155,6 +156,8 @@ if expired
 ==================================================================================================================================================================================================================================================================================================
 FIXED/added:
 ADMIN
+all amount input add "," every 3 whole digit number so the user can easily deterimine how much its amount inputted
+
 		advance billing and retention amount form change to manual user input (dont need to be automated since theres no proper formula)
 
 		bug: billing edit modal not working
