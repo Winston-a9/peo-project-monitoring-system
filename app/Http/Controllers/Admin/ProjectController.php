@@ -8,6 +8,7 @@ use App\Models\ProjectLog;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Services\ProjectReportPdf;
+use Illuminate\Support\Facades\Schema;
 
 class ProjectController extends Controller
 {
@@ -285,7 +286,7 @@ class ProjectController extends Controller
             'as_planned', 'work_done',
             'status', 'completed_at',
             'remarks_recommendation',
-            'ld_accomplished', 'ld_days_overdue',
+            'ld_accomplished',
             'performance_bond_date',
         ]);
 
@@ -328,6 +329,8 @@ class ProjectController extends Controller
 
         $data['billing_amounts'] = array_values($existingBillingAmounts);
         $data['billing_dates']   = array_values($existingBillingDates);
+
+        $saveLdDaysOverdue = Schema::getColumnType('projects', 'ld_days_overdue') !== 'date';
 
         // ── Step 3c: Billing summary fields ──────────────────────
         $data['total_amount_billed'] = array_sum($data['billing_amounts']);
@@ -491,7 +494,9 @@ class ProjectController extends Controller
 
         $data['ld_per_day']      = $ldPerDay > 0 ? round($ldPerDay, 2)   : null;
         $data['ld_unworked']     = $ldPerDay > 0 ? round($ldUnworked, 2) : null;
-        $data['ld_days_overdue'] = $daysOverdue > 0 ? $daysOverdue       : null;
+        if ($saveLdDaysOverdue) {
+            $data['ld_days_overdue'] = $daysOverdue > 0 ? $daysOverdue : null;
+        }
         $data['total_ld']        = ($ldPerDay > 0 && $daysOverdue > 0)
             ? round($ldPerDay * $daysOverdue, 2)
             : null;

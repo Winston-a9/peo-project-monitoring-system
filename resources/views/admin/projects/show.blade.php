@@ -306,7 +306,7 @@
                     <span class="ct">Contract Dates</span>
                 </div>
                 @if($totalDaysAdded > 0)
-                    <span class="pill p-or"><i class="fas fa-plus" style="font-size:0.55rem;"></i> +{{ $totalDaysAdded }}d total</span>
+                    <span class="pill p-or"><i class="fas fa-plus" style="font-size:0.55rem;"></i> +{{ $totalDaysAdded }}d extended</span>
                 @endif
             </div>
             <div class="dr">
@@ -323,10 +323,28 @@
                     <p class="ds">{{ $project->original_contract_expiry->format('l') }}</p>
                 </div>
             </div>
+            <div class="dr">
+                <span class="dl"><i class="fas fa-ruler-vertical"></i> Original Duration</span>
+                <div>
+                    <p class="dv">{{ $contractDaysTotal }} days</p>
+                    <p class="ds">From start to original expiry</p>
+                </div>
+            </div>
+            <div class="dr" style="{{ $totalDaysAdded > 0 ? '' : 'opacity:0.48;' }}">
+                <span class="dl"><i class="fas fa-arrow-up-right-from-square" style="{{ $totalDaysAdded > 0 ? '' : 'color:#9ca3af;' }}"></i> Extended By</span>
+                @if($totalDaysAdded > 0)
+                    <div>
+                        <p class="dv">+{{ $totalDaysAdded }} days</p>
+                        <p class="ds">{{ $totalTEDays }} TE{{ $totalVODays > 0 ? ', '.$totalVODays.' VO' : '' }}{{ $totalSODays > 0 ? ', '.$totalSODays.' SO' : '' }}</p>
+                    </div>
+                @else
+                    <span class="pill p-gy">No extensions</span>
+                @endif
+            </div>
             <div class="dr" style="{{ $totalTEDays > 0 ? '' : 'opacity:0.48;' }}">
-                <span class="dl"><i class="fas fa-clock" style="{{ $totalTEDays > 0 ? '' : 'color:#9ca3af;' }}"></i> Time Extension</span>
+                <span class="dl"><i class="fas fa-clock" style="{{ $totalTEDays > 0 ? 'color:#f97316;' : 'color:#9ca3af;' }}"></i> Time Extensions</span>
                 @if($totalTEDays > 0)
-                    <span class="pill p-or"><i class="fas fa-clock" style="font-size:0.55rem;"></i> +{{ $totalTEDays }}d &middot; {{ $teCount }} {{ $teCount === 1 ? 'entry' : 'entries' }}</span>
+                    <span class="pill p-or"><i class="fas fa-clock" style="font-size:0.55rem;"></i> +{{ $totalTEDays }}d · {{ $teCount }} {{ $teCount === 1 ? 'entry' : 'entries' }}</span>
                 @else
                     <span class="pill p-gy">None</span>
                 @endif
@@ -334,7 +352,7 @@
             <div class="dr" style="{{ $voCount > 0 ? '' : 'opacity:0.48;' }}">
                 <span class="dl"><i class="fas fa-file-signature" style="{{ $voCount > 0 ? 'color:#6366f1;' : 'color:#9ca3af;' }}"></i> Variation Order</span>
                 @if($voCount > 0)
-                    <span class="pill p-vi"><i class="fas fa-file-signature" style="font-size:0.55rem;"></i>{{ $totalVODays > 0 ? ' +'.$totalVODays.'d &middot;' : '' }} {{ $voCount }} {{ $voCount === 1 ? 'entry' : 'entries' }}</span>
+                    <span class="pill p-vi"><i class="fas fa-file-signature" style="font-size:0.55rem;"></i>{{ $totalVODays > 0 ? ' +'.$totalVODays.'d ·' : '' }} {{ $voCount }} {{ $voCount === 1 ? 'entry' : 'entries' }}</span>
                 @else
                     <span class="pill p-gy">None</span>
                 @endif
@@ -442,7 +460,7 @@
                         $voReasonMap = [];
 
                         preg_match_all(
-                            '/\[.*?\]\s+(Time Extension\s+\d+)\s+(?:edited|added)\s+—\s+Reason:\s+(.+?)(?=\n\n|\z)/s',
+                            '/\[.*?\]\s+(Time Extension\s+\d+)\s+(?:edited|added)\s+—\s+Reason:\s+(.+?)(?=\s*\[|$)/s',
                             $remarksText,
                             $teMatches,
                             PREG_SET_ORDER
@@ -452,7 +470,7 @@
                         }
 
                         preg_match_all(
-                            '/\[.*?\]\s+(Variation Order\s+\d+)\s+(?:edited|added)\s+—\s+Reason:\s+(.+?)(?=\n\n|\z)/s',
+                            '/\[.*?\]\s+(Variation Order\s+\d+)\s+(?:edited|added)\s+—\s+Reason:\s+(.+?)(?=\s*\[|$)/s',
                             $remarksText,
                             $voMatches,
                             PREG_SET_ORDER

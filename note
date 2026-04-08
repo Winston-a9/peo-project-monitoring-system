@@ -140,7 +140,6 @@ show.blade
 	overview
 		in contract dates add days and how much days has been extended
 	extensions
-		sort by earliest in date request
 	financial 
 		bug: amount total of TE and VO cost involved not being calculated and display 
 			 total in amount determine if deduction is greater than addition add "-" before the pesos sign
@@ -156,6 +155,8 @@ if expired
 ==================================================================================================================================================================================================================================================================================================
 FIXED/added:
 ADMIN
+		sort by earliest in date request
+reason/coverage reflected from the extension update modal reason/coverage
 all amount input add "," every 3 whole digit number so the user can easily deterimine how much its amount inputted
 
 		advance billing and retention amount form change to manual user input (dont need to be automated since theres no proper formula)

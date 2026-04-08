@@ -196,9 +196,9 @@ window.calculateDaysOverdue = function () {
     const hintEl = document.getElementById('ld_overdue_hint');
     const boxEl = displayEl ? displayEl.closest('[id="ld_days_box"], div') : null;
 
-    // Set the hidden input — only positive when actually overdue
-    if (hiddenEl) hiddenEl.value = diffDays;
-    if (displayEl) displayEl.textContent = diffDays; if (displayEl) displayEl.textContent = diffDays;
+    // Set the hidden input — only store overdue count when contract is actually overdue
+    if (hiddenEl) hiddenEl.value = isOverdue ? diffDays : 0;
+    if (displayEl) displayEl.textContent = diffDays;
 
     if (isOverdue) {
         if (displayEl) displayEl.style.color = '#dc2626';
