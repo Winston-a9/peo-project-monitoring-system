@@ -1,3 +1,44 @@
+/* ── Amount input comma formatter ── */
+(function () {
+    function rawVal(str) {
+        return str.replace(/,/g, '').replace(/[^0-9.]/g, '');
+    }
+    function formatWithCommas(str) {
+        const raw = rawVal(str);
+        if (raw === '') return '';
+        const parts = raw.split('.');
+        if (parts.length > 2) parts.splice(2);
+        const intFormatted = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        return parts.length === 2 ? intFormatted + '.' + parts[1] : intFormatted;
+    }
+
+    window.initAmountInput = function (el) {
+        if (!el || el.dataset.amountInit) return;
+        el.dataset.amountInit = '1';
+        if (el.value) el.value = formatWithCommas(el.value);
+
+        el.addEventListener('input', function () {
+            const cursorPos = this.selectionStart;
+            const beforeLen = this.value.length;
+            this.value = formatWithCommas(this.value);
+            const afterLen = this.value.length;
+            const newPos = cursorPos + (afterLen - beforeLen);
+            this.setSelectionRange(newPos, newPos);
+        });
+
+        el.addEventListener('blur', function () {
+            this.value = formatWithCommas(this.value);
+        });
+    };
+
+    // Strip commas before any form submits so Laravel receives clean numbers
+    document.addEventListener('submit', function (e) {
+        e.target.querySelectorAll('[data-amount]').forEach(el => {
+            el.value = rawVal(el.value);
+        });
+    }, true);
+})();
+
 /* ── Tab switching ── */
 window.switchTab = function (tabId, btnElement) {
     document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
@@ -351,7 +392,7 @@ window.updateBillingPreview = function () {
     const previewP = document.getElementById('billing_remaining_preview');
     if (!input || !totalEl || !remainingEl) return;
 
-    const newAmt = parseFloat(input.value) || 0;
+    const newAmt = parseFloat(input.value.replace(/,/g, '')) || 0;
     const base = parseFloat(totalEl.dataset.base) || 0;
     const contractAmt = parseFloat(document.getElementById('contract_amount')?.value) || 0;
     const newTotal = base + newAmt;
@@ -602,4 +643,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Re-trigger — loop back through until all reasons are filled
         document.querySelector('form[action*="projects"][method="POST"]')?.submit();
     };
+        
+    // ── Init all amount inputs on page load ──
+    document.querySelectorAll('[data-amount]').forEach(window.initAmountInput);
+    
 });

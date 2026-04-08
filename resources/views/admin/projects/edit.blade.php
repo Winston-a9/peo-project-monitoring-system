@@ -653,8 +653,8 @@
                             <label class="field-label">Cost Involved (₱)</label>
                             <div style="position:relative;">
                                 <span style="position:absolute; left:1rem; top:50%; transform:translateY(-50%); color:var(--ink-muted); font-weight:600; pointer-events:none;">₱</span>
-                                <input type="number" name="new_te_cost" class="field-input"
-                                    min="-9999999999" step="0.01" placeholder="0.00"
+                                <input type="text" name="new_te_cost" class="field-input" data-amount
+                                    inputmode="decimal" placeholder="0.00"
                                     style="padding-left:1.75rem;">
                             </div>
                             <p class="field-hint">Optional cost for this extension</p>
@@ -794,8 +794,8 @@
                             <label class="field-label">Cost Involved (₱)</label>
                             <div style="position:relative;">
                                 <span style="position:absolute; left:1rem; top:50%; transform:translateY(-50%); color:var(--ink-muted); font-weight:600; pointer-events:none;">₱</span>
-                                <input type="number" name="new_vo_cost" class="field-input"
-                                    min="-9999999999" step="0.01" placeholder="0.00"
+                                <input type="text" name="new_vo_cost" class="field-input" data-amount
+                                    inputmode="decimal" placeholder="0.00"
                                     style="padding-left:1.75rem; border-color:rgba(99,102,241,0.25);">
                             </div>
                             <p class="field-hint">Additional cost for this variation</p>
@@ -1000,10 +1000,9 @@
                             <label class="field-label">Billing Amount (₱) <span style="color:#ef4444;">*</span></label>
                             <div style="position:relative;">
                                 <span style="position:absolute; left:1rem; top:50%; transform:translateY(-50%); color:var(--ink-muted); font-weight:600; pointer-events:none;">₱</span>
-                                <input type="number" name="new_billing_amount" id="new_billing_amount" class="field-input"
-                                    min="0" step="0.01" placeholder="0.00"
+                                <input type="text" name="new_billing_amount" id="new_billing_amount" class="field-input" data-amount
+                                    inputmode="decimal" placeholder="0.00"
                                     style="padding-left:1.75rem; border-color:rgba(34,197,94,0.25);"
-                                    onkeydown="return event.key !== '-' && event.key !== 'e'"
                                     oninput="updateBillingPreview()">
                             </div>
                             <p class="field-hint">Amount billed in this update</p>
@@ -1077,11 +1076,10 @@
                             <label class="field-label">Amount (₱)</label>
                             <div style="position:relative;">
                                 <span style="position:absolute; left:1rem; top:50%; transform:translateY(-50%); color:var(--ink-muted); font-weight:600; pointer-events:none;">₱</span>
-                                <input type="number" name="advance_billing_amount" class="field-input"
-                                    min="0" step="0.01" placeholder="0.00"
+                                <input type="text" name="advance_billing_amount" class="field-input" data-amount
+                                    inputmode="decimal" placeholder="0.00"
                                     value="{{ old('advance_billing_amount', $project->advance_billing_amount ?? '') }}"
                                     style="padding-left:1.75rem; border-color:rgba(59,130,246,0.3);"
-                                    onkeydown="return event.key !== '-' && event.key !== 'e'"
                                     onfocus="this.style.borderColor='#2563eb';this.style.boxShadow='0 0 0 3px rgba(59,130,246,0.1)'"
                                     onblur="this.style.borderColor='rgba(59,130,246,0.3)';this.style.boxShadow='none'">
                             </div>
@@ -1138,11 +1136,10 @@
                             <label class="field-label">Amount (₱)</label>
                             <div style="position:relative;">
                                 <span style="position:absolute; left:1rem; top:50%; transform:translateY(-50%); color:var(--ink-muted); font-weight:600; pointer-events:none;">₱</span>
-                                <input type="number" name="retention_amount" class="field-input"
-                                    min="0" step="0.01" placeholder="0.00"
+                                <input type="text" name="retention_amount" class="field-input" data-amount
+                                    inputmode="decimal" placeholder="0.00"
                                     value="{{ old('retention_amount', $project->retention_amount ?? '') }}"
                                     style="padding-left:1.75rem; border-color:rgba(168,85,247,0.3);"
-                                    onkeydown="return event.key !== '-' && event.key !== 'e'"
                                     onfocus="this.style.borderColor='#9333ea';this.style.boxShadow='0 0 0 3px rgba(168,85,247,0.1)'"
                                     onblur="this.style.borderColor='rgba(168,85,247,0.3)';this.style.boxShadow='none'">
                             </div>
@@ -1380,9 +1377,9 @@
                 </label>
                 <div style="position:relative;">
                     <span style="position:absolute; left:1rem; top:50%; transform:translateY(-50%); color:var(--ink-muted); font-weight:600; pointer-events:none; font-size:0.9rem;">₱</span>
-                    <input type="number" id="edit_cost" name="edit_cost" min="-9999999999" step="0.01" placeholder="0.00"
+                    <input type="text" id="edit_cost" name="edit_cost" data-amount
+                        inputmode="decimal" placeholder="0.00"
                         style="width:100%; padding:0.72rem 1rem 0.72rem 1.75rem; border:1.5px solid var(--border); border-radius:9px; font-size:0.875rem; color:var(--text-primary); background:var(--bg-primary); outline:none; font-family:'Instrument Sans',sans-serif; transition:border-color 0.2s,box-shadow 0.2s; box-sizing:border-box;"
-                        onkeydown="return event.key !== '-' && event.key !== 'e'"
                         onfocus="this.style.borderColor='var(--orange-500)';this.style.boxShadow='0 0 0 3px rgba(249,115,22,0.1)'"
                         onblur="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
                 </div>
@@ -1445,8 +1442,7 @@ function openEditModal(type, index, label, days, cost, dateRequested, reason) {
     document.getElementById('edit_entry_index').value      = index;
     document.getElementById('edit_entry_label_display').textContent = label;
     document.getElementById('edit_days').value             = days || '';
-    document.getElementById('edit_cost').value             = cost || '';
-    document.getElementById('edit_date_requested').value   = dateRequested || '';
+    document.getElementById('edit_cost').value = cost ? Number(cost).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';    document.getElementById('edit_date_requested').value   = dateRequested || '';
 
     const reasonEl      = document.getElementById('edit_reason');
     const reasonCountEl = document.getElementById('edit_reason_count');
@@ -1530,9 +1526,9 @@ function submitEditEntry() {
                 </label>
                 <div style="position:relative;">
                     <span style="position:absolute; left:1rem; top:50%; transform:translateY(-50%); color:var(--ink-muted); font-weight:600; pointer-events:none;">₱</span>
-                    <input type="number" id="billing-edit-amount" min="0" step="0.01" placeholder="0.00"
+                    <input type="text" id="billing-edit-amount" data-amount
+                        inputmode="decimal" placeholder="0.00"
                         style="width:100%; padding:0.72rem 1rem 0.72rem 1.75rem; border:1.5px solid rgba(34,197,94,0.3); border-radius:9px; font-size:0.875rem; color:var(--text-primary); background:var(--bg-primary); outline:none; font-family:'Instrument Sans',sans-serif; box-sizing:border-box; transition:border-color 0.2s,box-shadow 0.2s;"
-                        onkeydown="return event.key !== '-' && event.key !== 'e'"
                         onfocus="this.style.borderColor='#16a34a';this.style.boxShadow='0 0 0 3px rgba(34,197,94,0.1)'"
                         onblur="this.style.borderColor='rgba(34,197,94,0.3)';this.style.boxShadow='none'">
                 </div>
@@ -1572,8 +1568,8 @@ window._billingEditIndex = 0;
 window.openBillingEditModal = function (index, amount, date) {
     window._billingEditIndex = index;
     document.getElementById('billing-edit-label').textContent   = 'Billing No. ' + (index + 1);
-    document.getElementById('billing-edit-amount').value        = amount || '';
-    document.getElementById('billing-edit-date').value          = date   || '';
+    const _bEl = document.getElementById('billing-edit-amount');
+    _bEl.value = amount ? Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';    document.getElementById('billing-edit-date').value          = date   || '';
     document.getElementById('billing-edit-error').style.display = 'none';
     openModal('billing-edit-modal');
 };

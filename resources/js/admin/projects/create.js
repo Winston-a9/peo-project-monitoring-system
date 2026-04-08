@@ -2,11 +2,33 @@
 // INITIALIZATION
 // Runs all setup functions once the page is ready
 // ─────────────────────────────────────────────
+/* ── Contract Amount formatter ── */
+window.formatContractAmount = function (el) {
+    let raw = el.value.replace(/,/g, '').replace(/[^0-9.]/g, '');
+
+    // Prevent multiple dots
+    const parts = raw.split('.');
+    if (parts.length > 2) raw = parts[0] + '.' + parts.slice(1).join('');
+
+    // Format whole part with commas
+    const [intPart, decPart] = raw.split('.');
+    const formatted = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    el.value = decPart !== undefined ? formatted + '.' + decPart : formatted;
+
+    // Sync raw value to hidden input
+    document.getElementById('contract_amount_raw').value = raw;
+};
+
 document.addEventListener('DOMContentLoaded', function () {
     liveSlippage();          // Set initial slippage display state
     calculateOriginalExpiry(); // Calculate expiry if old() values are present
     toggleCompletedAt();     // Show/hide the Date Completed field on load
     initContractAmount();     // Format the Contract Amount field on load
+});
+
+document.querySelector('form').addEventListener('submit', function () {
+    const raw = document.getElementById('contract_amount_raw').value;
+    document.getElementById('contract_amount_raw').value = raw.replace(/,/g, '');
 });
 
 

@@ -111,7 +111,7 @@ add a billing information table tab
 ==================================================================================================================================================================================================================================================================================================
 TO ADD/FIX:
 
-
+all amount input add "," every 3 whole digit number so the user can easily deterimine how much its amount inputted
 
 create.blade
 	Contract ID range value adjust (debugg subject for change)
@@ -125,13 +125,14 @@ edit.blade
 
 	performance
 
-		FIXED DATE START TO FINISH in LD
+		FIXED DATE START TO FINISH in LD (modal)
 
 	extensions
+		cost involve should also add or decrease the remaining balance
 
 	billing 
+		advance billing and retention edit modal
 
-		advance billing and retention amount form change to manual user input (dont need to be automated since theres no proper formula)
 
 	admin
 
@@ -155,6 +156,8 @@ if expired
 ==================================================================================================================================================================================================================================================================================================
 FIXED/added:
 ADMIN
+		advance billing and retention amount form change to manual user input (dont need to be automated since theres no proper formula)
+
 		bug: billing edit modal not working
 
 		include suspension order on the reason modal pop up
