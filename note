@@ -128,17 +128,16 @@ edit.blade
 		FIXED DATE START TO FINISH in LD
 
 	extensions
-		include suspension order on the reason modal pop up
 
 	billing 
 
 		advance billing and retention amount form change to manual user input (dont need to be automated since theres no proper formula)
-		bug: billing edit modal not working
 
-		
 	admin
 
 show.blade 
+	overview
+		in contract dates add days and how much days has been extended
 	extensions
 		sort by earliest in date request
 	financial 
@@ -156,6 +155,10 @@ if expired
 ==================================================================================================================================================================================================================================================================================================
 FIXED/added:
 ADMIN
+		bug: billing edit modal not working
+
+		include suspension order on the reason modal pop up
+
 		when work done is 100% LDA is read-only.
 
 		change ld calculation from Formula: (Unworked % ÷ 100) × Original Contract Amount × 0.001 to Formula: (Unworked % ÷ 100) × Remaining Contract Amount or in the data table "original_amount" × 0.001

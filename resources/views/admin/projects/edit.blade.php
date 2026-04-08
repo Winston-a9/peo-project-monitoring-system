@@ -1074,11 +1074,18 @@
                             <p class="field-hint">Percentage of the original contract amount</p>
                         </div>
                         <div class="field-group">
-                            <label class="field-label">Amount (₱) <span style="font-weight:400; color:#9ca3af;">(auto)</span></label>
-                            <p style="font-size:0.9rem; font-weight:800; color:#2563eb; margin:0; padding:0.78rem 0; font-family:'Syne',sans-serif; letter-spacing:-0.01em;">
-                                ₱<span id="advance_billing_amount_display">{{ number_format((float)($project->advance_billing_amount ?? 0), 2) }}</span>
-                            </p>
-                            <p class="field-hint">Calculated from original contract amount</p>
+                            <label class="field-label">Amount (₱)</label>
+                            <div style="position:relative;">
+                                <span style="position:absolute; left:1rem; top:50%; transform:translateY(-50%); color:var(--ink-muted); font-weight:600; pointer-events:none;">₱</span>
+                                <input type="number" name="advance_billing_amount" class="field-input"
+                                    min="0" step="0.01" placeholder="0.00"
+                                    value="{{ old('advance_billing_amount', $project->advance_billing_amount ?? '') }}"
+                                    style="padding-left:1.75rem; border-color:rgba(59,130,246,0.3);"
+                                    onkeydown="return event.key !== '-' && event.key !== 'e'"
+                                    onfocus="this.style.borderColor='#2563eb';this.style.boxShadow='0 0 0 3px rgba(59,130,246,0.1)'"
+                                    onblur="this.style.borderColor='rgba(59,130,246,0.3)';this.style.boxShadow='none'">
+                            </div>
+                            <p class="field-hint">Enter the advance billing amount</p>
                         </div>
                     </div>
                     <div style="padding:0.75rem 1rem; border-left:3px solid #2563eb; background:rgba(59,130,246,0.04); border-radius:6px; margin-top:0.25rem;">
@@ -1128,11 +1135,18 @@
                             <p class="field-hint">Percentage of the original contract amount</p>
                         </div>
                         <div class="field-group">
-                            <label class="field-label">Amount (₱) <span style="font-weight:400; color:#9ca3af;">(auto)</span></label>
-                            <p style="font-size:0.9rem; font-weight:800; color:#9333ea; margin:0; padding:0.78rem 0; font-family:'Syne',sans-serif; letter-spacing:-0.01em;">
-                                ₱<span id="retention_amount_display">{{ number_format((float)($project->retention_amount ?? 0), 2) }}</span>
-                            </p>
-                            <p class="field-hint">Calculated from original contract amount</p>
+                            <label class="field-label">Amount (₱)</label>
+                            <div style="position:relative;">
+                                <span style="position:absolute; left:1rem; top:50%; transform:translateY(-50%); color:var(--ink-muted); font-weight:600; pointer-events:none;">₱</span>
+                                <input type="number" name="retention_amount" class="field-input"
+                                    min="0" step="0.01" placeholder="0.00"
+                                    value="{{ old('retention_amount', $project->retention_amount ?? '') }}"
+                                    style="padding-left:1.75rem; border-color:rgba(168,85,247,0.3);"
+                                    onkeydown="return event.key !== '-' && event.key !== 'e'"
+                                    onfocus="this.style.borderColor='#9333ea';this.style.boxShadow='0 0 0 3px rgba(168,85,247,0.1)'"
+                                    onblur="this.style.borderColor='rgba(168,85,247,0.3)';this.style.boxShadow='none'">
+                            </div>
+                            <p class="field-hint">Enter the retention amount</p>
                         </div>
                     </div>
                     <div style="padding:0.75rem 1rem; border-left:3px solid #9333ea; background:rgba(168,85,247,0.04); border-radius:6px; margin-top:0.25rem;">

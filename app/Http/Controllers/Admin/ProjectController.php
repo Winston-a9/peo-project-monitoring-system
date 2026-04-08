@@ -457,39 +457,26 @@ class ProjectController extends Controller
             $data['revised_contract_expiry'] = null;
         }
 
-        // ── Step 7b: Adjust contract amount (original ± cost adjustments) ──
-        $originalAmount = (float) ($fresh->original_contract_amount ?? $request->contract_amount);
-
-        // Advance billing percentage → amount
+        // ── Step 7b: Advance billing & retention (manual amounts) ──
         $advPct = $request->input('advance_billing_pct');
-        if ($advPct !== null && $advPct !== '') {
-            $data['advance_billing_pct']    = (float) $advPct;
-            $data['advance_billing_amount'] = round((float)$advPct / 100 * $originalAmount, 2);
+        $advAmt = $request->input('advance_billing_amount');
+        if ($advAmt !== null && $advAmt !== '') {
+            $data['advance_billing_pct']    = ($advPct !== null && $advPct !== '') ? (float) $advPct : null;
+            $data['advance_billing_amount'] = round((float) $advAmt, 2);
         } else {
             $data['advance_billing_pct']    = null;
             $data['advance_billing_amount'] = null;
         }
 
-        // Retention percentage → amount
         $retPct = $request->input('retention_pct');
-        if ($retPct !== null && $retPct !== '') {
-            $data['retention_pct']    = (float) $retPct;
-            $data['retention_amount'] = round((float)$retPct / 100 * $originalAmount, 2);
+        $retAmt = $request->input('retention_amount');
+        if ($retAmt !== null && $retAmt !== '') {
+            $data['retention_pct']    = ($retPct !== null && $retPct !== '') ? (float) $retPct : null;
+            $data['retention_amount'] = round((float) $retAmt, 2);
         } else {
             $data['retention_pct']    = null;
             $data['retention_amount'] = null;
         }
-
-        // Sum all TE & VO cost adjustments
-        $totalAdjustment = 0;
-        foreach ($data['cost_involved'] as $cost) {
-            if ($cost !== null && (float)$cost != 0) $totalAdjustment += (float)$cost;
-        }
-        foreach (($data['vo_cost'] ?? []) as $cost) {
-            if ($cost !== null && (float)$cost != 0) $totalAdjustment += (float)$cost;
-        }
-
-        $data['contract_amount'] = max(0, $originalAmount + $totalAdjustment);
 
         // ── Step 8: Liquidated Damages (server-side computation) ─
         $ldAccomplished = isset($data['ld_accomplished']) && $data['ld_accomplished'] !== null
