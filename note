@@ -132,8 +132,7 @@ edit.blade
 
 	billing 
 		advance billing and retention edit modal
-
-
+		bug:percentage of advance billin and retention should only be max of 100% with 2 decimals
 	admin
 
 show.blade 

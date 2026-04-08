@@ -492,43 +492,60 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // ── Reason intercept modal ────────────────────────────────
-    const mainForm = document.querySelector('form[action*="projects"][method="POST"]');
     window._rimType = null; // 'te' | 'vo' | 'so' | null
+    window._pendingForm = null; // Store form reference to avoid selector issues
+    window._rimBypassIntercept = false; // Flag to bypass modal on re-submission
 
-    if (mainForm) {
-        mainForm.addEventListener('submit', function (e) {
-            const teDays = parseInt(document.getElementById('new_te_days')?.value) || 0;
-            const voDays = parseInt(document.getElementById('new_vo_days')?.value) || 0;
-            const soDays = parseInt(document.getElementById('new_so_days')?.value) || 0;
+    // Use event delegation to handle form submissions reliably across page reloads
+    document.addEventListener('submit', function (e) {
+        // If we just confirmed and are re-submitting, bypass the modal check
+        if (window._rimBypassIntercept) {
+            window._rimBypassIntercept = false;
+            return;
+        }
 
-            // Only intercept when a new TE, VO, or SO is actually being added
-            if (teDays < 1 && voDays < 1 && soDays < 1) return;
+        // Only handle forms that have extension/suspension day inputs
+        const form = e.target;
+        if (!form.querySelector('[name="new_te_days"]')) return;
 
-            const teReason = document.getElementById('new_te_reason_hidden')?.value.trim();
-            const voReason = document.getElementById('new_vo_reason_hidden')?.value.trim();
-            const soReason = document.getElementById('new_so_reason_hidden')?.value.trim();
+        const teDays = parseInt(form.querySelector('[name="new_te_days"]')?.value) || 0;
+        const voDays = parseInt(form.querySelector('[name="new_vo_days"]')?.value) || 0;
+        const soDays = parseInt(form.querySelector('[name="new_so_days"]')?.value) || 0;
 
-            // If all filled reasons match their days, let through
-            if (
-                (teDays < 1 || teReason !== '') &&
-                (voDays < 1 || voReason !== '') &&
-                (soDays < 1 || soReason !== '')
-            ) return;
+        // Only intercept when a new TE, VO, or SO is actually being added
+        if (teDays < 1 && voDays < 1 && soDays < 1) return;
 
-            e.preventDefault();
+        const teReasonInput = form.querySelector('[name="new_te_reason"]');
+        const voReasonInput = form.querySelector('[name="new_vo_reason"]');
+        const soReasonInput = form.querySelector('[name="new_so_reason"]');
 
-            // Ask in order: TE → VO → SO
-            if (teDays > 0 && teReason === '') {
-                window._rimType = 'te';
-            } else if (voDays > 0 && voReason === '') {
-                window._rimType = 'vo';
-            } else if (soDays > 0 && soReason === '') {
-                window._rimType = 'so';
-            }
+        const teReason = teReasonInput?.value.trim() || '';
+        const voReason = voReasonInput?.value.trim() || '';
+        const soReason = soReasonInput?.value.trim() || '';
 
-            openRIM();
-        });
-    }
+        // If all filled reasons match their days, let through
+        if (
+            (teDays < 1 || teReason !== '') &&
+            (voDays < 1 || voReason !== '') &&
+            (soDays < 1 || soReason !== '')
+        ) return;
+
+        e.preventDefault();
+
+        // Store the form reference for later use in rimConfirm()
+        window._pendingForm = form;
+
+        // Ask in order: TE → VO → SO
+        if (teDays > 0 && teReason === '') {
+            window._rimType = 'te';
+        } else if (voDays > 0 && voReason === '') {
+            window._rimType = 'vo';
+        } else if (soDays > 0 && soReason === '') {
+            window._rimType = 'so';
+        }
+
+        openRIM();
+    }, false);
 
     function openRIM() {
         const isVO = window._rimType === 'vo';
@@ -608,12 +625,16 @@ document.addEventListener('DOMContentLoaded', () => {
     window.rimCancel = function () {
         closeModal('reason-intercept-modal');
         window._rimType = null;
-        const teH = document.getElementById('new_te_reason_hidden');
-        const voH = document.getElementById('new_vo_reason_hidden');
-        const soH = document.getElementById('new_so_reason_hidden');
-        if (teH) teH.value = '';
-        if (voH) voH.value = '';
-        if (soH) soH.value = '';
+        
+        // Clear reason values
+        if (window._pendingForm) {
+            const teH = window._pendingForm.querySelector('[name="new_te_reason"]');
+            const voH = window._pendingForm.querySelector('[name="new_vo_reason"]');
+            const soH = window._pendingForm.querySelector('[name="new_so_reason"]');
+            if (teH) teH.value = '';
+            if (voH) voH.value = '';
+            if (soH) soH.value = '';
+        }
     };
 
     window.rimConfirm = function () {
@@ -629,19 +650,33 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        // Use the stored form reference instead of searching for it
+        const form = window._pendingForm;
+        if (!form) {
+            console.error('Form reference lost - unable to submit');
+            return;
+        }
+
+        // Set the appropriate reason field based on type
         if (window._rimType === 'te') {
-            document.getElementById('new_te_reason_hidden').value = reason;
+            const input = form.querySelector('[name="new_te_reason"]');
+            if (input) input.value = reason;
         } else if (window._rimType === 'vo') {
-            document.getElementById('new_vo_reason_hidden').value = reason;
+            const input = form.querySelector('[name="new_vo_reason"]');
+            if (input) input.value = reason;
         } else if (window._rimType === 'so') {
-            document.getElementById('new_so_reason_hidden').value = reason;
+            const input = form.querySelector('[name="new_so_reason"]');
+            if (input) input.value = reason;
         }
 
         closeModal('reason-intercept-modal');
         window._rimType = null;
+        
+        // Set bypass flag so the submit event listener doesn't re-trigger the modal
+        window._rimBypassIntercept = true;
 
-        // Re-trigger — loop back through until all reasons are filled
-        document.querySelector('form[action*="projects"][method="POST"]')?.submit();
+        // Submit the form - this will pass through the event listener without modal re-appearing
+        form.submit();
     };
         
     // ── Init all amount inputs on page load ──
