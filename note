@@ -138,7 +138,6 @@ edit.blade
 
 show.blade 
 	overview
-		in contract dates add days and how much days has been extended
 	extensions
 	financial 
 		bug: amount total of TE and VO cost involved not being calculated and display 
@@ -155,6 +154,8 @@ if expired
 ==================================================================================================================================================================================================================================================================================================
 FIXED/added:
 ADMIN
+		in contract dates add days and how much days has been extended
+
 		sort by earliest in date request
 reason/coverage reflected from the extension update modal reason/coverage
 all amount input add "," every 3 whole digit number so the user can easily deterimine how much its amount inputted

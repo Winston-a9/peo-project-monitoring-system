@@ -92,12 +92,19 @@
     $billingCount   = count($billingAmounts);
     $totalBilled    = array_sum($billingAmounts);
     $remainingBal   = (float)$project->contract_amount - $totalBilled;
+
+    $advancePct     = is_numeric($project->advance_billing_pct) ? (float) $project->advance_billing_pct : null;
+    $advanceAmt     = is_numeric($project->advance_billing_amount) ? (float) $project->advance_billing_amount : null;
+    $retentionPct   = is_numeric($project->retention_pct) ? (float) $project->retention_pct : null;
+    $retentionAmt   = is_numeric($project->retention_amount) ? (float) $project->retention_amount : null;
+
     $hasExtCosts    = collect(array_merge(
     is_array($project->cost_involved ?? null) ? $project->cost_involved : [],
     is_array($project->vo_cost ?? null) ? $project->vo_cost : []
     ))->filter(fn($c) => $c !== null && (float)$c != 0)->isNotEmpty();
 
     $hasBilling     = $billingCount > 0 || $hasExtCosts;
+    $hasFinancials  = $hasBilling || $advancePct !== null || $advanceAmt !== null || $retentionPct !== null || $retentionAmt !== null;
 
     $extCount = $teCount + $voCount + ($hasSO ? 1 : 0);
     $logs     = $project->logs()->with('user')->latest()->get();
@@ -105,99 +112,91 @@
 
 <div style="max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:0.875rem;">
 
-{{-- ══════════ HERO ROW · STATUS + PROGRESS + AMOUNT (always visible) ══════════ --}}
-<div style="display:grid;grid-template-columns:200px 1fr;gap:0.875rem;" class="fu">
+{{-- ══════════ HERO SUMMARY ══════════ --}}
+<div class="card" style="display:grid;grid-template-columns:1fr minmax(320px,420px);gap:0.875rem;align-items:start;padding:1.25rem;">
 
-    {{-- Status --}}
-    <div class="card" style="padding:1.25rem;display:flex;flex-direction:column;gap:0.65rem;justify-content:center;">
-        <p class="ey" style="margin:0;">Contract Status</p>
-        @if($project->status === 'completed')
-            <div style="display:flex;align-items:center;gap:0.5rem;">
-                <div style="width:8px;height:8px;border-radius:50%;background:#22c55e;flex-shrink:0;"></div>
-                <span style="font-family:'Syne',sans-serif;font-size:1.15rem;font-weight:800;color:#16a34a;">Completed</span>
+    <div style="display:flex;flex-direction:column;gap:0.9rem;">
+        <div>
+            <p class="ey" style="margin:0 0 0.45rem;">Project Snapshot</p>
+            <h1 style="margin:0;font-size:1.7rem;font-weight:800;">{{ $project->project_title }}</h1>
+            <p class="ds" style="margin-top:0.65rem;">
+                <i class="fas fa-map-marker-alt" style="color:#f97316;margin-right:0.35rem;"></i>{{ $project->location }}
+                <span style="margin:0 0.65rem;color:var(--tx2);">•</span>
+                <i class="fas fa-building" style="color:#6366f1;margin-right:0.35rem;"></i>{{ $project->contractor }}
+            </p>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0.75rem;">
+            <div style="padding:1rem;border-radius:14px;background:var(--bg2);">
+                <span class="dl">Contract ID</span>
+                <p class="dv" style="margin-top:0.5rem;font-family:'Syne',sans-serif;font-weight:800;">#{{ $project->contract_id }}</p>
             </div>
-            @if($project->completed_at)<p style="font-size:0.75rem;color:var(--tx2);">{{ $project->completed_at->format('M d, Y') }}</p>@endif
-        @elseif($project->status === 'expired' || $daysLeft < 0)
-            <div style="display:flex;align-items:center;gap:0.5rem;">
-                <div style="width:8px;height:8px;border-radius:50%;background:#ef4444;flex-shrink:0;"></div>
-                <span style="font-family:'Syne',sans-serif;font-size:1.15rem;font-weight:800;color:#dc2626;">Expired</span>
+            <div style="padding:1rem;border-radius:14px;background:var(--bg2);">
+                <span class="dl">In Charge</span>
+                <p class="dv" style="margin-top:0.5rem;">{{ $project->in_charge }}</p>
             </div>
-            <p style="font-size:0.75rem;color:#ef4444;">{{ $daysLeft < 0 ? abs($daysLeft).' days ago' : 'Marked as expired' }}</p>
-        @elseif($daysLeft <= 30)
-            <div style="display:flex;align-items:center;gap:0.5rem;">
-                <div style="width:8px;height:8px;border-radius:50%;background:#f59e0b;flex-shrink:0;animation:pulse 1.5s ease infinite;"></div>
-                <span style="font-family:'Syne',sans-serif;font-size:1.15rem;font-weight:800;color:#d97706;">Expiring</span>
+            <div style="padding:1rem;border-radius:14px;background:var(--bg2);">
+                <span class="dl">Contract Amount</span>
+                <p class="dv" style="margin-top:0.5rem;font-family:'Syne',sans-serif;font-weight:800;">₱{{ number_format($project->contract_amount, 2) }}</p>
             </div>
-            <p style="font-size:0.75rem;color:#f59e0b;">{{ $daysLeft }} days left</p>
-        @else
-            <div style="display:flex;align-items:center;gap:0.5rem;">
-                <div style="width:8px;height:8px;border-radius:50%;background:#22c55e;flex-shrink:0;"></div>
-                <span style="font-family:'Syne',sans-serif;font-size:1.15rem;font-weight:800;color:#16a34a;">Active</span>
+            <div style="padding:1rem;border-radius:14px;background:var(--bg2);">
+                <span class="dl">Original Amount</span>
+                <p class="dv" style="margin-top:0.5rem;">₱{{ number_format($project->original_contract_amount ?? $project->contract_amount, 2) }}</p>
             </div>
-            <p style="font-size:0.75rem;color:var(--tx2);">{{ $daysLeft }} days remaining</p>
-        @endif
-        <div style="height:3px;background:rgba(249,115,22,0.1);border-radius:99px;overflow:hidden;">
-            <div style="height:100%;width:{{ $pct }}%;background:{{ $barColor }};border-radius:99px;"></div>
         </div>
     </div>
 
-    {{-- Progress --}}
-    <div class="card" style="overflow:hidden;">
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;">
-            {{-- As Planned --}}
-            <div style="padding:1.25rem 1.5rem;border-right:1px solid var(--bd);">
-                <p class="ey" style="margin:0 0 0.5rem;">As Planned</p>
-                <p class="sn" style="font-size:2rem;color:var(--or5);">{{ $project->as_planned }}<span style="font-size:0.9rem;color:var(--ink2);">%</span></p>
-                <div style="height:3px;background:rgba(249,115,22,0.1);border-radius:99px;margin-top:0.75rem;overflow:hidden;">
-                    <div style="height:100%;width:{{ $project->as_planned }}%;background:#f97316;border-radius:99px;"></div>
+    <div style="display:grid;grid-template-rows:1fr auto;gap:0.875rem;">
+        <div class="card" style="padding:1.25rem; background:rgba(249,115,22,0.08);">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;">
+                <div>
+                    <p class="ey" style="margin:0 0 0.5rem;">Current Status</p>
+                    <p class="ds" style="margin:0;color:var(--tx2);">Live contract health and schedule progress</p>
+                </div>
+                <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+                    @if($project->status === 'completed')
+                        <span class="pill p-gr"><i class="fas fa-check-circle" style="font-size:0.65rem;"></i> Completed</span>
+                    @elseif($project->status === 'expired' || $daysLeft < 0)
+                        <span class="pill p-re"><i class="fas fa-times-circle" style="font-size:0.65rem;"></i> Expired</span>
+                    @elseif($daysLeft <= 30)
+                        <span class="pill p-am"><i class="fas fa-hourglass-end" style="font-size:0.65rem;"></i> Expiring Soon</span>
+                    @else
+                        <span class="pill p-gr"><i class="fas fa-circle" style="font-size:0.65rem;"></i> Active</span>
+                    @endif
                 </div>
             </div>
-            {{-- Work Done --}}
-            <div style="padding:1.25rem 1.5rem;border-right:1px solid var(--bd);">
-                <p class="ey" style="margin:0 0 0.5rem;">Work Done</p>
-                <p class="sn" style="font-size:2rem;color:#3b82f6;">{{ $project->work_done }}<span style="font-size:0.9rem;color:var(--ink2);">%</span></p>
-                <div style="height:3px;background:rgba(59,130,246,0.1);border-radius:99px;margin-top:0.75rem;overflow:hidden;">
-                    <div style="height:100%;width:{{ $project->work_done }}%;background:#3b82f6;border-radius:99px;"></div>
+            <div style="margin-top:1.2rem;">
+                <div style="height:10px;background:rgba(249,115,22,0.15);border-radius:999px;overflow:hidden;">
+                    <div style="width:{{ $pct }}%;height:100%;background:{{ $barColor }};"></div>
                 </div>
-            </div>
-            {{-- Slippage --}}
-            <div style="padding:1.25rem 1.5rem;border-right:1px solid var(--bd);">
-                <p class="ey" style="margin:0 0 0.5rem;">Slippage</p>
-                <p class="sn" style="font-size:2rem;color:{{ $slipColor }};">{{ $slip > 0 ? '+' : '' }}{{ $project->slippage }}<span style="font-size:0.9rem;">%</span></p>
-                <div style="display:flex;align-items:center;gap:0.35rem;margin-top:0.75rem;">
-                    <i class="fas {{ $slipIcon }}" style="font-size:0.65rem;color:{{ $slipColor }};"></i>
-                    <span style="font-size:0.7rem;font-weight:600;color:{{ $slipColor }};">{{ $slipLabel }}</span>
-                </div>
-            </div>
-            {{-- PROGRESS LAST UPDATED --}}
-            <div style="padding:1.25rem 1.5rem;">
-                <p class="ey" style="margin:0 0 0.5rem;">Progress Last Updated</p>
-                @if($project->progress_updated_at)
-                    <p style="font-size:0.875rem;font-weight:700;color:var(--tx);margin:0;line-height:1.3;">
-                        {{ $project->progress_updated_at->format('M d, Y') }}
-                    </p>
-                    <p style="font-size:0.7rem;color:var(--tx2);margin:4px 0 0;">
-                        {{ $project->progress_updated_at->format('h:i A') }}
-                    </p>
-                    <p style="font-size:0.7rem;color:var(--tx2);margin:2px 0 0;font-style:italic;">
-                        {{ $project->progress_updated_at->diffForHumans() }}
-                    </p>
-                @else
-                    <p style="font-size:0.875rem;font-weight:600;color:#9ca3af;margin:0;font-style:italic;">
-                        Not yet tracked
-                    </p>
-                    <p style="font-size:0.7rem;color:#9ca3af;margin:4px 0 0;">
-                        Progress hasn't been updated yet
-                    </p>
-                @endif
+                <p style="margin:0.8rem 0 0;font-size:0.85rem;color:var(--tx2);">
+                    {{ $project->revised_contract_expiry ? 'Revised expiry due ' . $project->revised_contract_expiry->format('M d, Y') : 'Original expiry due ' . $project->original_contract_expiry->format('M d, Y') }}
+                </p>
             </div>
         </div>
-        {{-- Combined progress bar footer --}}
-        <div style="padding:0.6rem 1.5rem;border-top:1px solid var(--bd);background:var(--bg2);display:flex;align-items:center;gap:0.75rem;">
-            <span style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--ink2);white-space:nowrap;">Overall</span>
-            <div style="flex:1;height:3px;border-radius:99px;background:rgba(249,115,22,0.08);overflow:hidden;position:relative;">
-                <div style="position:absolute;top:0;left:0;height:100%;width:{{ $project->as_planned }}%;background:rgba(249,115,22,0.25);border-radius:99px;"></div>
-                <div style="position:absolute;top:0;left:0;height:100%;width:{{ $project->work_done }}%;background:#3b82f6;border-radius:99px;"></div>
+
+        <div class="card" style="padding:1.25rem;display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+            <div style="padding:1rem;border-radius:14px;background:var(--bg2);">
+                <p class="ey" style="margin:0 0 0.5rem;">As Planned</p>
+                <p class="sn" style="font-size:1.75rem;color:var(--or5);margin:0;">{{ $project->as_planned }}<span style="font-size:0.85rem;color:var(--ink2);">%</span></p>
+            </div>
+            <div style="padding:1rem;border-radius:14px;background:var(--bg2);">
+                <p class="ey" style="margin:0 0 0.5rem;">Work Done</p>
+                <p class="sn" style="font-size:1.75rem;color:#3b82f6;margin:0;">{{ $project->work_done }}<span style="font-size:0.85rem;color:var(--ink2);">%</span></p>
+            </div>
+            <div style="padding:1rem;border-radius:14px;background:var(--bg2);">
+                <p class="ey" style="margin:0 0 0.5rem;">Slippage</p>
+                <p class="sn" style="font-size:1.75rem;color:{{ $slipColor }};margin:0;">{{ $slip > 0 ? '+' : '' }}{{ $project->slippage }}<span style="font-size:0.85rem;">%</span></p>
+                <p class="ds" style="margin:0.5rem 0 0;color:{{ $slipColor }};">{{ $slipLabel }}</p>
+            </div>
+            <div style="padding:1rem;border-radius:14px;background:var(--bg2);">
+                <p class="ey" style="margin:0 0 0.5rem;">Last Progress Update</p>
+                @if($project->progress_updated_at)
+                    <p class="dv" style="margin:0;">{{ $project->progress_updated_at->format('M d, Y') }}</p>
+                    <p class="ds" style="margin:0.35rem 0 0;">{{ $project->progress_updated_at->format('h:i A') }}</p>
+                @else
+                    <p class="dv" style="margin:0;color:#9ca3af;font-style:italic;">Not tracked yet</p>
+                @endif
             </div>
         </div>
     </div>
@@ -264,6 +263,10 @@
             <div class="dr">
                 <span class="dl"><i class="fas fa-building"></i> Contractor</span>
                 <span class="dv" style="text-align:right;max-width:60%;">{{ $project->contractor }}</span>
+            </div>
+            <div class="dr">
+                <span class="dl"><i class="fas fa-peso-sign"></i> Contract Amount</span>
+                <span class="dv" style="text-align:right;max-width:60%;">₱{{ number_format($project->contract_amount, 2) }}</span>
             </div>
             <div class="dr">
                 <span class="dl"><i class="fas fa-circle-dot"></i> Status</span>
@@ -582,6 +585,23 @@
     </div>
     @endif
 
+    @if($hasSO)
+        <div class="card" style="padding:1.25rem;margin-top:0.875rem;">
+            <div class="ch">
+                <i class="fas fa-pause-circle" style="color:var(--or5);font-size:0.8rem;"></i>
+                <span class="ct">Suspension Order</span>
+            </div>
+            <div class="dr">
+                <span class="dl">Total Suspension Days</span>
+                <span class="dv">+{{ $totalSODays }} days</span>
+            </div>
+            <div class="dr">
+                <span class="dl">Expiry Impact</span>
+                <span class="dv">{{ $project->revised_contract_expiry ? 'Revised expiry extended.' : 'Suspension recorded for this project.' }}</span>
+            </div>
+        </div>
+    @endif
+
     @else
     <div class="card" style="padding:3rem 1.5rem;text-align:center;">
         <div style="width:52px;height:52px;background:rgba(249,115,22,0.07);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;">
@@ -642,7 +662,7 @@
     </div>
     @endif
 
-    @if($hasBilling)
+    @if($hasFinancials)
     <div class="card" style="overflow:hidden;">
         <div style="display:flex;align-items:center;border-bottom:1px solid var(--bd);background:var(--bg2);">
             <button onclick="toggleBillingTab('summary')" id="billing-tab-summary"
@@ -685,6 +705,28 @@
                         <div style="height:100%;width:{{ min($remainPct, 100) }}%;background:{{ $remainingBal >= 0 ? '#3b82f6' : '#dc2626' }};border-radius:99px;"></div>
                     </div>
                     <p style="font-size:0.7rem;color:{{ $remainingBal >= 0 ? '#3b82f6' : '#dc2626' }};margin-top:0.3rem;font-weight:600;">{{ $remainPct }}% {{ $remainingBal >= 0 ? 'remaining' : 'exceeded' }}</p>
+                </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;padding:1.25rem;">
+                <div style="padding:1rem;border-radius:14px;background:rgba(59,130,246,0.05);border:1px solid rgba(59,130,246,0.12);">
+                    <p class="ey" style="margin-bottom:0.5rem;color:#2563eb;">Advance Billing</p>
+                    <p style="margin:0;font-family:'Syne',sans-serif;font-size:1.15rem;font-weight:800;color:var(--tx);">
+                        {{ $advancePct !== null ? $advancePct.'%' : '—' }}
+                        @if($advanceAmt !== null)
+                            <span style="font-size:0.9rem;font-weight:600;color:#2563eb;display:block;margin-top:0.35rem;">₱{{ number_format($advanceAmt, 2) }}</span>
+                        @endif
+                    </p>
+                    <p class="ds" style="margin-top:0.5rem;color:#2563eb;">Prepayment deducted from billings over the contract.</p>
+                </div>
+                <div style="padding:1rem;border-radius:14px;background:rgba(168,85,247,0.05);border:1px solid rgba(168,85,247,0.12);">
+                    <p class="ey" style="margin-bottom:0.5rem;color:#9333ea;">Retention</p>
+                    <p style="margin:0;margin-bottom:0.2rem;font-family:'Syne',sans-serif;font-size:1.15rem;font-weight:800;color:var(--tx);">
+                        {{ $retentionPct !== null ? $retentionPct.'%' : '—' }}
+                    </p>
+                    @if($retentionAmt !== null)
+                        <p style="margin:0;font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;color:#9333ea;">₱{{ number_format($retentionAmt, 2) }}</p>
+                    @endif
+                    <p class="ds" style="margin-top:0.5rem;color:#9333ea;">Holdback withheld from each progress billing.</p>
                 </div>
             </div>
         </div>

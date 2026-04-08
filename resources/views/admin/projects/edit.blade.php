@@ -1044,18 +1044,36 @@
                      style="border-bottom-color:rgba(59,130,246,0.15);">
                     <i class="fas fa-money-bill-trend-up" style="color:#2563eb; font-size:0.85rem; flex-shrink:0;"></i>
                     <span class="acc-title">Advance Billing</span>
-                    @if(!empty($project->advance_billing_pct))
-                        <span class="tag-chip" style="margin-left:0.4rem; background:rgba(59,130,246,0.1); color:#2563eb; border-color:rgba(59,130,246,0.25);">{{ $project->advance_billing_pct }}%</span>
-                    @else
+                    @php
+                        $savedAdvancePct = old('advance_billing_pct', $project->advance_billing_pct ?? '');
+                        $savedAdvanceAmt = old('advance_billing_amount', $project->advance_billing_amount ?? '');
+                    @endphp
+                    @if(!empty($savedAdvancePct))
+                        <span class="tag-chip" style="margin-left:0.4rem; background:rgba(59,130,246,0.1); color:#2563eb; border-color:rgba(59,130,246,0.25);">{{ $savedAdvancePct }}%</span>
+                    @endif
+                    @if(!empty($savedAdvanceAmt))
+                        <span class="tag-chip" style="margin-left:0.4rem; background:rgba(59,130,246,0.08); color:#1d4ed8; border-color:rgba(59,130,246,0.16);">₱{{ number_format((float) $savedAdvanceAmt, 2) }}</span>
+                    @endif
+                    @if(empty($savedAdvancePct) && empty($savedAdvanceAmt))
                         <span style="font-size:0.7rem; color:#9ca3af; margin-left:0.4rem; font-weight:400;">Not set</span>
                     @endif
-                    <div class="acc-status-dot" style="background:{{ !empty($project->advance_billing_pct) ? '#2563eb' : '#d1d5db' }};"></div>
+                    <div class="acc-status-dot" style="background:{{ !empty($savedAdvancePct) ? '#2563eb' : '#d1d5db' }};"></div>
                     <div class="acc-chevron" style="border-color:rgba(59,130,246,0.2);"><i class="fas fa-chevron-down"></i></div>
                 </div>
 
                 <div class="acc-body is-collapsed" id="acc-advance-bdy">
                 <div class="acc-body-inner">
                 <div class="section-body">
+                    @if(!empty($savedAdvancePct) || !empty($savedAdvanceAmt))
+                        <div style="margin-bottom:1rem; padding:0.85rem 1rem; border:1px solid rgba(59,130,246,0.18); border-radius:10px; background:rgba(59,130,246,0.04);">
+                            <p style="font-size:0.8rem; color:#2563eb; font-weight:700; margin:0 0 0.35rem;">Current Advance Billing</p>
+                            <p style="margin:0; color:var(--text-primary); font-size:0.95rem; line-height:1.5;">
+                                @if(!empty($savedAdvancePct)){{ $savedAdvancePct }}%@endif
+                                @if(!empty($savedAdvancePct) && !empty($savedAdvanceAmt)) / @endif
+                                @if(!empty($savedAdvanceAmt))₱{{ number_format((float) $savedAdvanceAmt, 2) }}@endif
+                            </p>
+                        </div>
+                    @endif
                     <div class="grid-2col">
                         <div class="field-group">
                             <label class="field-label">Percentage (%)</label>
@@ -1104,18 +1122,36 @@
                      style="border-bottom-color:rgba(168,85,247,0.15);">
                     <i class="fas fa-shield-halved" style="color:#9333ea; font-size:0.85rem; flex-shrink:0;"></i>
                     <span class="acc-title">Retention</span>
-                    @if(!empty($project->retention_pct))
-                        <span class="tag-chip" style="margin-left:0.4rem; background:rgba(168,85,247,0.1); color:#9333ea; border-color:rgba(168,85,247,0.25);">{{ $project->retention_pct }}%</span>
-                    @else
+                    @php
+                        $savedRetentionPct = old('retention_pct', $project->retention_pct ?? '');
+                        $savedRetentionAmt = old('retention_amount', $project->retention_amount ?? '');
+                    @endphp
+                    @if(!empty($savedRetentionPct))
+                        <span class="tag-chip" style="margin-left:0.4rem; background:rgba(168,85,247,0.1); color:#9333ea; border-color:rgba(168,85,247,0.25);">{{ $savedRetentionPct }}%</span>
+                    @endif
+                    @if(!empty($savedRetentionAmt))
+                        <span class="tag-chip" style="margin-left:0.4rem; background:rgba(168,85,247,0.08); color:#6d28d9; border-color:rgba(168,85,247,0.16);">₱{{ number_format((float) $savedRetentionAmt, 2) }}</span>
+                    @endif
+                    @if(empty($savedRetentionPct) && empty($savedRetentionAmt))
                         <span style="font-size:0.7rem; color:#9ca3af; margin-left:0.4rem; font-weight:400;">Not set</span>
                     @endif
-                    <div class="acc-status-dot" style="background:{{ !empty($project->retention_pct) ? '#9333ea' : '#d1d5db' }};"></div>
+                    <div class="acc-status-dot" style="background:{{ !empty($savedRetentionPct) ? '#9333ea' : '#d1d5db' }};"></div>
                     <div class="acc-chevron" style="border-color:rgba(168,85,247,0.2);"><i class="fas fa-chevron-down"></i></div>
                 </div>
 
                 <div class="acc-body is-collapsed" id="acc-retention-bdy">
                 <div class="acc-body-inner">
                 <div class="section-body">
+                    @if(!empty($savedRetentionPct) || !empty($savedRetentionAmt))
+                        <div style="margin-bottom:1rem; padding:0.85rem 1rem; border:1px solid rgba(168,85,247,0.18); border-radius:10px; background:rgba(168,85,247,0.04);">
+                            <p style="font-size:0.8rem; color:#9333ea; font-weight:700; margin:0 0 0.35rem;">Current Retention</p>
+                            <p style="margin:0; color:var(--text-primary); font-size:0.95rem; line-height:1.5;">
+                                @if(!empty($savedRetentionPct)){{ $savedRetentionPct }}%@endif
+                                @if(!empty($savedRetentionPct) && !empty($savedRetentionAmt)) / @endif
+                                @if(!empty($savedRetentionAmt))₱{{ number_format((float) $savedRetentionAmt, 2) }}@endif
+                            </p>
+                        </div>
+                    @endif
                     <div class="grid-2col">
                         <div class="field-group">
                             <label class="field-label">Percentage (%)</label>
