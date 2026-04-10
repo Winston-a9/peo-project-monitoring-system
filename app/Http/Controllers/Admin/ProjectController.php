@@ -329,9 +329,17 @@ class ProjectController extends Controller
 
         $saveLdDaysOverdue = Schema::getColumnType('projects', 'ld_days_overdue') !== 'date';
 
-        // ── Step 3c: Billing summary fields ──────────────────────
+        // ── Step 3c: Billing summary fields ──────────────────────────
         $data['total_amount_billed'] = array_sum($data['billing_amounts']);
-        $data['remaining_balance']   = (float) $fresh->original_contract_amount - $data['total_amount_billed'];
+
+        // Adjusted contract amount = original + all TE/VO cost adjustments (positive adds, negative deducts)
+        $allCurrentCosts = array_merge(
+            array_values($existingCosts),   // TE costs already in DB
+            array_values($existingVoCosts)  // VO costs already in DB
+        );
+        $totalCostAdj = collect($allCurrentCosts)->filter(fn($c) => $c !== null && (float)$c !== 0.0)->sum();
+        $adjustedContractAmount = max(0, (float) $fresh->original_contract_amount + $totalCostAdj);
+        $data['remaining_balance'] = $adjustedContractAmount - $data['total_amount_billed'];
 
         // ── Step 4: Append new Time Extension ────────────────────
         $newTEDays = (int) $request->input('new_te_days', 0);
@@ -580,14 +588,23 @@ class ProjectController extends Controller
         $billingAmounts[$index] = $amount;
         $billingDates[$index]   = $date ?: null;
 
-        $originalAmount = (float) $fresh->original_contract_amount;
-        $totalBilled    = array_sum($billingAmounts);
+        $totalBilled = array_sum($billingAmounts);
+
+        // Recompute adjusted contract amount using saved TE/VO costs
+        $allSavedCosts = array_merge(
+            is_array($fresh->cost_involved) ? $fresh->cost_involved : [],
+            is_array($fresh->vo_cost)       ? $fresh->vo_cost       : []
+        );
+        $totalCostAdj = collect($allSavedCosts)
+            ->filter(fn($c) => $c !== null && (float)$c !== 0.0)
+            ->sum();
+        $adjustedContractAmount = max(0, (float) $fresh->original_contract_amount + $totalCostAdj);
 
         $project->update([
             'billing_amounts'     => array_values($billingAmounts),
             'billing_dates'       => array_values($billingDates),
             'total_amount_billed' => $totalBilled,
-            'remaining_balance'   => $originalAmount - $totalBilled,
+            'remaining_balance'   => $adjustedContractAmount - $totalBilled,
         ]);
 
         return redirect()

@@ -417,9 +417,18 @@ window.updateBillingPreview = function () {
 
     const newAmt = parseFloat(input.value.replace(/,/g, '')) || 0;
     const base = parseFloat(totalEl.dataset.base) || 0;
-    const contractAmt = parseFloat(document.getElementById('original_contract_amount')?.value) || 0;
+    const originalAmt = parseFloat(document.getElementById('original_contract_amount')?.value) || 0;
+
+    // Mirror the blade @php: adjustedContractAmt = original + sum of all TE/VO costs
+    // The blade already renders the adjusted amount as the denominator in the remaining balance display.
+    // We read it from the rendered remaining balance + totalBilled instead of recomputing costs in JS.
+    const renderedRemaining = parseFloat(
+        document.getElementById('billing_remaining_val')?.textContent.replace(/,/g, '')
+    ) || 0;
+    const adjustedContractAmt = base + renderedRemaining; // base is totalBilled at page load
+
     const newTotal = base + newAmt;
-    const newRemain = contractAmt - newTotal;
+    const newRemain = adjustedContractAmt - newTotal;
 
     totalEl.textContent = newTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     remainingEl.textContent = newRemain.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });

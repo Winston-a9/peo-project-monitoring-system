@@ -91,7 +91,11 @@
     $billingDates   = is_array($project->billing_dates)   ? $project->billing_dates : [];
     $billingCount   = count($billingAmounts);
     $totalBilled    = array_sum($billingAmounts);
-    $remainingBal   = (float)$project->original_contract_amount - $totalBilled;
+    $totalCostAdj   = collect(array_merge(
+        is_array($project->cost_involved ?? null) ? $project->cost_involved : [],
+        is_array($project->vo_cost ?? null)        ? $project->vo_cost : []
+    ))->filter(fn($c) => $c !== null && (float)$c != 0)->sum();
+    $remainingBal   = max(0, (float)$project->original_contract_amount + $totalCostAdj) - $totalBilled;
 
     $advancePct     = is_numeric($project->advance_billing_pct) ? (float) $project->advance_billing_pct : null;
     $advanceAmt     = is_numeric($project->advance_billing_amount) ? (float) $project->advance_billing_amount : null;
@@ -110,92 +114,92 @@
     $logs     = $project->logs()->with('user')->latest()->get();
 @endphp
 
-<div style="max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:0.875rem;">
+<div class="show-page-inner">
 
 {{-- ══════════ HERO SUMMARY ══════════ --}}
-<div class="card" style="display:grid;grid-template-columns:1fr minmax(320px,420px);gap:0.875rem;align-items:start;padding:1.25rem;">
-
-    <div style="display:flex;flex-direction:column;gap:0.9rem;">
-        <div>
-            <p class="ey" style="margin:0 0 0.45rem;">Project Snapshot</p>
-            <h1 style="margin:0;font-size:1.7rem;font-weight:800;">{{ $project->project_title }}</h1>
-            <p class="ds" style="margin-top:0.65rem;">
+<div class="hero-summary card">
+    <div class="hero-summary-main">
+        <div class="hero-summary-heading">
+            <p class="ey">Project Snapshot</p>
+            <h1 class="hero-title">{{ $project->project_title }}</h1>
+            <p class="hero-lead">
                 <i class="fas fa-map-marker-alt" style="color:#f97316;margin-right:0.35rem;"></i>{{ $project->location }}
                 <span style="margin:0 0.65rem;color:var(--tx2);">•</span>
                 <i class="fas fa-building" style="color:#6366f1;margin-right:0.35rem;"></i>{{ $project->contractor }}
             </p>
         </div>
 
-        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0.75rem;">
-            <div style="padding:1rem;border-radius:14px;background:var(--bg2);">
+        <div class="hero-stats-grid">
+            <div class="hero-stat-block">
                 <span class="dl">Contract ID</span>
-                <p class="dv" style="margin-top:0.5rem;font-family:'Syne',sans-serif;font-weight:800;">#{{ $project->contract_id }}</p>
+                <p class="dv">#{{ $project->contract_id }}</p>
             </div>
-            <div style="padding:1rem;border-radius:14px;background:var(--bg2);">
+            <div class="hero-stat-block">
                 <span class="dl">In Charge</span>
-                <p class="dv" style="margin-top:0.5rem;">{{ $project->in_charge }}</p>
+                <p class="dv">{{ $project->in_charge }}</p>
             </div>
-            <div style="padding:1rem;border-radius:14px;background:var(--bg2);">
+            <div class="hero-stat-block">
                 <span class="dl">Contract Amount</span>
-                <p class="dv" style="margin-top:0.5rem;font-family:'Syne',sans-serif;font-weight:800;">₱{{ number_format($project->original_contract_amount, 2) }}</p>
+                <p class="dv">₱{{ number_format($project->original_contract_amount, 2) }}</p>
             </div>
-            <div style="padding:1rem;border-radius:14px;background:var(--bg2);">
-                <span class="dl">Original Amount</span>
-                <p class="dv" style="margin-top:0.5rem;">₱{{ number_format($project->original_contract_amount, 2) }}</p>
+            <div class="hero-stat-block">
+                <span class="dl">Remaining Balance</span>
+                <p class="dv">₱{{ number_format($remainingBal, 2) }}</p>
             </div>
         </div>
     </div>
 
-    <div style="display:grid;grid-template-rows:1fr auto;gap:0.875rem;">
-        <div class="card" style="padding:1.25rem; background:rgba(249,115,22,0.08);">
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;">
+    <div class="hero-summary-side">
+        <div class="hero-status-card card">
+            <div class="hero-status-head">
                 <div>
-                    <p class="ey" style="margin:0 0 0.5rem;">Current Status</p>
-                    <p class="ds" style="margin:0;color:var(--tx2);">Live contract health and schedule progress</p>
+                    <p class="ey">Current Status</p>
+                    <p class="hero-status-copy">Live contract health and schedule progress</p>
                 </div>
-                <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+                <div class="hero-status-meta">
                     @if($project->status === 'completed')
-                        <span class="pill p-gr"><i class="fas fa-check-circle" style="font-size:0.65rem;"></i> Completed</span>
+                        <span class="pill p-gr"><i class="fas fa-check-circle"></i> Completed</span>
                     @elseif($project->status === 'expired' || $daysLeft < 0)
-                        <span class="pill p-re"><i class="fas fa-times-circle" style="font-size:0.65rem;"></i> Expired</span>
+                        <span class="pill p-re"><i class="fas fa-times-circle"></i> Expired</span>
                     @elseif($daysLeft <= 30)
-                        <span class="pill p-am"><i class="fas fa-hourglass-end" style="font-size:0.65rem;"></i> Expiring Soon</span>
+                        <span class="pill p-am"><i class="fas fa-hourglass-end"></i> Expiring Soon</span>
                     @else
-                        <span class="pill p-gr"><i class="fas fa-circle" style="font-size:0.65rem;"></i> Active</span>
+                        <span class="pill p-gr"><i class="fas fa-circle"></i> Active</span>
                     @endif
                 </div>
             </div>
-            <div style="margin-top:1.2rem;">
-                <div style="height:10px;background:rgba(249,115,22,0.15);border-radius:999px;overflow:hidden;">
-                    <div style="width:{{ $pct }}%;height:100%;background:{{ $barColor }};"></div>
+
+            <div class="hero-progress-wrap">
+                <div class="hero-progress-bar">
+                    <div class="hero-progress-bar-inner" style="width:{{ $pct }}%;background:{{ $barColor }};"></div>
                 </div>
-                <p style="margin:0.8rem 0 0;font-size:0.85rem;color:var(--tx2);">
+                <p class="hero-status-note">
                     {{ $project->revised_contract_expiry ? 'Revised expiry due ' . $project->revised_contract_expiry->format('M d, Y') : 'Original expiry due ' . $project->original_contract_expiry->format('M d, Y') }}
                 </p>
             </div>
         </div>
 
-        <div class="card" style="padding:1.25rem;display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
-            <div style="padding:1rem;border-radius:14px;background:var(--bg2);">
-                <p class="ey" style="margin:0 0 0.5rem;">As Planned</p>
-                <p class="sn" style="font-size:1.75rem;color:var(--or5);margin:0;">{{ $project->as_planned }}<span style="font-size:0.85rem;color:var(--ink2);">%</span></p>
+        <div class="hero-quick-grid">
+            <div class="hero-quick-card">
+                <p class="ey">As Planned</p>
+                <p class="sn" style="color:var(--or5);">{{ $project->as_planned }}<span style="font-size:0.85rem;color:var(--ink2);">%</span></p>
             </div>
-            <div style="padding:1rem;border-radius:14px;background:var(--bg2);">
-                <p class="ey" style="margin:0 0 0.5rem;">Work Done</p>
-                <p class="sn" style="font-size:1.75rem;color:#3b82f6;margin:0;">{{ $project->work_done }}<span style="font-size:0.85rem;color:var(--ink2);">%</span></p>
+            <div class="hero-quick-card">
+                <p class="ey">Work Done</p>
+                <p class="sn" style="color:#3b82f6;">{{ $project->work_done }}<span style="font-size:0.85rem;color:var(--ink2);">%</span></p>
             </div>
-            <div style="padding:1rem;border-radius:14px;background:var(--bg2);">
-                <p class="ey" style="margin:0 0 0.5rem;">Slippage</p>
-                <p class="sn" style="font-size:1.75rem;color:{{ $slipColor }};margin:0;">{{ $slip > 0 ? '+' : '' }}{{ $project->slippage }}<span style="font-size:0.85rem;">%</span></p>
-                <p class="ds" style="margin:0.5rem 0 0;color:{{ $slipColor }};">{{ $slipLabel }}</p>
+            <div class="hero-quick-card">
+                <p class="ey">Slippage</p>
+                <p class="sn" style="color:{{ $slipColor }};">{{ $slip > 0 ? '+' : '' }}{{ $project->slippage }}<span style="font-size:0.85rem;">%</span></p>
+                <p class="hero-status-copy" style="color:{{ $slipColor }};">{{ $slipLabel }}</p>
             </div>
-            <div style="padding:1rem;border-radius:14px;background:var(--bg2);">
-                <p class="ey" style="margin:0 0 0.5rem;">Last Progress Update</p>
+            <div class="hero-quick-card">
+                <p class="ey">Last Progress Update</p>
                 @if($project->progress_updated_at)
-                    <p class="dv" style="margin:0;">{{ $project->progress_updated_at->format('M d, Y') }}</p>
-                    <p class="ds" style="margin:0.35rem 0 0;">{{ $project->progress_updated_at->format('h:i A') }}</p>
+                    <p class="dv">{{ $project->progress_updated_at->format('M d, Y') }}</p>
+                    <p class="hero-status-copy">{{ $project->progress_updated_at->format('h:i A') }}</p>
                 @else
-                    <p class="dv" style="margin:0;color:#9ca3af;font-style:italic;">Not tracked yet</p>
+                    <p class="dv" style="color:#9ca3af;font-style:italic;">Not tracked yet</p>
                 @endif
             </div>
         </div>
@@ -689,10 +693,6 @@
                     <p class="ey" style="margin-bottom:0.5rem;">Total Amount Billed</p>
                     <p style="font-family:'Syne',sans-serif;font-size:1.35rem;font-weight:800;color:#16a34a;line-height:1;letter-spacing:-0.02em;">₱{{ number_format($totalBilled, 2) }}</p>
                     @php $billedPct = $project->original_contract_amount > 0 ? round(($totalBilled / $project->original_contract_amount) * 100, 1) : 0; @endphp
-                    <div style="height:4px;background:rgba(34,197,94,0.1);border-radius:99px;margin-top:0.6rem;overflow:hidden;">
-                        <div style="height:100%;width:{{ min($billedPct, 100) }}%;background:#16a34a;border-radius:99px;"></div>
-                    </div>
-                    <p style="font-size:0.7rem;color:#16a34a;margin-top:0.3rem;font-weight:600;">{{ $billedPct }}% of contract</p>
                 </div>
                 <div style="padding:1.25rem;">
                     <p class="ey" style="margin-bottom:0.5rem;">Remaining Balance</p>
@@ -701,10 +701,6 @@
                         @if($remainingBal < 0)<span style="font-size:0.75rem;font-weight:700;color:#dc2626;"> (over)</span>@endif
                     </p>
                     @php $remainPct = $project->original_contract_amount > 0 ? round((abs($remainingBal) / $project->original_contract_amount) * 100, 1) : 0; @endphp
-                    <div style="height:4px;background:{{ $remainingBal >= 0 ? 'rgba(59,130,246,0.1)' : 'rgba(239,68,68,0.1)' }};border-radius:99px;margin-top:0.6rem;overflow:hidden;">
-                        <div style="height:100%;width:{{ min($remainPct, 100) }}%;background:{{ $remainingBal >= 0 ? '#3b82f6' : '#dc2626' }};border-radius:99px;"></div>
-                    </div>
-                    <p style="font-size:0.7rem;color:{{ $remainingBal >= 0 ? '#3b82f6' : '#dc2626' }};margin-top:0.3rem;font-weight:600;">{{ $remainPct }}% {{ $remainingBal >= 0 ? 'remaining' : 'exceeded' }}</p>
                 </div>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;padding:1.25rem;">
@@ -762,7 +758,7 @@
                         foreach ($billingAmounts as $bi => $amount) {
                             $tableRows[] = ['type'=>'billing','label'=>'Billing No.'.($bi+1),'date'=>$billingDates[$bi]??null,'amount'=>(float)$amount,'isLast'=>$bi===$billingCount-1];
                         }
-                        $adjustedContract = (float)$project->original_contract_amount;
+                        $adjustedContract = max(0, (float)$project->original_contract_amount + collect($allExtCosts)->filter(fn($c) => $c !== null && (float)$c != 0)->sum());
                         $runningBilled    = 0;
                     @endphp
                     @foreach($tableRows as $ri => $row)
