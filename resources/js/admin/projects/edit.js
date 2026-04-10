@@ -242,17 +242,20 @@ window.calculateDaysOverdue = function () {
 
 /**
  * LD Per Day formula:
- *   LD per day = (Accomplished / 100) × Original Contract Amount × 0.001
+ *   LD per day = (Unworked % ÷ 100) × Remaining Balance × 0.001
  *
- * Note: uses ACCOMPLISHED %, not unworked %.
+ * Note: uses UNWORKED %, not accomplished %.
  * ld_unworked is kept in sync for display only.
  */
 window.calculateLDPerDay = function () {
     const acc = parseFloat(document.getElementById('ld_accomplished').value) || 0;
-    const amt = parseFloat(document.getElementById('original_contract_amount').value.replace(/,/g, '')) || 0;
+    const remainingEl = document.getElementById('remaining_balance');
+    const remaining = remainingEl ? parseFloat(remainingEl.value.replace(/,/g, '')) || 0 : NaN;
+    const fallbackAmt = parseFloat(document.getElementById('original_contract_amount')?.value.replace(/,/g, '')) || 0;
+    const basisAmount = Number.isFinite(remaining) ? remaining : fallbackAmt;
 
     const unworked = 100 - acc;  // ← NO rounding, keep full precision
-    const perDay = Math.max(0, unworked) / 100 * amt * 0.001;
+    const perDay = Math.max(0, unworked) / 100 * basisAmount * 0.001;
 
     document.getElementById('ld_unworked').value = unworked.toFixed(2);  // store 2dp for display
     document.getElementById('ld_per_day').value = perDay;  // full precision

@@ -516,7 +516,7 @@
                             <p style="font-size:0.9rem; font-weight:700; color:var(--text-primary); margin:0; padding:0.1rem 0; font-family:'Syne',sans-serif; letter-spacing:-0.01em;">
                                 ₱<span id="ld_per_day_display">{{ number_format((float) old('ld_per_day', $project->ld_per_day ?? 0), 2) }}</span>
                             </p>
-                            <p class="field-hint">Formula: (Unworked % ÷ 100) × Adjusted Contract Amount × 0.001</p>
+                            <p class="field-hint">Formula: (Unworked % ÷ 100) × Remaining Balance × 0.001</p>
                         </div>
 
                         {{-- Total LD (auto) --}}
@@ -981,6 +981,7 @@
                             <span style="font-family:'Syne',sans-serif; font-size:1.2rem; font-weight:800; color:{{ $remainingBal >= 0 ? '#3b82f6' : '#dc2626' }};">
                                 ₱{{ number_format($remainingBal, 2) }}
                             </span>
+                            <input type="hidden" id="remaining_balance" name="remaining_balance" value="{{ old('remaining_balance', $remainingBal) }}">
                         </div>
                     </div>
                     <div style="border-top:1px dashed rgba(34,197,94,0.2); margin-bottom:1.5rem;"></div>
