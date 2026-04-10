@@ -1076,14 +1076,13 @@
                             <label class="field-label">Percentage (%)</label>
                             <div style="position:relative;">
                                 <input type="number" name="advance_billing_pct" id="advance_billing_pct" class="field-input"
-                                    min="0" max="100" step="0.01" placeholder="e.g. 15"
+                                    min="0" max="100" step="0.001" placeholder="e.g. 15"
                                     value="{{ old('advance_billing_pct', $project->advance_billing_pct ?? '') }}"
                                     style="border-color:rgba(59,130,246,0.3); padding-right:2rem;"
                                     onkeydown="return event.key !== '-' && event.key !== 'e'"
-                                    oninput="calcAdvanceRetention()"
+                                    oninput="if(parseFloat(this.value)>100)this.value=100; calcAdvanceRetention()"
                                     onfocus="this.style.borderColor='#2563eb';this.style.boxShadow='0 0 0 3px rgba(59,130,246,0.1)'"
                                     onblur="this.style.borderColor='rgba(59,130,246,0.3)';this.style.boxShadow='none'">
-                                <span style="position:absolute; right:0.75rem; top:50%; transform:translateY(-50%); font-size:0.75rem; font-weight:700; color:#9ca3af; pointer-events:none;">%</span>
                             </div>
                             <p class="field-hint">Percentage of the original contract amount</p>
                         </div>
@@ -1154,14 +1153,13 @@
                             <label class="field-label">Percentage (%)</label>
                             <div style="position:relative;">
                                 <input type="number" name="retention_pct" id="retention_pct" class="field-input"
-                                    min="0" max="100" step="0.01" placeholder="e.g. 10"
+                                    min="0" max="100" step="0.001" placeholder="e.g. 10"
                                     value="{{ old('retention_pct', $project->retention_pct ?? '') }}"
                                     style="border-color:rgba(168,85,247,0.3); padding-right:2rem;"
                                     onkeydown="return event.key !== '-' && event.key !== 'e'"
-                                    oninput="calcAdvanceRetention()"
+                                    oninput="if(parseFloat(this.value)>100)this.value=100; calcAdvanceRetention()"
                                     onfocus="this.style.borderColor='#9333ea';this.style.boxShadow='0 0 0 3px rgba(168,85,247,0.1)'"
                                     onblur="this.style.borderColor='rgba(168,85,247,0.3)';this.style.boxShadow='none'">
-                                <span style="position:absolute; right:0.75rem; top:50%; transform:translateY(-50%); font-size:0.75rem; font-weight:700; color:#9ca3af; pointer-events:none;">%</span>
                             </div>
                             <p class="field-hint">Percentage of the original contract amount</p>
                         </div>
