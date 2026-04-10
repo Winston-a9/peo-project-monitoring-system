@@ -1,35 +1,58 @@
 /* ── Amount input comma formatter ── */
 (function () {
     function rawVal(str) {
-        return str.replace(/,/g, '').replace(/[^0-9.]/g, '');
+    const isNeg = str.trim().startsWith('-');
+    const cleaned = str.replace(/,/g, '').replace(/[^0-9.]/g, '');
+    return isNeg && cleaned !== '' ? '-' + cleaned : cleaned;
     }
+
     function formatWithCommas(str) {
-        const raw = rawVal(str);
+        const trimmed = str.trim();
+        // Allow bare minus while user is still typing
+        if (trimmed === '-') return '-';
+        
+        const isNeg = trimmed.startsWith('-');
+        const raw = rawVal(trimmed);
         if (raw === '') return '';
-        const parts = raw.split('.');
+        
+        const abs = raw.replace(/^-/, '');
+        const parts = abs.split('.');
         if (parts.length > 2) parts.splice(2);
         const intFormatted = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-        return parts.length === 2 ? intFormatted + '.' + parts[1] : intFormatted;
+        const formatted = parts.length === 2 ? intFormatted + '.' + parts[1] : intFormatted;
+        return isNeg ? '-' + formatted : formatted;
     }
 
-    window.initAmountInput = function (el) {
-        if (!el || el.dataset.amountInit) return;
-        el.dataset.amountInit = '1';
-        if (el.value) el.value = formatWithCommas(el.value);
+window.initAmountInput = function (el) {
+    if (!el || el.dataset.amountInit) return;
+    el.dataset.amountInit = '1';
+    if (el.value) el.value = formatWithCommas(el.value);
 
-        el.addEventListener('input', function () {
-            const cursorPos = this.selectionStart;
-            const beforeLen = this.value.length;
-            this.value = formatWithCommas(this.value);
-            const afterLen = this.value.length;
-            const newPos = cursorPos + (afterLen - beforeLen);
-            this.setSelectionRange(newPos, newPos);
-        });
+    el.addEventListener('keydown', function (e) {
+        // Allow minus only at the start and only if not already present
+        if (e.key === '-') {
+            if (this.selectionStart === 0 && !this.value.startsWith('-')) {
+                return; // allow it
+            }
+            e.preventDefault();
+        }
+    });
 
-        el.addEventListener('blur', function () {
-            this.value = formatWithCommas(this.value);
-        });
-    };
+    el.addEventListener('input', function () {
+        const cursorPos = this.selectionStart;
+        const beforeLen = this.value.length;
+        this.value = formatWithCommas(this.value);
+        const afterLen = this.value.length;
+        const newPos = cursorPos + (afterLen - beforeLen);
+        this.setSelectionRange(newPos, newPos);
+    });
+
+    el.addEventListener('blur', function () {
+        // On blur, if just '-' was typed with nothing after, clear it
+        if (this.value.trim() === '-') this.value = '';
+        else this.value = formatWithCommas(this.value);
+    });
+};
 
     // Strip commas before any form submits so Laravel receives clean numbers
     document.addEventListener('submit', function (e) {

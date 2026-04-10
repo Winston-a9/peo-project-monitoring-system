@@ -657,8 +657,7 @@
                                     inputmode="decimal" placeholder="0.00"
                                     style="padding-left:1.75rem;">
                             </div>
-                            <p class="field-hint">Optional cost for this extension</p>
-                        </div>
+                        <p class="field-hint"><i class="fas fa-minus" style="color:#ef4444; font-size:0.6rem;"></i> Use a negative value (e.g. <strong>−50,000</strong>) to deduct from the contract amount</p>                        </div>
                         <div class="field-group">
                             <label class="field-label">Date Requested</label>
                             <input type="date" name="new_te_date" class="field-input"
@@ -798,8 +797,7 @@
                                     inputmode="decimal" placeholder="0.00"
                                     style="padding-left:1.75rem; border-color:rgba(99,102,241,0.25);">
                             </div>
-                            <p class="field-hint">Additional cost for this variation</p>
-                        </div>
+                        <p class="field-hint"><i class="fas fa-minus" style="color:#ef4444; font-size:0.6rem;"></i> Use a negative value to deduct; positive to add to the contract amount</p>                        </div>
                         <div class="field-group">
                             <label class="field-label">Date Requested</label>
                             <input type="date" name="new_vo_date" class="field-input"

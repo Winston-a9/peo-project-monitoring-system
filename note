@@ -128,11 +128,11 @@ edit.blade
 		FIXED DATE START TO FINISH in LD
 
 	extensions
+		bug: make days input required
 		cost involve should also add or decrease the remaining balance
 		cost involve add a negative sign "-" means the amount is being deducted
 
 	billing 
-		advance billing and retention edit modal
 		bug:percentage of advance billin and retention should only be max of 100% with 2 decimals
 	admin
 
@@ -154,6 +154,7 @@ if expired
 ==================================================================================================================================================================================================================================================================================================
 FIXED/added:
 ADMIN
+contract id coloumn and contract id filter search text add
 render the adv billing and retention in the show.blade
 		in contract dates add days and how much days has been extended
 
