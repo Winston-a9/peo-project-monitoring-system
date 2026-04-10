@@ -1,225 +1,254 @@
 <x-app-layout>
-<x-slot name="header">
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-            <h2 style="font-family:'Syne',sans-serif; font-weight:800; font-size:1.6rem; letter-spacing:-0.03em; color:var(--text-primary); display:flex; align-items:center; gap:0.6rem;">
-                <span style="background:#f97316; width:34px; height:34px; border-radius:9px; display:inline-flex; align-items:center; justify-content:center; box-shadow:0 2px 10px rgba(249,115,22,0.35);">
-                    <i class="fas fa-plus-circle" style="color:white; font-size:0.85rem;"></i>
-                </span>
-                Create New Project
-            </h2>
-            <p style="color:var(--text-secondary); font-size:0.82rem; margin-top:3px;">Add a new project to the system</p>
-        </div>
-        <div style="display:flex; align-items:center; gap:1.25rem;">
-            <a href="{{ route('admin.projects.index') }}"
-               style="display:inline-flex; align-items:center; gap:0.5rem; padding:0.6rem 1.1rem; border:1.5px solid var(--border); border-radius:9px; font-weight:600; font-size:0.855rem; color:var(--text-secondary); text-decoration:none; background:var(--bg-secondary); transition:all 0.2s;"
-               onmouseover="this.style.borderColor='#f97316';this.style.color='#ea580c'"
-               onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-secondary)'">
-                <i class="fas fa-arrow-left"></i> Back
-            </a>
-        </div>
-    </div>
-</x-slot>
-
-@push('styles')
-    @vite('resources/css/admin/projects/create.css')
-@endpush
-
-<div class="max-w-4xl mx-auto fade-up">
-    <form method="POST" action="{{ route('admin.projects.store') }}">
-        @csrf
-
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.25rem; margin-bottom:1.25rem;">
-
-            {{-- Project Information --}}
-            <div class="form-card" style="grid-column:1 / -1;">
-                <div class="section-header">
-                    <i class="fas fa-circle-info" style="color:var(--orange-500); font-size:0.85rem;"></i>
-                    <span>Project Information</span>
-                </div>
-                <div class="section-body" style="display:grid; grid-template-columns:1fr 1fr; gap:1.25rem;">
-                    <div style="grid-column:1/-1;">
-                        <label class="field-label">Contract ID</label>
-                        <input type="number" name="contract_id"
-                            class="field-input {{ $errors->has('contract_id') ? 'has-error' : '' }}"
-                            placeholder="Enter unique contract ID"
-                            value="{{ old('contract_id') }}"
-                            min="1" step="1"
-                            onkeydown="return event.key !== '-' && event.key !== 'e'"
-                            required>
-                        @error('contract_id')
-                            <p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div>
-                        <label class="field-label">In Charge</label>
-                        <input type="text" name="in_charge" class="field-input {{ $errors->has('in_charge') ? 'has-error' : '' }}"
-                            placeholder="Who is responsible?" value="{{ old('in_charge') }}" required>
-                        @error('in_charge')<p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
-                    </div>
-
-                    <div>
-                        <label class="field-label">Project Title</label>
-                        <input type="text" name="project_title" class="field-input {{ $errors->has('project_title') ? 'has-error' : '' }}"
-                            placeholder="Give the project a name" value="{{ old('project_title') }}" required>
-                        @error('project_title')<p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
-                    </div>
-
-                    <div>
-                        <label class="field-label">Location</label>
-                        <input type="text" name="location" class="field-input {{ $errors->has('location') ? 'has-error' : '' }}"
-                            placeholder="Project location" value="{{ old('location') }}" required>
-                        @error('location')<p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
-                    </div>
-
-                    <div>
-                        <label class="field-label">Contractor</label>
-                        <input type="text" name="contractor" class="field-input {{ $errors->has('contractor') ? 'has-error' : '' }}"
-                            placeholder="Contractor company" value="{{ old('contractor') }}" required>
-                        @error('contractor')<p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
-                    </div>
-
-                    <div>
-                        <label class="field-label">Contract Amount</label>
-                        <div class="prefix-wrap">
-                        <span class="prefix">₱</span>
-                        {{-- Display input: shows formatted number with commas --}}
-                        <input type="text" id="original_contract_amount_display"
-                            class="field-input {{ $errors->has('original_contract_amount') ? 'has-error' : '' }}"
-                            placeholder="0.00"
-                            value="{{ old('original_contract_amount') ? number_format((float) old('original_contract_amount'), 2) : '' }}"
-                            inputmode="decimal"
-                            autocomplete="off"
-                            oninput="formatContractAmount(this)">
-                        {{-- Hidden input: clean numeric value submitted to Laravel --}}
-                        <input type="hidden" name="original_contract_amount" id="original_contract_amount_raw"
-                            value="{{ old('original_contract_amount', '') }}">
-                    </div>
-                        @error('original_contract_amount')<p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
-                    </div>
-                <div>
-                    <label class="field-label">Status <span style="font-weight:400;color:#9ca3af;">(auto)</span></label>
-                    <span style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.4rem 0.85rem;border-radius:99px;background:rgba(34,197,94,0.1);color:#16a34a;font-size:0.8rem;font-weight:700;">
-                        <span style="width:7px;height:7px;border-radius:50%;background:#22c55e;display:inline-block;"></span> Ongoing
+    <x-slot name="header">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <h2
+                    style="font-family:'Syne',sans-serif; font-weight:800; font-size:1.6rem; letter-spacing:-0.03em; color:var(--text-primary); display:flex; align-items:center; gap:0.6rem;">
+                    <span
+                        style="background:#f97316; width:34px; height:34px; border-radius:9px; display:inline-flex; align-items:center; justify-content:center; box-shadow:0 2px 10px rgba(249,115,22,0.35);">
+                        <i class="fas fa-plus-circle" style="color:white; font-size:0.85rem;"></i>
                     </span>
-                    <p class="field-hint" style="color:#9ca3af;">Auto-determined from expiry date on save</p>
-                </div>
-                </div>
+                    Create New Project
+                </h2>
+                <p style="color:var(--text-secondary); font-size:0.82rem; margin-top:3px;">Add a new project to the
+                    system</p>
             </div>
-
-            {{-- Contract Dates --}}
-            <div class="form-card">
-                <div class="section-header">
-                    <i class="fas fa-calendar-days" style="color:var(--orange-500); font-size:0.85rem;"></i>
-                    <span>Contract Dates</span>
-                </div>
-                <div class="section-body" style="display:flex; flex-direction:column; gap:1.1rem;">
-                    <div>
-                        <label class="field-label">Date Started</label>
-                        <input type="date" id="date_started" name="date_started" class="field-input {{ $errors->has('date_started') ? 'has-error' : '' }}"
-                            value="{{ old('date_started') }}" required oninput="calculateOriginalExpiry()">
-                        @error('date_started')<p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
-                    </div>
-                    <div>
-                        <label class="field-label">Contract Days</label>
-                        <input type="number" id="contract_days" onkeydown="return event.key !== '-' && event.key !== 'e' "  name="contract_days" class="field-input {{ $errors->has('contract_days') ? 'has-error' : '' }}"
-                            placeholder="Enter number of days" value="{{ old('contract_days') }}" min="0" step="1" required oninput="calculateOriginalExpiry()">
-                        @error('contract_days')<p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
-                    </div>
-                    <div>
-                        <label class="field-label">Original Expiry <span style="font-weight:400; text-transform:none; letter-spacing:0; color:#9ca3af;">(auto-calculated)</span></label>
-                        <input type="date" id="original_contract_expiry" name="original_contract_expiry" class="field-input {{ $errors->has('original_contract_expiry') ? 'has-error' : '' }}"
-                            value="{{ old('original_contract_expiry') }}" readonly style="background:rgba(249,115,22,0.08); cursor:not-allowed;">
-                        @error('original_contract_expiry')<p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
-                    </div>
-                </div>
+            <div style="display:flex; align-items:center; gap:1.25rem;">
+                <a href="{{ route('admin.projects.index') }}"
+                    style="display:inline-flex; align-items:center; gap:0.5rem; padding:0.6rem 1.1rem; border:1.5px solid var(--border); border-radius:9px; font-weight:600; font-size:0.855rem; color:var(--text-secondary); text-decoration:none; background:var(--bg-secondary); transition:all 0.2s;"
+                    onmouseover="this.style.borderColor='#f97316';this.style.color='#ea580c'"
+                    onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-secondary)'">
+                    <i class="fas fa-arrow-left"></i> Back
+                </a>
             </div>
+        </div>
+    </x-slot>
 
-            {{-- Progress --}}
-            <div class="form-card">
-                <div class="section-header">
-                    <i class="fas fa-chart-bar" style="color:var(--orange-500); font-size:0.85rem;"></i>
-                    <span>Progress</span>
+    @push('styles')
+        @vite('resources/css/admin/projects/create.css')
+    @endpush
+
+    <div class="max-w-4xl mx-auto fade-up">
+        <form method="POST" action="{{ route('admin.projects.store') }}">
+            @csrf
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.25rem; margin-bottom:1.25rem;">
+
+                {{-- Project Information --}}
+                <div class="form-card" style="grid-column:1 / -1;">
+                    <div class="section-header">
+                        <i class="fas fa-circle-info" style="color:var(--orange-500); font-size:0.85rem;"></i>
+                        <span>Project Information</span>
+                    </div>
+                    <div class="section-body" style="display:grid; grid-template-columns:1fr 1fr; gap:1.25rem;">
+                        <div style="grid-column:1/-1;">
+                            <label class="field-label">Contract ID</label>
+                            <input type="number" name="contract_id"
+                                class="field-input {{ $errors->has('contract_id') ? 'has-error' : '' }}"
+                                placeholder="Enter unique contract ID" value="{{ old('contract_id') }}" min="1" step="1"
+                                onkeydown="return event.key !== '-' && event.key !== 'e'" required>
+                            @error('contract_id')
+                                <p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div>
+                            <label class="field-label">In Charge</label>
+                            <input type="text" name="in_charge"
+                                class="field-input {{ $errors->has('in_charge') ? 'has-error' : '' }}"
+                                placeholder="Who is responsible?" value="{{ old('in_charge') }}" required>
+                            @error('in_charge')<p class="field-error"><i
+                            class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
+                        </div>
+
+                        <div>
+                            <label class="field-label">Project Title</label>
+                            <input type="text" name="project_title"
+                                class="field-input {{ $errors->has('project_title') ? 'has-error' : '' }}"
+                                placeholder="Give the project a name" value="{{ old('project_title') }}" required>
+                            @error('project_title')<p class="field-error"><i
+                            class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
+                        </div>
+
+                        <div>
+                            <label class="field-label">Location</label>
+                            <input type="text" name="location"
+                                class="field-input {{ $errors->has('location') ? 'has-error' : '' }}"
+                                placeholder="Project location" value="{{ old('location') }}" required>
+                            @error('location')<p class="field-error"><i
+                            class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
+                        </div>
+
+                        <div>
+                            <label class="field-label">Contractor</label>
+                            <input type="text" name="contractor"
+                                class="field-input {{ $errors->has('contractor') ? 'has-error' : '' }}"
+                                placeholder="Contractor company" value="{{ old('contractor') }}" required>
+                            @error('contractor')<p class="field-error"><i
+                            class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
+                        </div>
+
+                        <div>
+                            <label class="field-label">Contract Amount</label>
+                            <div class="prefix-wrap">
+                                <span class="prefix">₱</span>
+                                {{-- Display input: shows formatted number with commas --}}
+                                <input type="text" id="original_contract_amount_display"
+                                    class="field-input {{ $errors->has('original_contract_amount') ? 'has-error' : '' }}"
+                                    placeholder="0.00"
+                                    value="{{ old('original_contract_amount') ? number_format((float) old('original_contract_amount'), 2) : '' }}"
+                                    inputmode="decimal" autocomplete="off" oninput="formatContractAmount(this)">
+                                {{-- Hidden input: clean numeric value submitted to Laravel --}}
+                                <input type="hidden" name="original_contract_amount" id="original_contract_amount_raw"
+                                    value="{{ old('original_contract_amount', '') }}">
+                            </div>
+                            @error('original_contract_amount')<p class="field-error"><i
+                            class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
+                        </div>
+                        <div>
+                            <label class="field-label">Status <span
+                                    style="font-weight:400;color:#9ca3af;">(auto)</span></label>
+                            <span
+                                style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.4rem 0.85rem;border-radius:99px;background:rgba(34,197,94,0.1);color:#16a34a;font-size:0.8rem;font-weight:700;">
+                                <span
+                                    style="width:7px;height:7px;border-radius:50%;background:#22c55e;display:inline-block;"></span>
+                                Ongoing
+                            </span>
+                            <p class="field-hint" style="color:#9ca3af;">Auto-determined from expiry date on save</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="section-body" style="display:flex; flex-direction:column; gap:1.1rem;">
-                    <div>
-                        <label class="field-label">As Planned <span style="font-weight:400; text-transform:none; letter-spacing:0; color:#9ca3af;">(%)</span></label>
-                        <div class="prefix-wrap" style="position:relative;">
-                            <input type="number" onkeydown="return event.key !== '-'&& event.key !== 'e' " name="as_planned" id="as_planned" class="field-input"
-                            style="padding-right:2.5rem;" placeholder="0.000"
-                            value="{{ old('as_planned', 0) }}"
-                            min="0" max="100" step="0.001"
-                            oninput="if(parseFloat(this.value)>100)this.value=100; liveSlippage()">
-                        </div>
-                        <div class="prog-bar-track"><div class="prog-bar-fill" id="ap_bar" style="background:var(--orange-500); width:0%;"></div></div>
-                    </div>
-                    <div>
-                        <label class="field-label">Work Done <span style="font-weight:400; text-transform:none; letter-spacing:0; color:#9ca3af;">(%)</span></label>
-                        <div style="position:relative;">
-                            <input type="number" onkeydown="return event.key !== '-'&& event.key !== 'e' " name="work_done" id="work_done" class="field-input"
-                            style="padding-right:2.5rem;" placeholder="0.000"
-                            value="{{ old('work_done', 0) }}"
-                            min="0" max="100" step="0.001"
-                            oninput="if(parseFloat(this.value)>100)this.value=100; liveSlippage()">
-                        </div>
-                        <div class="prog-bar-track"><div class="prog-bar-fill" id="wd_bar" style="background:#3b82f6; width:0%;"></div></div>
-                    </div>
-                    <div>
-                        <label class="field-label">Slippage <span style="font-weight:400; text-transform:none; letter-spacing:0; color:#9ca3af;">(auto-calculated)</span></label>
-                        
-                        {{-- Hidden input so slippage still submits with the form --}}
-                        <input type="hidden" name="slippage" id="slippage" value="{{ old('slippage', 0) }}">
 
-                        <div id="slippage-display" style="
+                {{-- Contract Dates --}}
+                <div class="form-card">
+                    <div class="section-header">
+                        <i class="fas fa-calendar-days" style="color:var(--orange-500); font-size:0.85rem;"></i>
+                        <span>Contract Dates</span>
+                    </div>
+                    <div class="section-body" style="display:flex; flex-direction:column; gap:1.1rem;">
+                        <div>
+                            <label class="field-label">Date Started</label>
+                            <input type="date" id="date_started" name="date_started"
+                                class="field-input {{ $errors->has('date_started') ? 'has-error' : '' }}"
+                                value="{{ old('date_started') }}" required oninput="calculateOriginalExpiry()">
+                            @error('date_started')<p class="field-error"><i
+                            class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
+                        </div>
+                        <div>
+                            <label class="field-label">Contract Days</label>
+                            <input type="number" id="contract_days"
+                                onkeydown="return event.key !== '-' && event.key !== 'e' " name="contract_days"
+                                class="field-input {{ $errors->has('contract_days') ? 'has-error' : '' }}"
+                                placeholder="Enter number of days" value="{{ old('contract_days') }}" min="0" step="1"
+                                required oninput="calculateOriginalExpiry()">
+                            @error('contract_days')<p class="field-error"><i
+                            class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
+                        </div>
+                        <div>
+                            <label class="field-label">Original Expiry <span
+                                    style="font-weight:400; text-transform:none; letter-spacing:0; color:#9ca3af;">(auto-calculated)</span></label>
+                            <input type="date" id="original_contract_expiry" name="original_contract_expiry"
+                                class="field-input {{ $errors->has('original_contract_expiry') ? 'has-error' : '' }}"
+                                value="{{ old('original_contract_expiry') }}" readonly
+                                style="background:rgba(249,115,22,0.08); cursor:not-allowed;">
+                            @error('original_contract_expiry')<p class="field-error"><i
+                            class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Progress --}}
+                <div class="form-card">
+                    <div class="section-header">
+                        <i class="fas fa-chart-bar" style="color:var(--orange-500); font-size:0.85rem;"></i>
+                        <span>Progress</span>
+                    </div>
+                    <div class="section-body" style="display:flex; flex-direction:column; gap:1.1rem;">
+                        <div>
+                            <label class="field-label">As Planned <span
+                                    style="font-weight:400; text-transform:none; letter-spacing:0; color:#9ca3af;">(%)</span></label>
+                            <div class="prefix-wrap" style="position:relative;">
+                                <input type="number" onkeydown="return event.key !== '-'&& event.key !== 'e' "
+                                    name="as_planned" id="as_planned" class="field-input" style="padding-right:2.5rem;"
+                                    placeholder="0.000" value="{{ old('as_planned', 0) }}" min="0" max="100"
+                                    step="0.001" oninput="if(parseFloat(this.value)>100)this.value=100; liveSlippage()">
+                            </div>
+                            <div class="prog-bar-track">
+                                <div class="prog-bar-fill" id="ap_bar" style="background:var(--orange-500); width:0%;">
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="field-label">Work Done <span
+                                    style="font-weight:400; text-transform:none; letter-spacing:0; color:#9ca3af;">(%)</span></label>
+                            <div style="position:relative;">
+                                <input type="number" onkeydown="return event.key !== '-'&& event.key !== 'e' "
+                                    name="work_done" id="work_done" class="field-input" style="padding-right:2.5rem;"
+                                    placeholder="0.000" value="{{ old('work_done', 0) }}" min="0" max="100" step="0.001"
+                                    oninput="if(parseFloat(this.value)>100)this.value=100; liveSlippage()">
+                            </div>
+                            <div class="prog-bar-track">
+                                <div class="prog-bar-fill" id="wd_bar" style="background:#3b82f6; width:0%;"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="field-label">Slippage <span
+                                    style="font-weight:400; text-transform:none; letter-spacing:0; color:#9ca3af;">(auto-calculated)</span></label>
+
+                            {{-- Hidden input so slippage still submits with the form --}}
+                            <input type="hidden" name="slippage" id="slippage" value="{{ old('slippage', 0) }}">
+
+                            <div id="slippage-display" style="
                             display:flex; align-items:center; justify-content:space-between;
                             padding:0.75rem 1rem;
                             border:1.5px solid rgba(26,15,0,0.08);
                             border-radius:9px;
                             background:#fffaf5;
                             min-height:42px;">
-                            <p id="slippage_label" style="font-size:0.825rem; font-weight:600; color:#9ca3af;">
-                                <i class="fas fa-minus"></i> Enter values above
-                            </p>
-                            <span id="slippage-value" style="font-family:'Syne',sans-serif; font-size:1.15rem; font-weight:800; color:#9ca3af;">—</span>
+                                <p id="slippage_label" style="font-size:0.825rem; font-weight:600; color:#9ca3af;">
+                                    <i class="fas fa-minus"></i> Enter values above
+                                </p>
+                                <span id="slippage-value"
+                                    style="font-family:'Syne',sans-serif; font-size:1.15rem; font-weight:800; color:#9ca3af;">—</span>
+                            </div>
                         </div>
                     </div>
                 </div>
+
+                {{-- Remarks --}}
+                <div class="form-card" style="grid-column:1/-1;">
+                    <div class="section-header">
+                        <i class="fas fa-comment-dots" style="color:var(--orange-500); font-size:0.85rem;"></i>
+                        <span>Remarks / Recommendation <span
+                                style="font-weight:400; font-family:'Instrument Sans',sans-serif; letter-spacing:0; font-size:0.78rem; color:#9ca3af;">(optional)</span></span>
+                    </div>
+                    <div class="section-body">
+                        <textarea name="remarks_recommendation" rows="4" class="field-input" style="resize:none;"
+                            placeholder="Enter any remarks or recommendations…">{{ old('remarks_recommendation') }}</textarea>
+                    </div>
+                </div>
+
             </div>
 
-            {{-- Remarks --}}
-            <div class="form-card" style="grid-column:1/-1;">
-                <div class="section-header">
-                    <i class="fas fa-comment-dots" style="color:var(--orange-500); font-size:0.85rem;"></i>
-                    <span>Remarks / Recommendation <span style="font-weight:400; font-family:'Instrument Sans',sans-serif; letter-spacing:0; font-size:0.78rem; color:#9ca3af;">(optional)</span></span>
-                </div>
-                <div class="section-body">
-                    <textarea name="remarks_recommendation" rows="4" class="field-input" style="resize:none;"
-                        placeholder="Enter any remarks or recommendations…">{{ old('remarks_recommendation') }}</textarea>
-                </div>
+            {{-- Actions --}}
+            <div style="display:flex; gap:0.875rem; padding-top:0.25rem;">
+                <button type="submit"
+                    style="display:inline-flex; align-items:center; gap:0.5rem; padding:0.75rem 1.75rem; background:var(--orange-500); color:white; font-weight:700; font-size:0.9rem; border-radius:10px; border:none; cursor:pointer; box-shadow:0 3px 14px rgba(249,115,22,0.38); font-family:'Instrument Sans',sans-serif; transition:all 0.2s;"
+                    onmouseover="this.style.background='#ea580c';this.style.transform='translateY(-1px)'"
+                    onmouseout="this.style.background='#f97316';this.style.transform='translateY(0)'">
+                    <i class="fas fa-save"></i> Create Project
+                </button>
+                <a href="{{ route('admin.projects.index') }}"
+                    style="display:inline-flex; align-items:center; gap:0.5rem; padding:0.75rem 1.5rem; border:1.5px solid rgba(26,15,0,0.1); border-radius:10px; font-weight:600; font-size:0.875rem; color:var(--ink-muted); text-decoration:none; background:white; transition:all 0.2s;"
+                    onmouseover="this.style.borderColor='var(--orange-500)';this.style.color='var(--orange-600)'"
+                    onmouseout="this.style.borderColor='rgba(26,15,0,0.1)';this.style.color='var(--ink-muted)'">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
             </div>
 
-        </div>
-
-        {{-- Actions --}}
-        <div style="display:flex; gap:0.875rem; padding-top:0.25rem;">
-            <button type="submit"
-                style="display:inline-flex; align-items:center; gap:0.5rem; padding:0.75rem 1.75rem; background:var(--orange-500); color:white; font-weight:700; font-size:0.9rem; border-radius:10px; border:none; cursor:pointer; box-shadow:0 3px 14px rgba(249,115,22,0.38); font-family:'Instrument Sans',sans-serif; transition:all 0.2s;"
-                onmouseover="this.style.background='#ea580c';this.style.transform='translateY(-1px)'"
-                onmouseout="this.style.background='#f97316';this.style.transform='translateY(0)'">
-                <i class="fas fa-save"></i> Create Project
-            </button>
-            <a href="{{ route('admin.projects.index') }}"
-               style="display:inline-flex; align-items:center; gap:0.5rem; padding:0.75rem 1.5rem; border:1.5px solid rgba(26,15,0,0.1); border-radius:10px; font-weight:600; font-size:0.875rem; color:var(--ink-muted); text-decoration:none; background:white; transition:all 0.2s;"
-               onmouseover="this.style.borderColor='var(--orange-500)';this.style.color='var(--orange-600)'"
-               onmouseout="this.style.borderColor='rgba(26,15,0,0.1)';this.style.color='var(--ink-muted)'">
-                <i class="fas fa-times"></i> Cancel
-            </a>
-        </div>
-
-    </form>
-</div>
-@push('scripts')
-    @vite('resources/js/admin/projects/create.js')
-@endpush
+        </form>
+    </div>
+    @push('scripts')
+        @vite('resources/js/admin/projects/create.js')
+    @endpush
 </x-app-layout>

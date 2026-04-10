@@ -1,4 +1,4 @@
- // ═══ DONUT HOVER FUNCTIONALITY ═══
+// ═══ DONUT HOVER FUNCTIONALITY ═══
 const center = document.getElementById('donut-center');
 if (center) {
     // Store the default HTML so mouseleave restores it exactly

@@ -59,58 +59,6 @@
        background: var(--bg-secondary);
    }
 
-   .summary-cards {
-       display: grid;
-       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-       gap: 1.2rem;
-       margin-bottom: 2rem;
-   }
-
-   .summary-card {
-       background: var(--bg-primary);
-       border: 1px solid var(--border);
-       border-radius: 12px;
-       padding: 1.5rem;
-       display: flex;
-       align-items: center;
-       gap: 1rem;
-       transition: all 0.3s;
-   }
-
-   .summary-card:hover {
-       border-color: var(--orange-500);
-       transform: translateY(-2px);
-       box-shadow: 0 4px 12px rgba(249, 115, 22, 0.15);
-   }
-
-   .summary-card-icon {
-       width: 50px;
-       height: 50px;
-       border-radius: 10px;
-       display: flex;
-       align-items: center;
-       justify-content: center;
-       font-size: 1.4rem;
-   }
-
-   .summary-card-content {
-       flex: 1;
-   }
-
-   .summary-card-label {
-       font-size: 0.8rem;
-       color: var(--text-secondary);
-       font-weight: 600;
-       text-transform: uppercase;
-   }
-
-   .summary-card-value {
-       font-size: 1.8rem;
-       font-weight: 800;
-       color: var(--text-primary);
-       margin-top: 0.25rem;
-   }
-
    .filter-input {
        padding: 0.575rem 1rem 0.575rem 2.25rem;
        width: 100%;
@@ -207,6 +155,7 @@
 
    .proj-table tbody tr {
        transition: background 0.13s;
+       cursor: pointer;
    }
 
    @media (prefers-color-scheme: light) {
@@ -354,7 +303,7 @@
        border-radius: 8px;
        font-size: 0.755rem;
        font-weight: 600;
-       color: var(--text-secondary);
+       color: var(--ink-muted);
        border: 1.5px solid var(--border);
        background: var(--bg-primary);
        text-decoration: none;
@@ -365,7 +314,7 @@
    .view-btn:hover {
        border-color: var(--orange-500);
        color: var(--orange-600);
-       background: rgba(249, 115, 22, 0.1);
+       background: rgba(249, 115, 22, 0.08);
    }
 
    /* Chips */
@@ -384,7 +333,7 @@
 
    .chip-default {
        background: var(--bg-primary);
-       color: var(--text-secondary);
+       color: var(--ink-muted);
        border-color: var(--border);
    }
 
@@ -414,7 +363,7 @@
 
    .page-info {
        font-size: 0.78rem;
-       color: var(--text-secondary);
+       color: var(--ink-muted);
    }
 
    .page-links {
@@ -436,7 +385,7 @@
        font-weight: 600;
        border: 1.5px solid var(--border);
        background: var(--bg-primary);
-       color: var(--text-secondary);
+       color: var(--ink-muted);
        text-decoration: none;
        transition: all 0.16s;
        font-family: 'Instrument Sans', sans-serif;
@@ -445,7 +394,7 @@
    .page-btn:hover:not(.disabled):not(.active) {
        border-color: var(--orange-500);
        color: var(--orange-600);
-       background: rgba(249, 115, 22, 0.1);
+       background: rgba(249, 115, 22, 0.08);
    }
 
    .page-btn.active {

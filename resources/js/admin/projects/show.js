@@ -13,9 +13,9 @@ function initTheme() {
 }
 
 function updateThemeBtn(t) {
-    const icon  = document.getElementById('themeIcon');
+    const icon = document.getElementById('themeIcon');
     const label = document.getElementById('themeLabel');
-    if (icon)  icon.className    = 'fas ' + (t === 'dark' ? 'fa-moon' : 'fa-sun');
+    if (icon) icon.className = 'fas ' + (t === 'dark' ? 'fa-moon' : 'fa-sun');
     if (label) label.textContent = t === 'dark' ? 'Dark' : 'Light';
 }
 
@@ -44,7 +44,7 @@ window.switchShowTab = function (tabId, btnEl) {
 /* Restore last active tab on page load */
 document.addEventListener('DOMContentLoaded', function () {
     const saved = localStorage.getItem('show-tab') || 'overview';
-    const btn   = document.querySelector('.show-tab-btn[data-tab="' + saved + '"]');
+    const btn = document.querySelector('.show-tab-btn[data-tab="' + saved + '"]');
     if (btn) {
         switchShowTab(saved, btn);
     } else {
@@ -56,35 +56,35 @@ document.addEventListener('DOMContentLoaded', function () {
 
 /* ── Activity log entry toggle ── */
 window.toggleLog = function (id) {
-    const el   = document.getElementById(id);
-    const ch   = document.getElementById(id + '-chevron');
+    const el = document.getElementById(id);
+    const ch = document.getElementById(id + '-chevron');
     const open = el.style.display === 'flex';
-    el.style.display   = open ? 'none' : 'flex';
+    el.style.display = open ? 'none' : 'flex';
     if (ch) ch.style.transform = open ? 'rotate(0deg)' : 'rotate(180deg)';
 };
 
 /* ── Billing inner tab toggle ── */
 window.toggleBillingTab = function (tab) {
     const summaryContent = document.getElementById('billing-tab-summary-content');
-    const tableContent   = document.getElementById('billing-tab-table-content');
-    const summaryBtn     = document.getElementById('billing-tab-summary');
-    const tableBtn       = document.getElementById('billing-tab-table');
+    const tableContent = document.getElementById('billing-tab-table-content');
+    const summaryBtn = document.getElementById('billing-tab-summary');
+    const tableBtn = document.getElementById('billing-tab-table');
     if (!summaryContent) return;
 
     if (tab === 'summary') {
-        summaryContent.style.display       = 'block';
-        tableContent.style.display         = 'none';
+        summaryContent.style.display = 'block';
+        tableContent.style.display = 'none';
         summaryBtn.style.borderBottomColor = '#16a34a';
-        summaryBtn.style.color             = 'var(--tx)';
-        tableBtn.style.borderBottomColor   = 'transparent';
-        tableBtn.style.color               = 'var(--tx2)';
+        summaryBtn.style.color = 'var(--tx)';
+        tableBtn.style.borderBottomColor = 'transparent';
+        tableBtn.style.color = 'var(--tx2)';
     } else {
-        summaryContent.style.display       = 'none';
-        tableContent.style.display         = 'block';
+        summaryContent.style.display = 'none';
+        tableContent.style.display = 'block';
         summaryBtn.style.borderBottomColor = 'transparent';
-        summaryBtn.style.color             = 'var(--tx2)';
-        tableBtn.style.borderBottomColor   = '#16a34a';
-        tableBtn.style.color               = 'var(--tx)';
+        summaryBtn.style.color = 'var(--tx2)';
+        tableBtn.style.borderBottomColor = '#16a34a';
+        tableBtn.style.color = 'var(--tx)';
     }
 };
 

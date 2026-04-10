@@ -1,20 +1,20 @@
 /* ── Amount input comma formatter ── */
 (function () {
     function rawVal(str) {
-    const isNeg = str.trim().startsWith('-');
-    const cleaned = str.replace(/,/g, '').replace(/[^0-9.]/g, '');
-    return isNeg && cleaned !== '' ? '-' + cleaned : cleaned;
+        const isNeg = str.trim().startsWith('-');
+        const cleaned = str.replace(/,/g, '').replace(/[^0-9.]/g, '');
+        return isNeg && cleaned !== '' ? '-' + cleaned : cleaned;
     }
 
     function formatWithCommas(str) {
         const trimmed = str.trim();
         // Allow bare minus while user is still typing
         if (trimmed === '-') return '-';
-        
+
         const isNeg = trimmed.startsWith('-');
         const raw = rawVal(trimmed);
         if (raw === '') return '';
-        
+
         const abs = raw.replace(/^-/, '');
         const parts = abs.split('.');
         if (parts.length > 2) parts.splice(2);
@@ -23,36 +23,36 @@
         return isNeg ? '-' + formatted : formatted;
     }
 
-window.initAmountInput = function (el) {
-    if (!el || el.dataset.amountInit) return;
-    el.dataset.amountInit = '1';
-    if (el.value) el.value = formatWithCommas(el.value);
+    window.initAmountInput = function (el) {
+        if (!el || el.dataset.amountInit) return;
+        el.dataset.amountInit = '1';
+        if (el.value) el.value = formatWithCommas(el.value);
 
-    el.addEventListener('keydown', function (e) {
-        // Allow minus only at the start and only if not already present
-        if (e.key === '-') {
-            if (this.selectionStart === 0 && !this.value.startsWith('-')) {
-                return; // allow it
+        el.addEventListener('keydown', function (e) {
+            // Allow minus only at the start and only if not already present
+            if (e.key === '-') {
+                if (this.selectionStart === 0 && !this.value.startsWith('-')) {
+                    return; // allow it
+                }
+                e.preventDefault();
             }
-            e.preventDefault();
-        }
-    });
+        });
 
-    el.addEventListener('input', function () {
-        const cursorPos = this.selectionStart;
-        const beforeLen = this.value.length;
-        this.value = formatWithCommas(this.value);
-        const afterLen = this.value.length;
-        const newPos = cursorPos + (afterLen - beforeLen);
-        this.setSelectionRange(newPos, newPos);
-    });
+        el.addEventListener('input', function () {
+            const cursorPos = this.selectionStart;
+            const beforeLen = this.value.length;
+            this.value = formatWithCommas(this.value);
+            const afterLen = this.value.length;
+            const newPos = cursorPos + (afterLen - beforeLen);
+            this.setSelectionRange(newPos, newPos);
+        });
 
-    el.addEventListener('blur', function () {
-        // On blur, if just '-' was typed with nothing after, clear it
-        if (this.value.trim() === '-') this.value = '';
-        else this.value = formatWithCommas(this.value);
-    });
-};
+        el.addEventListener('blur', function () {
+            // On blur, if just '-' was typed with nothing after, clear it
+            if (this.value.trim() === '-') this.value = '';
+            else this.value = formatWithCommas(this.value);
+        });
+    };
 
     // Strip commas before any form submits so Laravel receives clean numbers
     document.addEventListener('submit', function (e) {
@@ -630,8 +630,8 @@ document.addEventListener('DOMContentLoaded', () => {
             ta.onfocus = () => {
                 ta.style.borderColor = accent;
                 ta.style.boxShadow = `0 0 0 3px ${isVO ? 'rgba(99,102,241,0.1)' :
-                        isSO ? 'rgba(217,119,6,0.1)' :
-                            'rgba(249,115,22,0.1)'
+                    isSO ? 'rgba(217,119,6,0.1)' :
+                        'rgba(249,115,22,0.1)'
                     }`;
             };
             ta.onblur = () => { ta.style.borderColor = 'var(--border)'; ta.style.boxShadow = 'none'; };
@@ -660,7 +660,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.rimCancel = function () {
         closeModal('reason-intercept-modal');
         window._rimType = null;
-        
+
         // Clear reason values
         if (window._pendingForm) {
             const teH = window._pendingForm.querySelector('[name="new_te_reason"]');
@@ -706,14 +706,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         closeModal('reason-intercept-modal');
         window._rimType = null;
-        
+
         // Set bypass flag so the submit event listener doesn't re-trigger the modal
         window._rimBypassIntercept = true;
 
         // Submit the form - this will pass through the event listener without modal re-appearing
         form.submit();
     };
-        
+
     // ── Init all amount inputs on page load ──
     document.querySelectorAll('[data-amount]').forEach(window.initAmountInput);
 
@@ -724,5 +724,5 @@ document.addEventListener('DOMContentLoaded', () => {
             window.calcAdvanceRetention();
         });
     }
-    
+
 });

@@ -38,7 +38,7 @@ document.querySelector('form').addEventListener('submit', function () {
 // the Status dropdown is set to "Completed"
 // ─────────────────────────────────────────────
 window.toggleCompletedAt = function () {
-    const sel   = document.getElementById('status_sel');
+    const sel = document.getElementById('status_sel');
     const field = document.getElementById('completed_at_field');
     if (!sel || !field) return;
     field.classList.toggle('hidden', sel.value !== 'completed');
@@ -61,18 +61,18 @@ window.liveSlippage = function () {
     document.getElementById('ap_bar').style.width = Math.min(ap || 0, 100) + '%';
     document.getElementById('wd_bar').style.width = Math.min(wd || 0, 100) + '%';
 
-    const lbl     = document.getElementById('slippage_label');
-    const valEl   = document.getElementById('slippage-value');
+    const lbl = document.getElementById('slippage_label');
+    const valEl = document.getElementById('slippage-value');
     const display = document.getElementById('slippage-display');
 
     // If either field is empty/invalid, reset to neutral state
     if (isNaN(ap) || isNaN(wd)) {
-        lbl.style.color           = '#9ca3af';
-        lbl.innerHTML             = '<i class="fas fa-minus"></i> Enter values above';
-        valEl.textContent         = '—';
-        valEl.style.color         = '#9ca3af';
+        lbl.style.color = '#9ca3af';
+        lbl.innerHTML = '<i class="fas fa-minus"></i> Enter values above';
+        valEl.textContent = '—';
+        valEl.style.color = '#9ca3af';
         display.style.borderColor = 'rgba(26,15,0,0.08)';
-        display.style.background  = '#fffaf5';
+        display.style.background = '#fffaf5';
         document.getElementById('slippage').value = 0;
         return;
     }
@@ -83,23 +83,23 @@ window.liveSlippage = function () {
 
     // Color-code the display based on result
     if (sl > 0) {
-        lbl.style.color           = '#16a34a';  // Green = ahead
-        lbl.innerHTML             = '<i class="fas fa-arrow-up"></i> Ahead of schedule';
-        valEl.style.color         = '#16a34a';
+        lbl.style.color = '#16a34a';  // Green = ahead
+        lbl.innerHTML = '<i class="fas fa-arrow-up"></i> Ahead of schedule';
+        valEl.style.color = '#16a34a';
         display.style.borderColor = 'rgba(22,163,74,0.2)';
-        display.style.background  = 'rgba(22,163,74,0.04)';
+        display.style.background = 'rgba(22,163,74,0.04)';
     } else if (sl < 0) {
-        lbl.style.color           = '#dc2626';  // Red = behind
-        lbl.innerHTML             = '<i class="fas fa-arrow-down"></i> Behind schedule';
-        valEl.style.color         = '#dc2626';
+        lbl.style.color = '#dc2626';  // Red = behind
+        lbl.innerHTML = '<i class="fas fa-arrow-down"></i> Behind schedule';
+        valEl.style.color = '#dc2626';
         display.style.borderColor = 'rgba(220,38,38,0.2)';
-        display.style.background  = 'rgba(220,38,38,0.04)';
+        display.style.background = 'rgba(220,38,38,0.04)';
     } else {
-        lbl.style.color           = '#9ca3af';  // Gray = on schedule
-        lbl.innerHTML             = '<i class="fas fa-minus"></i> On schedule';
-        valEl.style.color         = '#9ca3af';
+        lbl.style.color = '#9ca3af';  // Gray = on schedule
+        lbl.innerHTML = '<i class="fas fa-minus"></i> On schedule';
+        valEl.style.color = '#9ca3af';
         display.style.borderColor = 'rgba(26,15,0,0.08)';
-        display.style.background  = '#fffaf5';
+        display.style.background = '#fffaf5';
     }
 
     // Show the final value e.g. "+2.500%" or "-1.200%"
@@ -115,8 +115,8 @@ window.liveSlippage = function () {
 // Writes the result into the read-only expiry date input.
 // ─────────────────────────────────────────────
 window.calculateOriginalExpiry = function () {
-    const dateStartedInput    = document.getElementById('date_started').value;
-    const contractDaysInput   = document.getElementById('contract_days').value;
+    const dateStartedInput = document.getElementById('date_started').value;
+    const contractDaysInput = document.getElementById('contract_days').value;
     const originalExpiryInput = document.getElementById('original_contract_expiry');
 
     // Clear the field if either input is missing
@@ -125,7 +125,7 @@ window.calculateOriginalExpiry = function () {
         return;
     }
 
-    const dateStarted  = new Date(dateStartedInput + 'T00:00:00');
+    const dateStarted = new Date(dateStartedInput + 'T00:00:00');
     const contractDays = parseInt(contractDaysInput);
 
     // Clear the field if inputs are invalid
@@ -139,9 +139,9 @@ window.calculateOriginalExpiry = function () {
     originalExpiry.setDate(originalExpiry.getDate() + contractDays - 1);
 
     // Format as YYYY-MM-DD for the date input
-    const year  = originalExpiry.getFullYear();
+    const year = originalExpiry.getFullYear();
     const month = String(originalExpiry.getMonth() + 1).padStart(2, '0');
-    const day   = String(originalExpiry.getDate()).padStart(2, '0');
+    const day = String(originalExpiry.getDate()).padStart(2, '0');
 
     originalExpiryInput.value = `${year}-${month}-${day}`;
 };
@@ -159,7 +159,7 @@ window.formatContractAmount = function (input) {
     if (parts.length > 2) raw = parts[0] + '.' + parts.slice(1).join('');
 
     // Limit to 2 decimal places
-    const wholePart   = (parts[0] || '').replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    const wholePart = (parts[0] || '').replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     const decimalPart = parts[1] !== undefined ? '.' + parts[1].slice(0, 2) : '';
 
     // Update display input with formatted value
@@ -177,7 +177,7 @@ window.formatContractAmount = function (input) {
 // ─────────────────────────────────────────────
 window.initContractAmount = function () {
     const display = document.getElementById('original_contract_amount_display');
-    const raw     = document.getElementById('original_contract_amount_raw');
+    const raw = document.getElementById('original_contract_amount_raw');
     if (!display || !raw) return;
 
     // If there's already a value (from old()), format it
@@ -190,9 +190,9 @@ window.initContractAmount = function () {
         // Pad to 2 decimal places on blur for a cleaner look
         const rawVal = parseFloat(raw.value);
         if (!isNaN(rawVal)) {
-            const parts      = rawVal.toFixed(2).split('.');
-            const wholePart  = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-            display.value    = wholePart + '.' + parts[1];
+            const parts = rawVal.toFixed(2).split('.');
+            const wholePart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            display.value = wholePart + '.' + parts[1];
         }
     });
 };
