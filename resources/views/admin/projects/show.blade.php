@@ -117,90 +117,78 @@
 <div class="show-page-inner">
 
 {{-- ══════════ HERO SUMMARY ══════════ --}}
-<div class="hero-summary card">
-    <div class="hero-summary-main">
-        <div class="hero-summary-heading">
+<div class="project-snapshot card">
+    <div class="snapshot-header">
+        <div>
             <p class="ey">Project Snapshot</p>
-            <h1 class="hero-title">{{ $project->project_title }}</h1>
-            <p class="hero-lead">
-                <i class="fas fa-map-marker-alt" style="color:#f97316;margin-right:0.35rem;"></i>{{ $project->location }}
-                <span style="margin:0 0.65rem;color:var(--tx2);">•</span>
-                <i class="fas fa-building" style="color:#6366f1;margin-right:0.35rem;"></i>{{ $project->contractor }}
-            </p>
+            <h2 class="snapshot-title">Progress at a glance</h2>
         </div>
-
-        <div class="hero-stats-grid">
-            <div class="hero-stat-block">
-                <span class="dl">Contract ID</span>
-                <p class="dv">#{{ $project->contract_id }}</p>
-            </div>
-            <div class="hero-stat-block">
-                <span class="dl">In Charge</span>
-                <p class="dv">{{ $project->in_charge }}</p>
-            </div>
-            <div class="hero-stat-block">
-                <span class="dl">Contract Amount</span>
-                <p class="dv">₱{{ number_format($project->original_contract_amount, 2) }}</p>
-            </div>
-            <div class="hero-stat-block">
-                <span class="dl">Remaining Balance</span>
-                <p class="dv">₱{{ number_format($remainingBal, 2) }}</p>
-            </div>
+        <div class="snapshot-meta">
+            @if($project->status === 'completed')
+                <span class="pill p-gr"><i class="fas fa-check-circle"></i> Completed</span>
+            @elseif($project->status === 'expired' || $daysLeft < 0)
+                <span class="pill p-re"><i class="fas fa-times-circle"></i> Expired</span>
+            @elseif($daysLeft <= 30)
+                <span class="pill p-am"><i class="fas fa-hourglass-end"></i> Expiring Soon</span>
+            @else
+                <span class="pill p-gr"><i class="fas fa-circle"></i> Active</span>
+            @endif
         </div>
     </div>
 
-    <div class="hero-summary-side">
-        <div class="hero-status-card card">
-            <div class="hero-status-head">
-                <div>
-                    <p class="ey">Current Status</p>
-                    <p class="hero-status-copy">Live contract health and schedule progress</p>
+    <div class="snapshot-grid">
+        <div class="snapshot-card snapshot-progress-card">
+            <div class="snapshot-card-head">
+                <span class="label">Progress comparison</span>
+            </div>
+            <div class="snapshot-stat-grid">
+                <div class="snapshot-mini-card">
+                    <span class="item-label">As Planned</span>
+                    <span class="item-value" style="color:var(--or5);">{{ $project->as_planned }}<span class="unit">%</span></span>
+                    <div class="progress-meter">
+                        <div class="progress-fill" style="width:{{ min(max((int)$project->as_planned, 0), 100) }}%; background: var(--or5);"></div>
+                    </div>
                 </div>
-                <div class="hero-status-meta">
-                    @if($project->status === 'completed')
-                        <span class="pill p-gr"><i class="fas fa-check-circle"></i> Completed</span>
-                    @elseif($project->status === 'expired' || $daysLeft < 0)
-                        <span class="pill p-re"><i class="fas fa-times-circle"></i> Expired</span>
-                    @elseif($daysLeft <= 30)
-                        <span class="pill p-am"><i class="fas fa-hourglass-end"></i> Expiring Soon</span>
-                    @else
-                        <span class="pill p-gr"><i class="fas fa-circle"></i> Active</span>
-                    @endif
+                <div class="snapshot-mini-card">
+                    <span class="item-label">Work Done</span>
+                    <span class="item-value" style="color:#3b82f6;">{{ $project->work_done }}<span class="unit">%</span></span>
+                    <div class="progress-meter">
+                        <div class="progress-fill" style="width:{{ min(max((int)$project->work_done, 0), 100) }}%; background: #3b82f6;"></div>
+                    </div>
+                </div>
+                @php
+                    $slipThemeColor = $slip < 0 ? '#dc2626' : '#16a34a';
+                    $slipThemeBg    = $slip < 0 ? 'rgba(239,68,68,0.12)' : 'rgba(22,163,74,0.12)';
+                @endphp
+                <div class="snapshot-mini-card snapshot-slippage-mini" style="background: {{ $slipThemeBg }};">
+                    <span class="item-label">Slippage</span>
+                    <span class="item-value" style="color: {{ $slipThemeColor }};">{{ $slip > 0 ? '+' : '' }}{{ $project->slippage }}<span class="unit">%</span></span>
+                    <span class="meta" style="color: {{ $slipThemeColor }};">{{ $slipLabel }}</span>
+                    <div class="progress-meter">
+                        <div class="progress-fill" style="width:{{ min(max(abs((int)$project->slippage), 0), 100) }}%; background: {{ $slipThemeColor }};"></div>
+                    </div>
                 </div>
             </div>
-
-            <div class="hero-progress-wrap">
-                <div class="hero-progress-bar">
-                    <div class="hero-progress-bar-inner" style="width:{{ $pct }}%;background:{{ $barColor }};"></div>
+            <div class="snapshot-footer">
+                <div class="snapshot-footer-col">
+                    <span class="footer-label">Due date</span>
+                    <span class="footer-value">{{ $project->revised_contract_expiry ? $project->revised_contract_expiry->format('M d, Y') : $project->original_contract_expiry->format('M d, Y') }}</span>
                 </div>
-                <p class="hero-status-note">
-                    {{ $project->revised_contract_expiry ? 'Revised expiry due ' . $project->revised_contract_expiry->format('M d, Y') : 'Original expiry due ' . $project->original_contract_expiry->format('M d, Y') }}
-                </p>
-            </div>
-        </div>
-
-        <div class="hero-quick-grid">
-            <div class="hero-quick-card">
-                <p class="ey">As Planned</p>
-                <p class="sn" style="color:var(--or5);">{{ $project->as_planned }}<span style="font-size:0.85rem;color:var(--ink2);">%</span></p>
-            </div>
-            <div class="hero-quick-card">
-                <p class="ey">Work Done</p>
-                <p class="sn" style="color:#3b82f6;">{{ $project->work_done }}<span style="font-size:0.85rem;color:var(--ink2);">%</span></p>
-            </div>
-            <div class="hero-quick-card">
-                <p class="ey">Slippage</p>
-                <p class="sn" style="color:{{ $slipColor }};">{{ $slip > 0 ? '+' : '' }}{{ $project->slippage }}<span style="font-size:0.85rem;">%</span></p>
-                <p class="hero-status-copy" style="color:{{ $slipColor }};">{{ $slipLabel }}</p>
-            </div>
-            <div class="hero-quick-card">
-                <p class="ey">Last Progress Update</p>
-                @if($project->progress_updated_at)
-                    <p class="dv">{{ $project->progress_updated_at->format('M d, Y') }}</p>
-                    <p class="hero-status-copy">{{ $project->progress_updated_at->format('h:i A') }}</p>
-                @else
-                    <p class="dv" style="color:#9ca3af;font-style:italic;">Not tracked yet</p>
-                @endif
+                <div class="snapshot-footer-col">
+                    <span class="footer-label">Last updated</span>
+                    <span class="footer-value">
+                        @if($project->progress_updated_at)
+                            {{ $project->progress_updated_at->format('M d, Y') }} · {{ $project->progress_updated_at->format('h:i A') }}
+                        @else
+                            Not tracked yet
+                        @endif
+                    </span>
+                </div>
+                <div class="snapshot-footer-col snapshot-footer-status">
+                    <span class="pill {{ $slip < 0 ? 'p-re' : ($slip > 0 ? 'p-gr' : 'p-gy') }}">
+                        <i class="fas fa-clock"></i> {{ $slipLabel }}
+                    </span>
+                </div>
             </div>
         </div>
     </div>

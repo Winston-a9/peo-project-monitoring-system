@@ -125,11 +125,10 @@ edit.blade
 
 	performance
 
-		FIXED DATE START TO FINISH in LD
+		FIXED DATE START TO FINISH in LD (major addition)
 
 	extensions
 		bug: make days input required
-		cost involve should also add or decrease the remaining balance
 
 	billing 
 		bug:percentage of advance billin and retention should only be max of 100% with 2 decimals
@@ -153,6 +152,8 @@ if expired
 ==================================================================================================================================================================================================================================================================================================
 FIXED/added:
 ADMIN
+		cost involve should also add or decrease the remaining balance
+
 		cost involve add a negative sign "-" means the amount is being deducted
 
 contract id coloumn and contract id filter search text add
@@ -209,3 +210,5 @@ in financial the "days overdue" only counts the overdued date since the revised 
 
 Status Needs to fix only need one status display, force expired if the user updated the status.
 		in the index.blade change name:Active into On Going -->
+
+
