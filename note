@@ -128,8 +128,6 @@ edit.blade
 		FIXED DATE START TO FINISH in LD (major addition)
 
 	extensions
-		bug: make days input required
-
 	billing 
 	admin
 

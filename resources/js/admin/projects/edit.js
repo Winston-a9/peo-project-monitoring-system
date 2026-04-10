@@ -507,8 +507,8 @@ document.addEventListener('DOMContentLoaded', () => {
     /* ── Advance billing & retention calculator ── */
     window.calcAdvanceRetention = function () {
         const originalAmt = parseFloat(
-            document.getElementById('original_contract_amount')?.value || 0
-        );
+            document.getElementById('original_contract_amount')?.value.replace(/,/g, '') || 0
+        ) || 0;
 
         const advPct = parseFloat(document.getElementById('advance_billing_pct')?.value) || 0;
         const retPct = parseFloat(document.getElementById('retention_pct')?.value) || 0;
@@ -713,5 +713,13 @@ document.addEventListener('DOMContentLoaded', () => {
         
     // ── Init all amount inputs on page load ──
     document.querySelectorAll('[data-amount]').forEach(window.initAmountInput);
+
+    const originalAmtInput = document.getElementById('original_contract_amount');
+    if (originalAmtInput) {
+        originalAmtInput.addEventListener('input', function () {
+            window.calculateLDPerDay();
+            window.calcAdvanceRetention();
+        });
+    }
     
 });

@@ -151,8 +151,6 @@
                     <span style="margin-left:auto; font-size:0.7rem; color:#9ca3af; font-weight:400;">Read-only</span>
                 </div>
 
-                <input type="hidden" name="original_contract_amount" id="original_contract_amount" value="{{ (float) $project->original_contract_amount }}">
-
                 <div class="section-body">
                     <div class="grid-2col">
 
@@ -162,6 +160,18 @@
                             <p style="font-size:0.9rem; font-weight:800; color:var(--text-primary); margin:0; padding:0.1rem 0; font-family:'Syne',sans-serif; letter-spacing:-0.01em;">
                                 #{{ $project->contract_id }}
                             </p>
+                        </div>
+
+                        {{-- Original Contract Amount --}}
+                        <div class="field-group">
+                            <label class="field-label">Contract Amount</label>
+                            <input type="text" name="original_contract_amount" id="original_contract_amount" class="field-input" data-amount
+                                value="{{ old('original_contract_amount', number_format((float) $project->original_contract_amount, 2)) }}"
+                                placeholder="0.00" required>
+                            @error('original_contract_amount')
+                                <p class="field-error"><i class="fas fa-exclamation-circle"></i> {{ $message }}</p>
+                            @enderror
+                            <p class="field-hint">Base contract amount</p>
                         </div>
 
                         {{-- In Charge --}}
@@ -206,17 +216,6 @@
                             @error('contractor')
                                 <p class="field-error"><i class="fas fa-exclamation-circle"></i> {{ $message }}</p>
                             @enderror
-                        </div>
-
-                        {{-- Contract Amount (read-only display) --}}
-                        <div class="field-group">
-                            <label class="field-label">
-                                Contract Amount <span style="font-weight:400; color:#9ca3af;">(read-only)</span>
-                            </label>
-                            <p style="font-size:0.9rem; font-weight:700; color:var(--text-primary); margin:0; padding:0.1rem 0; font-family:'Syne',sans-serif; letter-spacing:-0.01em;">
-                                ₱{{ number_format($project->original_contract_amount, 2) }}
-                            </p>
-                            <p class="field-hint">Base contract amount</p>
                         </div>
 
                         {{-- Status --}}
