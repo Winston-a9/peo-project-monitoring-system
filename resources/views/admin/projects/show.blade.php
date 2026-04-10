@@ -164,9 +164,6 @@
                     <span class="item-label">Slippage</span>
                     <span class="item-value" style="color: {{ $slipThemeColor }};">{{ $slip > 0 ? '+' : '' }}{{ $project->slippage }}<span class="unit">%</span></span>
                     <span class="meta" style="color: {{ $slipThemeColor }};">{{ $slipLabel }}</span>
-                    <div class="progress-meter">
-                        <div class="progress-fill" style="width:{{ min(max(abs((int)$project->slippage), 0), 100) }}%; background: {{ $slipThemeColor }};"></div>
-                    </div>
                 </div>
             </div>
             <div class="snapshot-footer">
