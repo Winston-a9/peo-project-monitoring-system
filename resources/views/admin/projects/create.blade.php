@@ -85,18 +85,18 @@
                         <div class="prefix-wrap">
                         <span class="prefix">₱</span>
                         {{-- Display input: shows formatted number with commas --}}
-                        <input type="text" id="contract_amount_display"
-                            class="field-input {{ $errors->has('contract_amount') ? 'has-error' : '' }}"
+                        <input type="text" id="original_contract_amount_display"
+                            class="field-input {{ $errors->has('original_contract_amount') ? 'has-error' : '' }}"
                             placeholder="0.00"
-                            value="{{ old('contract_amount') ? number_format((float) old('contract_amount'), 2) : '' }}"
+                            value="{{ old('original_contract_amount') ? number_format((float) old('original_contract_amount'), 2) : '' }}"
                             inputmode="decimal"
                             autocomplete="off"
                             oninput="formatContractAmount(this)">
                         {{-- Hidden input: clean numeric value submitted to Laravel --}}
-                        <input type="hidden" name="contract_amount" id="contract_amount_raw"
-                            value="{{ old('contract_amount', '') }}">
+                        <input type="hidden" name="original_contract_amount" id="original_contract_amount_raw"
+                            value="{{ old('original_contract_amount', '') }}">
                     </div>
-                        @error('contract_amount')<p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
+                        @error('original_contract_amount')<p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
                     </div>
                 <div>
                     <label class="field-label">Status <span style="font-weight:400;color:#9ca3af;">(auto)</span></label>

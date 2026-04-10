@@ -249,7 +249,7 @@ window.calculateDaysOverdue = function () {
  */
 window.calculateLDPerDay = function () {
     const acc = parseFloat(document.getElementById('ld_accomplished').value) || 0;
-    const amt = parseFloat(document.getElementById('contract_amount').value.replace(/,/g, '')) || 0;
+    const amt = parseFloat(document.getElementById('original_contract_amount').value.replace(/,/g, '')) || 0;
 
     const unworked = 100 - acc;  // ← NO rounding, keep full precision
     const perDay = Math.max(0, unworked) / 100 * amt * 0.001;
@@ -417,7 +417,7 @@ window.updateBillingPreview = function () {
 
     const newAmt = parseFloat(input.value.replace(/,/g, '')) || 0;
     const base = parseFloat(totalEl.dataset.base) || 0;
-    const contractAmt = parseFloat(document.getElementById('contract_amount')?.value) || 0;
+    const contractAmt = parseFloat(document.getElementById('original_contract_amount')?.value) || 0;
     const newTotal = base + newAmt;
     const newRemain = contractAmt - newTotal;
 

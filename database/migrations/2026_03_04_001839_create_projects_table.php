@@ -21,7 +21,6 @@ return new class extends Migration
             $table->date('revised_contract_expiry')->nullable();
             $table->enum('status', ['ongoing', 'completed', 'expiring' ,'expired'])->default('ongoing');
             $table->date('completed_at')->nullable();
-            $table->decimal('contract_amount', 15, 2)->default(0);
             $table->decimal('original_contract_amount', 15, 2)->nullable();
             $table->decimal('as_planned', 5, 2)->default(0);
             $table->decimal('work_done', 5, 2)->default(0);

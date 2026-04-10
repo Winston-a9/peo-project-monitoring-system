@@ -58,31 +58,28 @@ class ProjectController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'in_charge'                => 'required|string|max:255',
-            'contract_id'              => 'required|integer|unique:projects,contract_id',
-            'project_title'            => 'required|string|max:255',
-            'location'                 => 'required|string|max:255',
-            'contractor'               => 'required|string|max:255',
-            'contract_amount'          => 'required|numeric|min:0',
-            'date_started'             => 'required|date',
-            'contract_days'            => 'required|integer|min:1',
-            'original_contract_expiry' => 'required|date',
-            'as_planned'               => 'required|numeric|min:0|max:100',
-            'work_done'                => 'required|numeric|min:0|max:100',
-            'status'                   => 'nullable|string',
-            'completed_at'             => 'nullable|date',
+            'in_charge'                    => 'required|string|max:255',
+            'contract_id'                  => 'required|integer|unique:projects,contract_id',
+            'project_title'                => 'required|string|max:255',
+            'location'                     => 'required|string|max:255',
+            'contractor'                   => 'required|string|max:255',
+            'original_contract_amount'     => 'required|numeric|min:0',
+            'date_started'                 => 'required|date',
+            'contract_days'                => 'required|integer|min:1',
+            'original_contract_expiry'     => 'required|date',
+            'as_planned'                   => 'required|numeric|min:0|max:100',
+            'work_done'                    => 'required|numeric|min:0|max:100',
+            'status'                       => 'nullable|string',
+            'completed_at'                 => 'nullable|date',
         ]);
 
         $data = $request->only([
             'in_charge', 'contract_id', 'project_title', 'location', 'contractor',
-            'contract_amount', 'date_started', 'contract_days',
+            'original_contract_amount', 'date_started', 'contract_days',
             'original_contract_expiry',
             'as_planned', 'work_done',
             'status', 'completed_at',
         ]);
-
-        // Snapshot original amount before any extensions/VOs alter it
-        $data['original_contract_amount'] = $request->contract_amount;
 
         // Derive status from days remaining until expiry
         $expiry   = Carbon::parse($data['original_contract_expiry']);
@@ -253,7 +250,7 @@ class ProjectController extends Controller
             'contract_days'            => 'nullable|integer|min:1',
             'original_contract_expiry' => 'required|date',
             'status'                   => 'nullable|string',
-            'contract_amount'          => 'required|numeric|min:0',
+            'original_contract_amount' => 'required|numeric|min:0',
             'as_planned'               => 'required|numeric|min:0|max:100',
             'work_done'                => 'required|numeric|min:0|max:100',
             'remarks_recommendation'   => 'nullable|string',
@@ -281,7 +278,7 @@ class ProjectController extends Controller
         // ── Step 1: Basic scalar fields ───────────────────────────
         $data = $request->only([
             'in_charge', 'project_title', 'location', 'contractor',
-            'contract_amount', 'date_started', 'contract_days',
+            'original_contract_amount', 'date_started', 'contract_days',
             'original_contract_expiry',
             'as_planned', 'work_done',
             'status', 'completed_at',
@@ -334,7 +331,7 @@ class ProjectController extends Controller
 
         // ── Step 3c: Billing summary fields ──────────────────────
         $data['total_amount_billed'] = array_sum($data['billing_amounts']);
-        $data['remaining_balance']   = (float) ($fresh->original_contract_amount ?? $fresh->contract_amount) - $data['total_amount_billed'];
+        $data['remaining_balance']   = (float) $fresh->original_contract_amount - $data['total_amount_billed'];
 
         // ── Step 4: Append new Time Extension ────────────────────
         $newTEDays = (int) $request->input('new_te_days', 0);
@@ -485,10 +482,10 @@ class ProjectController extends Controller
         $ldAccomplished = isset($data['ld_accomplished']) && $data['ld_accomplished'] !== null
             ? (float) $data['ld_accomplished']
             : 0.0;
-        $contractAmount = (float) ($data['contract_amount'] ?? 0);
+        $contractAmount = (float) ($data['original_contract_amount'] ?? 0);
         $daysOverdue    = (int) $request->input('ld_days_overdue', 0);
 
-        // Formula: LD per day = (unworked% / 100) × contract_amount × 0.001
+        // Formula: LD per day = (unworked% / 100) × original_contract_amount × 0.001
         $ldUnworked = max(0, 100 - $ldAccomplished);
         $ldPerDay   = ($ldUnworked / 100) * $contractAmount * 0.001;
 
@@ -583,7 +580,7 @@ class ProjectController extends Controller
         $billingAmounts[$index] = $amount;
         $billingDates[$index]   = $date ?: null;
 
-        $originalAmount = (float) ($fresh->original_contract_amount ?? $fresh->contract_amount);
+        $originalAmount = (float) $fresh->original_contract_amount;
         $totalBilled    = array_sum($billingAmounts);
 
         $project->update([
@@ -689,14 +686,14 @@ class ProjectController extends Controller
         $currentVODays        = (int) array_sum(array_map('intval', $data['vo_days']        ?? $fresh->vo_days        ?? []));
         $data['contract_days'] = $originalContractDays + $currentTEDays + $currentVODays;
 
-        // ── Recompute contract amount from original ───────────────
-        $originalAmount = (float) ($fresh->original_contract_amount ?? (float) $fresh->contract_amount);
+        // ── Recompute contract amounts from original ─────────────
+        $originalAmount = (float) $fresh->original_contract_amount;
         $allCosts = array_merge(
             array_values($data['cost_involved'] ?? $fresh->cost_involved ?? []),
             array_values($data['vo_cost']       ?? $fresh->vo_cost       ?? [])
         );
         $adjustment = collect($allCosts)->filter(fn($c) => $c !== null && (float)$c != 0)->sum();
-        $data['contract_amount'] = max(0, $originalAmount + $adjustment);
+        // contract_amount column has been removed; do not store a duplicate numeric field.
 
         // ── Resolve the display label for this entry ──────────────
         $labelCounter  = 0;
@@ -1043,7 +1040,7 @@ class ProjectController extends Controller
                 mb_strimwidth($clean($project->in_charge),     0, 20, '...'),
                 mb_strimwidth($clean($project->location),      0, 18, '...'),
                 mb_strimwidth($clean($project->contractor),    0, 20, '...'),
-                'P' . number_format($project->contract_amount, 2),
+                'P' . number_format($project->original_contract_amount, 2),
                 $project->date_started->format('m/d/Y'),
                 $expiry->format('m/d/Y'),
                 $slipStr,

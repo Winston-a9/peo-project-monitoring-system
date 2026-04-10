@@ -91,7 +91,7 @@
     $billingDates   = is_array($project->billing_dates)   ? $project->billing_dates : [];
     $billingCount   = count($billingAmounts);
     $totalBilled    = array_sum($billingAmounts);
-    $remainingBal   = (float)$project->contract_amount - $totalBilled;
+    $remainingBal   = (float)$project->original_contract_amount - $totalBilled;
 
     $advancePct     = is_numeric($project->advance_billing_pct) ? (float) $project->advance_billing_pct : null;
     $advanceAmt     = is_numeric($project->advance_billing_amount) ? (float) $project->advance_billing_amount : null;
@@ -137,11 +137,11 @@
             </div>
             <div style="padding:1rem;border-radius:14px;background:var(--bg2);">
                 <span class="dl">Contract Amount</span>
-                <p class="dv" style="margin-top:0.5rem;font-family:'Syne',sans-serif;font-weight:800;">₱{{ number_format($project->contract_amount, 2) }}</p>
+                <p class="dv" style="margin-top:0.5rem;font-family:'Syne',sans-serif;font-weight:800;">₱{{ number_format($project->original_contract_amount, 2) }}</p>
             </div>
             <div style="padding:1rem;border-radius:14px;background:var(--bg2);">
                 <span class="dl">Original Amount</span>
-                <p class="dv" style="margin-top:0.5rem;">₱{{ number_format($project->original_contract_amount ?? $project->contract_amount, 2) }}</p>
+                <p class="dv" style="margin-top:0.5rem;">₱{{ number_format($project->original_contract_amount, 2) }}</p>
             </div>
         </div>
     </div>
@@ -266,7 +266,7 @@
             </div>
             <div class="dr">
                 <span class="dl"><i class="fas fa-peso-sign"></i> Contract Amount</span>
-                <span class="dv" style="text-align:right;max-width:60%;">₱{{ number_format($project->contract_amount, 2) }}</span>
+                <span class="dv" style="text-align:right;max-width:60%;">₱{{ number_format($project->original_contract_amount, 2) }}</span>
             </div>
             <div class="dr">
                 <span class="dl"><i class="fas fa-circle-dot"></i> Status</span>
@@ -283,7 +283,7 @@
             </div>
             <div class="dr">
                 <span class="dl"><i class="fas fa-peso-sign"></i> Original Amount</span>
-                <span class="dv">₱{{ number_format($project->original_contract_amount ?? $project->contract_amount, 2) }}</span>
+                <span class="dv">₱{{ number_format($project->original_contract_amount, 2) }}</span>
             </div>
             <div class="dr">
                 <span class="dl"><i class="fas fa-clock-rotate-left"></i> Last Updated</span>
@@ -682,13 +682,13 @@
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid var(--bd);">
                 <div style="padding:1.25rem;border-right:1px solid var(--bd);">
                     <p class="ey" style="margin-bottom:0.5rem;">Original Contract Amount</p>
-                    <p style="font-family:'Syne',sans-serif;font-size:1.35rem;font-weight:800;color:var(--tx);line-height:1;letter-spacing:-0.02em;">₱{{ number_format($project->original_contract_amount ?? $project->contract_amount, 2) }}</p>
+                    <p style="font-family:'Syne',sans-serif;font-size:1.35rem;font-weight:800;color:var(--tx);line-height:1;letter-spacing:-0.02em;">₱{{ number_format($project->original_contract_amount, 2) }}</p>
                     <p style="font-size:0.7rem;color:#9ca3af;margin-top:0.4rem;">Before any cost adjustments</p>
                 </div>
                 <div style="padding:1.25rem;border-right:1px solid var(--bd);">
                     <p class="ey" style="margin-bottom:0.5rem;">Total Amount Billed</p>
                     <p style="font-family:'Syne',sans-serif;font-size:1.35rem;font-weight:800;color:#16a34a;line-height:1;letter-spacing:-0.02em;">₱{{ number_format($totalBilled, 2) }}</p>
-                    @php $billedPct = $project->contract_amount > 0 ? round(($totalBilled / $project->contract_amount) * 100, 1) : 0; @endphp
+                    @php $billedPct = $project->original_contract_amount > 0 ? round(($totalBilled / $project->original_contract_amount) * 100, 1) : 0; @endphp
                     <div style="height:4px;background:rgba(34,197,94,0.1);border-radius:99px;margin-top:0.6rem;overflow:hidden;">
                         <div style="height:100%;width:{{ min($billedPct, 100) }}%;background:#16a34a;border-radius:99px;"></div>
                     </div>
@@ -700,7 +700,7 @@
                         ₱{{ number_format(abs($remainingBal), 2) }}
                         @if($remainingBal < 0)<span style="font-size:0.75rem;font-weight:700;color:#dc2626;"> (over)</span>@endif
                     </p>
-                    @php $remainPct = $project->contract_amount > 0 ? round((abs($remainingBal) / $project->contract_amount) * 100, 1) : 0; @endphp
+                    @php $remainPct = $project->original_contract_amount > 0 ? round((abs($remainingBal) / $project->original_contract_amount) * 100, 1) : 0; @endphp
                     <div style="height:4px;background:{{ $remainingBal >= 0 ? 'rgba(59,130,246,0.1)' : 'rgba(239,68,68,0.1)' }};border-radius:99px;margin-top:0.6rem;overflow:hidden;">
                         <div style="height:100%;width:{{ min($remainPct, 100) }}%;background:{{ $remainingBal >= 0 ? '#3b82f6' : '#dc2626' }};border-radius:99px;"></div>
                     </div>
@@ -762,7 +762,7 @@
                         foreach ($billingAmounts as $bi => $amount) {
                             $tableRows[] = ['type'=>'billing','label'=>'Billing No.'.($bi+1),'date'=>$billingDates[$bi]??null,'amount'=>(float)$amount,'isLast'=>$bi===$billingCount-1];
                         }
-                        $adjustedContract = (float)$project->contract_amount;
+                        $adjustedContract = (float)$project->original_contract_amount;
                         $runningBilled    = 0;
                     @endphp
                     @foreach($tableRows as $ri => $row)

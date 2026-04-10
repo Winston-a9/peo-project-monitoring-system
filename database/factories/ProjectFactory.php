@@ -178,7 +178,6 @@ class ProjectFactory extends Factory
             'revised_contract_expiry'  => $revisedExpiry,
             'status'                   => $status,
             'completed_at'             => $completedAt,
-            'contract_amount'          => $adjustedAmount,           // adjusted (original + TE/VO costs)
             'original_contract_amount' => $contractAmount,           // always the raw original
             'as_planned'               => $asPlanned,
             'work_done'                => $workDone,

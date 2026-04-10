@@ -318,7 +318,7 @@
                     ['fas fa-folder',          'Project Title',   $project->project_title],
                     ['fas fa-map-marker-alt',  'Location',        $project->location],
                     ['fas fa-building',        'Contractor',      $project->contractor],
-                    ['fas fa-peso-sign',       'Contract Amount', '₱'.number_format($project->contract_amount,2)],
+                    ['fas fa-peso-sign',       'Contract Amount', '₱'.number_format($project->original_contract_amount,2)],
                 ]; @endphp
                 @foreach($fields as [$icon,$key,$val])
                 <div class="info-row">

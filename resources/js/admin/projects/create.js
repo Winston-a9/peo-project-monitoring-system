@@ -16,7 +16,7 @@ window.formatContractAmount = function (el) {
     el.value = decPart !== undefined ? formatted + '.' + decPart : formatted;
 
     // Sync raw value to hidden input
-    document.getElementById('contract_amount_raw').value = raw;
+    document.getElementById('original_contract_amount_raw').value = raw;
 };
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -27,8 +27,8 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 document.querySelector('form').addEventListener('submit', function () {
-    const raw = document.getElementById('contract_amount_raw').value;
-    document.getElementById('contract_amount_raw').value = raw.replace(/,/g, '');
+    const raw = document.getElementById('original_contract_amount_raw').value;
+    document.getElementById('original_contract_amount_raw').value = raw.replace(/,/g, '');
 });
 
 
@@ -167,7 +167,7 @@ window.formatContractAmount = function (input) {
 
     // Store clean numeric value in hidden input for form submission
     const cleanRaw = (parts[0] || '') + (parts[1] !== undefined ? '.' + parts[1].slice(0, 2) : '');
-    document.getElementById('contract_amount_raw').value = cleanRaw;
+    document.getElementById('original_contract_amount_raw').value = cleanRaw;
 };
 
 // ─────────────────────────────────────────────
@@ -176,8 +176,8 @@ window.formatContractAmount = function (input) {
 // validation error), re-apply the comma formatting.
 // ─────────────────────────────────────────────
 window.initContractAmount = function () {
-    const display = document.getElementById('contract_amount_display');
-    const raw     = document.getElementById('contract_amount_raw');
+    const display = document.getElementById('original_contract_amount_display');
+    const raw     = document.getElementById('original_contract_amount_raw');
     if (!display || !raw) return;
 
     // If there's already a value (from old()), format it

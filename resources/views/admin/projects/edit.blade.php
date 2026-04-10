@@ -151,8 +151,7 @@
                     <span style="margin-left:auto; font-size:0.7rem; color:#9ca3af; font-weight:400;">Read-only</span>
                 </div>
 
-                <input type="hidden" name="contract_amount"          id="contract_amount"          value="{{ $project->contract_amount }}">
-                <input type="hidden"                                  id="original_contract_amount" value="{{ (float) ($project->original_contract_amount ?? $project->contract_amount) }}">
+                <input type="hidden" name="original_contract_amount" id="original_contract_amount" value="{{ (float) $project->original_contract_amount }}">
 
                 <div class="section-body">
                     <div class="grid-2col">
@@ -215,9 +214,9 @@
                                 Contract Amount <span style="font-weight:400; color:#9ca3af;">(read-only)</span>
                             </label>
                             <p style="font-size:0.9rem; font-weight:700; color:var(--text-primary); margin:0; padding:0.1rem 0; font-family:'Syne',sans-serif; letter-spacing:-0.01em;">
-                                ₱{{ number_format($project->contract_amount, 2) }}
+                                ₱{{ number_format($project->original_contract_amount, 2) }}
                             </p>
-                            <p class="field-hint">Adjusted by TE / VO cost entries</p>
+                            <p class="field-hint">Base contract amount</p>
                         </div>
 
                         {{-- Status --}}
@@ -897,8 +896,8 @@
                 is_array($project->cost_involved ?? null) ? $project->cost_involved : [],
                 is_array($project->vo_cost       ?? null) ? $project->vo_cost       : []
             );
-            $totalCostAdj        = collect($allExtCosts)->filter(fn($c) => $c !== null && (float)$c != 0)->sum();
-            $adjustedContractAmt = max(0, (float)($project->original_contract_amount ?? $project->contract_amount) + $totalCostAdj);
+            $totalCostAdj        = collect($allExtCosts)->filter(fn($c) => $c !== null && (float)$c !== 0)->sum();
+            $adjustedContractAmt = max(0, (float) $project->original_contract_amount + $totalCostAdj);
             $remainingBal        = $adjustedContractAmt - $totalBilled;
         @endphp
 
