@@ -732,7 +732,8 @@
                                         </div>
                                         <p class="field-hint"><i class="fas fa-minus"
                                                 style="color:#ef4444; font-size:0.6rem;"></i> Use a negative value (e.g.
-                                            <strong>−50,000</strong>) to deduct from the contract amount</p>
+                                            <strong>−50,000</strong>) to deduct from the contract amount
+                                        </p>
                                     </div>
                                     <div class="field-group">
                                         <label class="field-label">Date Requested</label>
@@ -1048,87 +1049,87 @@
 
                                 {{-- Billing history --}}
                                 @if($billingCount > 0)
-                                        <div style="margin-bottom:1.5rem;">
-                                            <p
-                                                style="font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#9ca3af; margin-bottom:0.75rem; display:flex; align-items:center; gap:0.5rem;">
-                                                <i class="fas fa-history" style="color:#16a34a;"></i> Billing History
-                                            </p>
-                                            <div
-                                                style="display:grid; grid-template-columns:18px 1fr 5rem 5rem; gap:0 0.75rem; padding:0 0.25rem; margin-bottom:0.4rem;">
-                                                <span></span>
-                                                <p class="h-col-hdr">Billing</p>
-                                                <p class="h-col-hdr" style="text-align:center;">Action</p>
-                                                <p class="h-col-hdr" style="text-align:right;">Amount</p>
-                                            </div>
-                                            <div class="history-timeline">
-                                                @foreach($billingAmounts as $bi => $amount)
-                                                    @php $bIsLast = $bi === $billingCount - 1; @endphp
-                                                    <div
-                                                        style="display:grid; grid-template-columns:18px 1fr 5rem 5rem; gap:0 0.75rem; align-items:start;">
-                                                        <div class="h-spine">
-                                                            <div class="h-dot"
-                                                                style="background:#16a34a; box-shadow:0 0 0 3px rgba(34,197,94,0.18);">
-                                                            </div>
-                                                            @if(!$bIsLast)
-                                                                <div class="h-line" style="background:rgba(34,197,94,0.18);"></div>
-                                                            @endif
-                                                        </div>
-                                                        <div class="h-label {{ $bIsLast ? 'last' : '' }}"
-                                                            style="display:flex; flex-direction:column; gap:0.2rem;">
-                                                            <span>Billing No. {{ $bi + 1 }}</span>
-                                                            @if(!empty($billingDates[$bi]))
-                                                                <span style="font-size:0.72rem; font-weight:500; color:#9ca3af;">
-                                                                    {{ \Carbon\Carbon::parse($billingDates[$bi])->format('M d, Y') }}
-                                                                </span>
-                                                            @endif
-                                                        </div>
-                                                        <div style="display:flex; justify-content:center; padding-top:2px;">
-                                                            <button type="button"
-                                                                onclick="openBillingEditModal({{ $bi }}, {{ $amount }}, '{{ $billingDates[$bi] ?? '' }}')"
-                                                                style="display:inline-flex; align-items:center; gap:0.3rem; padding:3px 10px; border-radius:6px; border:1.5px solid rgba(34,197,94,0.25); background:rgba(34,197,94,0.06); color:#16a34a; font-size:0.68rem; font-weight:700; cursor:pointer; font-family:'Instrument Sans',sans-serif; transition:all 0.15s; white-space:nowrap;"
-                                                                onmouseover="this.style.background='rgba(34,197,94,0.15)';this.style.borderColor='rgba(34,197,94,0.45)'"
-                                                                onmouseout="this.style.background='rgba(34,197,94,0.06)';this.style.borderColor='rgba(34,197,94,0.25)'">
-                                                                <i class="fas fa-pen" style="font-size:0.55rem;"></i> Edit
-                                                            </button>
-                                                        </div>
-                                                        <div style="display:flex; justify-content:flex-end; padding-top:2px;">
-                                                            <span
-                                                                style="font-size:0.82rem; font-weight:700; color:#16a34a;">₱{{ number_format($amount, 2) }}</span>
-                                                        </div>
-                                                    </div>
-                                                @endforeach
-                                            </div>
-                                            <div class="h-summary" style="margin-top:1rem; border-color:rgba(34,197,94,0.2);">
-                                                <span
-                                                    style="font-size:0.8rem; font-weight:600; color:var(--ink-muted); display:flex; align-items:center; gap:0.4rem;">
-                                                    <i class="fas fa-sigma" style="color:#16a34a; font-size:0.75rem;"></i>
-                                                    Total across {{ $billingCount }}
-                                                    {{ $billingCount === 1 ? 'billing' : 'billings' }}
-                                                </span>
-                                                <span
-                                                    style="font-family:'Syne',sans-serif; font-size:1.2rem; font-weight:800; color:#16a34a;">₱{{ number_format($totalBilled, 2) }}</span>
-                                            </div>
-                                            <div
-                                                style="margin-top:0.75rem; padding:0.875rem 1rem; border-radius:10px; display:flex; align-items:center; justify-content:space-between;
-                                    background:{{ $remainingBal >= 0 ? 'rgba(59,130,246,0.04)' : 'rgba(239,68,68,0.04)' }};
-                                    border:1px solid {{ $remainingBal >= 0 ? 'rgba(59,130,246,0.18)' : 'rgba(239,68,68,0.18)' }};">
-                                                <span
-                                                    style="font-size:0.8rem; font-weight:600; color:var(--ink-muted); display:flex; align-items:center; gap:0.4rem;">
-                                                    <i class="fas fa-wallet"
-                                                        style="color:{{ $remainingBal >= 0 ? '#3b82f6' : '#dc2626' }};"></i>
-                                                    Remaining Balance
-                                                    <span style="font-size:0.68rem; color:#9ca3af; font-weight:400;">(Contract −
-                                                        Total Billed)</span>
-                                                </span>
-                                                <span
-                                                    style="font-family:'Syne',sans-serif; font-size:1.2rem; font-weight:800; color:{{ $remainingBal >= 0 ? '#3b82f6' : '#dc2626' }};">
-                                                    ₱{{ number_format($remainingBal, 2) }}
-                                                </span>
-                                                <input type="hidden" id="remaining_balance" name="remaining_balance"
-                                                    value="{{ old('remaining_balance', $remainingBal) }}">
-                                            </div>
+                                    <div style="margin-bottom:1.5rem;">
+                                        <p
+                                            style="font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#9ca3af; margin-bottom:0.75rem; display:flex; align-items:center; gap:0.5rem;">
+                                            <i class="fas fa-history" style="color:#16a34a;"></i> Billing History
+                                        </p>
+                                        <div
+                                            style="display:grid; grid-template-columns:18px 1fr 5rem 5rem; gap:0 0.75rem; padding:0 0.25rem; margin-bottom:0.4rem;">
+                                            <span></span>
+                                            <p class="h-col-hdr">Billing</p>
+                                            <p class="h-col-hdr" style="text-align:center;">Action</p>
+                                            <p class="h-col-hdr" style="text-align:right;">Amount</p>
                                         </div>
-                                        <div style="border-top:1px dashed rgba(34,197,94,0.2); margin-bottom:1.5rem;"></div>
+                                        <div class="history-timeline">
+                                            @foreach($billingAmounts as $bi => $amount)
+                                                @php $bIsLast = $bi === $billingCount - 1; @endphp
+                                                <div
+                                                    style="display:grid; grid-template-columns:18px 1fr 5rem 5rem; gap:0 0.75rem; align-items:start;">
+                                                    <div class="h-spine">
+                                                        <div class="h-dot"
+                                                            style="background:#16a34a; box-shadow:0 0 0 3px rgba(34,197,94,0.18);">
+                                                        </div>
+                                                        @if(!$bIsLast)
+                                                            <div class="h-line" style="background:rgba(34,197,94,0.18);"></div>
+                                                        @endif
+                                                    </div>
+                                                    <div class="h-label {{ $bIsLast ? 'last' : '' }}"
+                                                        style="display:flex; flex-direction:column; gap:0.2rem;">
+                                                        <span>Billing No. {{ $bi + 1 }}</span>
+                                                        @if(!empty($billingDates[$bi]))
+                                                            <span style="font-size:0.72rem; font-weight:500; color:#9ca3af;">
+                                                                {{ \Carbon\Carbon::parse($billingDates[$bi])->format('M d, Y') }}
+                                                            </span>
+                                                        @endif
+                                                    </div>
+                                                    <div style="display:flex; justify-content:center; padding-top:2px;">
+                                                        <button type="button"
+                                                            onclick="openBillingEditModal({{ $bi }}, {{ $amount }}, '{{ $billingDates[$bi] ?? '' }}')"
+                                                            style="display:inline-flex; align-items:center; gap:0.3rem; padding:3px 10px; border-radius:6px; border:1.5px solid rgba(34,197,94,0.25); background:rgba(34,197,94,0.06); color:#16a34a; font-size:0.68rem; font-weight:700; cursor:pointer; font-family:'Instrument Sans',sans-serif; transition:all 0.15s; white-space:nowrap;"
+                                                            onmouseover="this.style.background='rgba(34,197,94,0.15)';this.style.borderColor='rgba(34,197,94,0.45)'"
+                                                            onmouseout="this.style.background='rgba(34,197,94,0.06)';this.style.borderColor='rgba(34,197,94,0.25)'">
+                                                            <i class="fas fa-pen" style="font-size:0.55rem;"></i> Edit
+                                                        </button>
+                                                    </div>
+                                                    <div style="display:flex; justify-content:flex-end; padding-top:2px;">
+                                                        <span
+                                                            style="font-size:0.82rem; font-weight:700; color:#16a34a;">₱{{ number_format($amount, 2) }}</span>
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                        <div class="h-summary" style="margin-top:1rem; border-color:rgba(34,197,94,0.2);">
+                                            <span
+                                                style="font-size:0.8rem; font-weight:600; color:var(--ink-muted); display:flex; align-items:center; gap:0.4rem;">
+                                                <i class="fas fa-sigma" style="color:#16a34a; font-size:0.75rem;"></i>
+                                                Total across {{ $billingCount }}
+                                                {{ $billingCount === 1 ? 'billing' : 'billings' }}
+                                            </span>
+                                            <span
+                                                style="font-family:'Syne',sans-serif; font-size:1.2rem; font-weight:800; color:#16a34a;">₱{{ number_format($totalBilled, 2) }}</span>
+                                        </div>
+                                        <div
+                                            style="margin-top:0.75rem; padding:0.875rem 1rem; border-radius:10px; display:flex; align-items:center; justify-content:space-between;
+                                        background:{{ $remainingBal >= 0 ? 'rgba(59,130,246,0.04)' : 'rgba(239,68,68,0.04)' }};
+                                        border:1px solid {{ $remainingBal >= 0 ? 'rgba(59,130,246,0.18)' : 'rgba(239,68,68,0.18)' }};">
+                                            <span
+                                                style="font-size:0.8rem; font-weight:600; color:var(--ink-muted); display:flex; align-items:center; gap:0.4rem;">
+                                                <i class="fas fa-wallet"
+                                                    style="color:{{ $remainingBal >= 0 ? '#3b82f6' : '#dc2626' }};"></i>
+                                                Remaining Balance
+                                                <span style="font-size:0.68rem; color:#9ca3af; font-weight:400;">(Contract −
+                                                    Total Billed)</span>
+                                            </span>
+                                            <span
+                                                style="font-family:'Syne',sans-serif; font-size:1.2rem; font-weight:800; color:{{ $remainingBal >= 0 ? '#3b82f6' : '#dc2626' }};">
+                                                ₱{{ number_format($remainingBal, 2) }}
+                                            </span>
+                                            <input type="hidden" id="remaining_balance" name="remaining_balance"
+                                                value="{{ old('remaining_balance', $remainingBal) }}">
+                                        </div>
+                                    </div>
+                                    <div style="border-top:1px dashed rgba(34,197,94,0.2); margin-bottom:1.5rem;"></div>
                                 @endif
 
                                 {{-- Add new billing --}}
@@ -1742,6 +1743,43 @@
             document.body.appendChild(form);
             form.submit();
         }
+        {{-- Billing Edit Modal JS --}}
+        window._billingEditIndex = 0;
+
+        window.openBillingEditModal = function (index, amount, date) {
+            window._billingEditIndex = index;
+            document.getElementById('billing-edit-label').textContent = 'Billing No. ' + (index + 1);
+            const _bEl = document.getElementById('billing-edit-amount');
+            _bEl.value = amount ? Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''; document.getElementById('billing-edit-date').value = date || '';
+            document.getElementById('billing-edit-error').style.display = 'none';
+            openModal('billing-edit-modal');
+        };
+
+        window.submitBillingEdit = function () {
+            const amount = document.getElementById('billing-edit-amount').value;
+            if (!amount || parseFloat(amount) < 0) {
+                document.getElementById('billing-edit-error').style.display = 'flex';
+                document.getElementById('billing-edit-amount').focus();
+                return;
+            }
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ route("admin.projects.updateBilling", $project) }}';
+            const fields = {
+                '_token': '{{ csrf_token() }}',
+                '_method': 'PATCH',
+                'billing_index': window._billingEditIndex,
+                'billing_amount': amount,
+                'billing_date': document.getElementById('billing-edit-date').value,
+            };
+            Object.entries(fields).forEach(([name, value]) => {
+                const input = document.createElement('input');
+                input.type = 'hidden'; input.name = name; input.value = value;
+                form.appendChild(input);
+            });
+            document.body.appendChild(form);
+            form.submit();
+        };
     </script>
 
     {{-- Billing Edit Modal --}}
@@ -1799,46 +1837,6 @@
             </button>
         </x-slot>
     </x-modal>
-
-    {{-- Billing Edit Modal JS --}}
-    <script>
-        window._billingEditIndex = 0;
-
-        window.openBillingEditModal = function (index, amount, date) {
-            window._billingEditIndex = index;
-            document.getElementById('billing-edit-label').textContent = 'Billing No. ' + (index + 1);
-            const _bEl = document.getElementById('billing-edit-amount');
-            _bEl.value = amount ? Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''; document.getElementById('billing-edit-date').value = date || '';
-            document.getElementById('billing-edit-error').style.display = 'none';
-            openModal('billing-edit-modal');
-        };
-
-        window.submitBillingEdit = function () {
-            const amount = document.getElementById('billing-edit-amount').value;
-            if (!amount || parseFloat(amount) < 0) {
-                document.getElementById('billing-edit-error').style.display = 'flex';
-                document.getElementById('billing-edit-amount').focus();
-                return;
-            }
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = '{{ route("admin.projects.updateBilling", $project) }}';
-            const fields = {
-                '_token': '{{ csrf_token() }}',
-                '_method': 'PATCH',
-                'billing_index': window._billingEditIndex,
-                'billing_amount': amount,
-                'billing_date': document.getElementById('billing-edit-date').value,
-            };
-            Object.entries(fields).forEach(([name, value]) => {
-                const input = document.createElement('input');
-                input.type = 'hidden'; input.name = name; input.value = value;
-                form.appendChild(input);
-            });
-            document.body.appendChild(form);
-            form.submit();
-        };
-    </script>
 
     {{-- Reactivation form (completed projects only) --}}
     @if($project->status === 'completed')
