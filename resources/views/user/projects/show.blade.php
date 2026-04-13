@@ -999,10 +999,7 @@
                                 <i class="fas fa-comment-dots" style="color:var(--or5);font-size:0.8rem;"></i>
                                 <span class="ct">Remarks / Recommendation</span>
                             </div>
-                            <div style="padding:1.1rem 1.25rem;">
-                                <p style="font-size:0.875rem;color:var(--tx);line-height:1.8;white-space:pre-wrap;font-family:ui-monospace, SFMono-Regular, Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;">
-                                    {{ $project->remarks_recommendation }}</p>
-                            </div>
+                            <div style="padding:1.1rem 1.25rem;"><p style="margin:0;font-size:0.875rem;color:var(--tx);line-height:1.8;white-space:pre-wrap;font-family:ui-monospace, SFMono-Regular, Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;">{{ $project->remarks_recommendation }}</p></div>
                         </div>
                     @endif
                 </div>
