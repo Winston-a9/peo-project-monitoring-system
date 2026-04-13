@@ -356,8 +356,7 @@ class ProjectController extends Controller
             $existingCosts[] = ($newTECost !== null && $newTECost !== '') ? (float) $newTECost : null;
             if ($newTEReason !== '') {
                 $existing  = trim($fresh->remarks_recommendation ?? '');
-                $timestamp = now()->format('F d, Y \a\t h:i A');
-                $note      = "[{$timestamp}] {$newTELabel} added — Reason: {$newTEReason}";
+                $note      = $this->formatEntryRemark($newTELabel, 'added', $newTEReason);
                 $data['remarks_recommendation'] = $existing !== '' ? $existing . "\n\n" . $note : $note;
             }
 
@@ -387,8 +386,7 @@ class ProjectController extends Controller
             $existingDates[]   = $newVODate ?: null;
             if ($newVOReason !== '') {
                 $existing  = trim($data['remarks_recommendation'] ?? $fresh->remarks_recommendation ?? '');
-                $timestamp = now()->format('F d, Y \a\t h:i A');
-                $note      = "[{$timestamp}] {$newVOLabel} added — Reason: {$newVOReason}";
+                $note      = $this->formatEntryRemark($newVOLabel, 'added', $newVOReason);
                 $data['remarks_recommendation'] = $existing !== '' ? $existing . "\n\n" . $note : $note;
             }
         }
@@ -725,8 +723,7 @@ class ProjectController extends Controller
 
         // ── Append edit note to remarks_recommendation ────────────
         $existing  = trim($fresh->remarks_recommendation ?? '');
-        $timestamp = now()->format('F d, Y \a\t h:i A');
-        $note      = "[{$timestamp}] {$resolvedLabel} edited — Reason: {$reason}";
+        $note      = $this->formatEntryRemark($resolvedLabel, 'edited', $reason);
         $data['remarks_recommendation'] = $existing !== '' ? $existing . "\n\n" . $note : $note;
 
         $project->update($data);
@@ -734,6 +731,26 @@ class ProjectController extends Controller
         return redirect()
             ->route('admin.projects.edit', $project)
             ->with('success', ucfirst($type === 'te' ? 'Time Extension' : 'Variation Order') . ' updated successfully.');
+    }
+
+    /**
+     * Build a compact plain-text remark entry with a small table row.
+     */
+    private function formatEntryRemark(string $label, string $action, string $reason): string
+    {
+        $timestamp = now()->format('F d, Y \a\t h:i A');
+        $time = now()->format('h:i A');
+        $rowId = $this->resolveRemarkRowId($label);
+        $cleanReason = trim(preg_replace('/\s+/', ' ', $reason));
+        $header = '#   Time       Reason';
+        $row    = sprintf('%-3s %-11s %s', $rowId, $time, $cleanReason);
+
+        return "[{$timestamp}] {$label} {$action} — Reason: {$cleanReason}\n{$header}\n{$row}";
+    }
+
+    private function resolveRemarkRowId(string $label): string
+    {
+        return preg_match('/\b(\d+)\b$/', $label, $matches) ? $matches[1] : $label;
     }
 
     /**
@@ -863,8 +880,7 @@ class ProjectController extends Controller
 
         // ── Append delete note to remarks_recommendation ──────────
         $existing  = trim($fresh->remarks_recommendation ?? '');
-        $timestamp = now()->format('F d, Y \a\t h:i A');
-        $note      = "[{$timestamp}] {$deletedLabel} deleted — Reason: {$reason}";
+        $note      = $this->formatEntryRemark($deletedLabel, 'deleted', $reason);
 
         $data['remarks_recommendation'] = $existing !== ''
             ? $existing . "\n\n" . $note
