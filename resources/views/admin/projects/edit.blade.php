@@ -1169,7 +1169,8 @@
                                                 <p
                                                     style="font-family:'Syne',sans-serif; font-size:1rem; font-weight:800; color:#16a34a; margin:0;">
                                                     ₱<span id="billing_total_preview"
-                                                        data-base="{{ $totalBilled }}">{{ number_format($totalBilled, 2) }}</span>
+                                                        data-base="{{ $totalBilled }}"
+                                                        data-adjusted="{{ $adjustedContractAmt }}">{{ number_format($totalBilled, 2) }}</span>
                                                 </p>
                                             </div>
                                             <div

@@ -129,6 +129,7 @@ edit.blade
 
 	extensions
 	billing 
+		bug:billing remaining balance calculation js fix
 	admin
 
 show.blade 
