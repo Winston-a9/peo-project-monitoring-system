@@ -823,7 +823,6 @@
                                         <th style="text-align:left;">Entry</th>
                                         <th style="text-align:center;">Date</th>
                                         <th style="text-align:right;">Amount</th>
-                                        <th style="text-align:right;">Cumulative Total</th>
                                         <th style="text-align:right;">Remaining Balance</th>
                                     </tr>
                                 </thead>
@@ -913,14 +912,6 @@
                                                     <span style="color:#9ca3af;font-size:0.8rem;">—</span>
                                                 @else
                                                     <span
-                                                        style="font-weight:700;color:{{ ($row['isLast'] ?? false) ? '#16a34a' : 'var(--tx)' }};">₱{{ number_format($runningBilled, 2) }}</span>
-                                                @endif
-                                            </td>
-                                            <td style="text-align:right;">
-                                                @if($isExt)
-                                                    <span style="color:#9ca3af;font-size:0.8rem;">—</span>
-                                                @else
-                                                    <span
                                                         style="font-weight:700;color:{{ $runningRemain >= 0 ? '#3b82f6' : '#dc2626' }};">₱{{ number_format($runningRemain, 2) }}</span>
                                                 @endif
                                             </td>
@@ -932,9 +923,6 @@
                                         <td colspan="2"
                                             style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink2);">
                                             Total</td>
-                                        <td style="text-align:right;"><span
-                                                style="font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:800;color:#16a34a;">₱{{ number_format($totalBilled, 2) }}</span>
-                                        </td>
                                         <td style="text-align:right;"><span
                                                 style="font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:800;color:#16a34a;">₱{{ number_format($totalBilled, 2) }}</span>
                                         </td>
