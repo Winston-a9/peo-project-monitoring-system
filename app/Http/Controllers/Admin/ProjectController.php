@@ -1421,7 +1421,7 @@ public function exportPdf(Project $project)
     // ============================================================
 
     /**
-     * Permanently delete a project record.
+     * Permanently delet    e a project record.
      */
     public function destroy(Project $project)
     {

@@ -14,12 +14,12 @@
                 </p>
             </div>
             <div class="app-header-actions">
+                <a href="{{ route('admin.projects.export-pdf', $project) }}">
+                        Export PDF</a>
                 <a href="{{ route('admin.projects.edit', $project) }}" class="app-btn-secondary"><i
                         class="fas fa-edit"></i> Update</a>
                 <a href="{{ route('admin.projects.index') }}" class="app-btn-secondary"><i
                         class="fas fa-arrow-left"></i> Back</a>
-                <a href="{{ route('admin.projects.export-pdf', $project) }}">
-                        Export PDF</a>
             </div>
         </div>
     </x-slot>

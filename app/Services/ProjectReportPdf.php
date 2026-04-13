@@ -7,7 +7,7 @@ use FPDF;
 
 class ProjectReportPdf extends FPDF
 {
-    private $reportTitle = 'Project Monitoring Report';
+    private $reportTitle = 'PEO Project Monitoring Report';
     private $generatedAt = '';
     private $filterLabel = 'All Projects';
 
