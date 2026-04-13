@@ -1,26 +1,29 @@
 <!-- in create add/change:
 
-input calendar form "contract days"
 
- 	change original expiry will be a result of text date started + original days = original expiry
+february 23-27, 2026: constructed a basic CRUDS for project monitoring
+
+March 2, 2026:
+
+<added> input calendar form "contract days"
+
+ 	<logic>change original expiry will be a result of text date started + original days = original expiry
 
 in edit add/change:
 
-when Liquidated Damages is choosen
-new percentage form "Accomplished", "Unworked"
-new number input "LD per day", and "total LD"
-new calendar form "days overdue"
 
- 	LD per day computation: (Accomplished/100) *Contract Amount*0.001
- 	Total LD computation: LD per day * days overdue
- 		total LD will be calculating everyday until the deadline of days overdue
+<add> Liquidated Damages, new percentage form "Accomplished", "Unworked", new number input "LD per day", and "total LD",new calendar form "days overdue"
 
-when time extension is selected add a new number form of cost involve
+<logic> LD per day computation: (Accomplished/100) *Contract Amount*0.001,Total LD computation: LD per day * days overdue, 		total LD will be calculating everyday until the deadline of days overdue
 
-add Suspension Order days count
 
- 	if time extension = extended Calendar Days and Revised Expiry
- 	if Suspension order = extend revised expiry only
+
+<add> when time extension is selected add a new number form of cost involve
+
+<add> add Suspension Order days count
+
+ 	<logic>if time extension = extended Calendar Days and Revised Expiry,if Suspension order = extend revised expiry only
+ 	
 
 in Show add/change:
  	time extension count log
@@ -35,35 +38,31 @@ polish user and admin design
 
 filter add - Municipality, district, date
 
-user and admin roles
-
-add super admin
-
 ==================================================================================================================================================================================================================================================================================================
 
-redesign my show.blade, in contract dates add calendar days and how many days its been added, in the approved time extensions/variation orders remove the column date requested
+<Redesign> redesign my show.blade, in contract dates add calendar days and how many days its been added, in the approved time extensions/variation orders remove the column date requested
 
 3/10/2026
 
-FIX, DISPLAY THE LD SUMMARY AND DELETE THE TE/VO/SP SCOREBOARD
+<bug> FIX, DISPLAY THE LD SUMMARY AND DELETE THE TE/VO/SP SCOREBOARD
 
-edit.blade fix the money amount figure of contract amount, LD per day, Total LD
+<update> edit.blade fix the money amount figure of contract amount, LD per day, Total LD
 
-make accomplished number limit 2, 5
+<update> make accomplished number limit 2, 5
 
-in extension tab make it each extension can be updated once in a time so it will prevent system confusion
+<update> in extension tab make it each extension can be updated once in a time so it will prevent system confusion
 
 ==================================================================================================================================================================================================================================================================================================
 
 3/13/2026
 
 EDIT:
- 	 revised expiry and original -1 formula always
- 	change the extension delete function into a edit function
- 	performance bond 'date' for notif date and add a warning when its almost 5 days on the performance bond date
- 	if Extension's cost involved is negative, deduct the contract amount
- 	Use Accordion / Collapsible Sections on the tabs of TE,VO and SO
- 	if the number is a amount of money it should have , every 3 digits of whole number.
+ 	 <update> revised expiry and original -1 formula always
+ 	<update> change the extension delete function into a edit function
+ 	<add> performance bond 'date' for notif date and add a warning when its almost 5 days on the performance bond date
+ 	<logic> if Extension's cost involved is negative, deduct the contract amount
+ 	<update> Use Accordion / Collapsible Sections on the tabs of TE,VO and SO
+ 	<logic> if the number is a amount of money it should have , every 3 digits of whole number.
 
 
 SHOW:
@@ -74,10 +73,13 @@ SHOW:
 
 3/16/2026
 
+Addition in edit page:
+
 add total amount bill
 add Remaining balance
 Add Billing Update
 
+	Logic:
  	each billing update has a count example billing no.1,2,3,4. each billing amount summed up and display the total amount in "total amount bill"
 
 	Billing Amount + Billing Amount (and so on depends on how many times billing amount has been added) = Total Amount Billed
@@ -113,8 +115,6 @@ TO ADD/FIX:
 
 
 create.blade
-	Contract ID range value adjust (debugg subject for change)
-	allow "-" in contract id input
 	change my formula when calculating original expiry date from -1 to +1 day (SUBJECT FOR CHANGE)
 
 edit.blade
@@ -142,75 +142,87 @@ if complete
 if expired
 	LD is shown
 	
+<add> make a csv report for a project information with all the existing information of the project
 	
 ==================================================================================================================================================================================================================================================================================================
 FIXED/added:
-ADMIN
-remaining balance display amount display after the updated adjustment also
-		change the sorting of the financial table from oldest -> earliest on the bottom
-		contract amount editable(to prevent bugs didnt include project information inputtable update)
-bug: amount total of TE and VO cost involved not being calculated and display 
-			 total in amount determine if deduction is greater than addition add "-" before the pesos sign
-		bug:billing remaining balance calculation js fix
-updated user blades, displays the same admin-style data layout and tabbed view, but with user-compatible routes and asset references.
-		bug:percentage of advance billin and retention should only be max of 100% with 2 decimals
-		cost involve should also add or decrease the remaining balance
 
-		cost involve add a negative sign "-" means the amount is being deducted
+<add> added a pdf report generator inside a project
 
-contract id coloumn and contract id filter search text add
-render the adv billing and retention in the show.blade
-		in contract dates add days and how much days has been extended
+4/13-17/26
+	<update> Contract ID range value adjust (debugg subject for change)
+	<update> allow "-" in contract id input
+<update> remaining balance display amount display after the updated adjustment also
+		<update> change the sorting of the financial table from oldest -> earliest on the bottom
+		<update> contract amount editable(to prevent bugs didnt include project information inputtable update)
+<fix> bug: amount total of TE and VO cost involved not being calculated and display 
+			 <update> total in amount determine if deduction is greater than addition add "-" before the pesos sign
+		<fix> bug:billing remaining balance calculation js fix
+<update> updated user blades, displays the same admin-style data layout and tabbed view, but with user-compatible routes and asset references.
+		<fix> bug:percentage of advance billin and retention should only be max of 100% with 2 decimals
+		<update> cost involve should also add or decrease the remaining balance
 
-		sort by earliest in date request
-reason/coverage reflected from the extension update modal reason/coverage
-all amount input add "," every 3 whole digit number so the user can easily deterimine how much its amount inputted
+		<update> cost involve add a negative sign "-" means the amount is being deducted
 
-		advance billing and retention amount form change to manual user input (dont need to be automated since theres no proper formula)
+4/6-10/26
 
-		bug: billing edit modal not working
+<add> contract id coloumn and contract id filter search text add
+<add> render the adv billing and retention in the show.blade
+		<update> in contract dates add days and how much days has been extended
+		<update> sort by earliest in date request
+<update> reason/coverage reflected from the extension update modal reason/coverage
+<update> all amount input add "," every 3 whole digit number so the user can easily deterimine how much its amount inputted
 
-		include suspension order on the reason modal pop up
+		<update> advance billing and retention amount form change to manual user input (dont need to be automated since theres no proper formula)
 
-		when work done is 100% LDA is read-only.
+		<fix> bug: billing edit modal not working
 
-		change ld calculation from Formula: (Unworked % ÷ 100) × Original Contract Amount × 0.001 to Formula: (Unworked % ÷ 100) × Remaining Contract Amount or in the data table "original_amount" × 0.001
+		<update> include suspension order on the reason modal pop up
 
-		add a reason/coverage everytime date extension is updated
+		<update> when work done is 100% LDA is read-only.
+
+		<update> change ld calculation from Formula: (Unworked % ÷ 100) × Original Contract Amount × 0.001 to Formula: (Unworked % ÷ 100) × Remaining Contract Amount or in the data table "original_amount" × 0.001
+
+		<add> add a reason/coverage everytime date extension is updated
+
+3/30/26 - 4/3/26
 
 	add contract id
-		create a new billing tab
+		<add> create a new billing tab
 
-		billing updates changes to 171
+		<update> billing updates changes to 171
 
-		adv billin and retention manual user input type: Percentage and Amount form
-		date stamp everytime as planned and work done is updated
+		<add> adv billin and retention manual user input type: Percentage and Amount form
+		<add> date stamp everytime as planned and work done is updated
 
-		Contract Amount number form put "," every 3 whole digit number
-		make a switch or button for reactivation, when the user reactivate a project it will go back to either on going, expiring or expired status, depends on the expiry date	
+		<update> Contract Amount number form put "," every 3 whole digit number
+		<add> make a switch or button for reactivation, when the user reactivate a project it will go back to either on going, expiring or expired status, depends on the expiry date	
 
-	when the user added a extension that extended a expired project the status in index.blade, show.blade, and edit.blade will automatically update into ongoing or expiring depending on how many days are left
+	<update> when the user added a extension that extended a expired project the status in index.blade, show.blade, and edit.blade will automatically update into ongoing or expiring depending on how many days are left
 
-	Should the status be automatic if less than 0 expired date will status "expired", if less than 30 days status is "expiring", if days left is more than 31 days status is "ongoing"
+	<update> Should the status be automatic if less than 0 expired date will status "expired", if less than 30 days status is "expiring", if days left is more than 31 days status is "ongoing"
+
+3/23-27/26
+
+<fix> in financial the "days overdue" only counts the overdued date since the revised expiry or original expiry (depends if the project has extension then it will only count the original expiry) if theres still days left just leave it blanked
+
+	<logic> in financial>billing history add if the extensions has cost involve, then compute the cost involve amount in the remaining amount
+
+		<fix> LD CALCULATION IS NOT CORRECT
+        <update> make Days Overdue only a read-only,        fill Days Overdue = days remaining
 
 
-in financial the "days overdue" only counts the overdued date since the revised expiry or original expiry (depends if the project has extension then it will only count the original expiry) if theres still days left just leave it blanked
+3/17-20/26
 
-	in financial>billing history add if the extensions has cost involve, then compute the cost involve amount in the remaining amount
+	<update> In LD tab, I only need the view tab, everything else inside it delete, also delete days overdue and total liability display
 
-		LD CALCULATION IS NOT CORRECT
-        make Days Overdue only a read-only,
-        fill Days Overdue = days remaining
+	<logic> If the project is updated its status, it should update all the blade of its new status so it will prevent user confusion - edit.blade, show.blade, index.blade
 
-	In LD tab, I only need the view tab, everything else inside it delete, also delete days overdue and total liability display
+	<update> work progress max and Liquidated Damages Assessment (ACCOMPLISHED) input of 3 whole numbers and 2 decimals, 100.00max 0.0min. - edit.blade and create.blade (progress in create.blade)
 
-	If the project is updated its status, it should update all the blade of its new status so it will prevent user confusion - edit.blade, show.blade, index.blade
+	<update> Activity Log remove unnecessary updates, only show the updated data - show.blade
 
-	work progress max and Liquidated Damages Assessment (ACCOMPLISHED) input of 3 whole numbers and 2 decimals, 100.00max 0.0min. - edit.blade and create.blade (progress in create.blade)
-
-	Activity Log remove unnecessary updates, only show the updated data - show.blade
-
-Status Needs to fix only need one status display, force expired if the user updated the status.
-		in the index.blade change name:Active into On Going -->
+<Fix> Status Needs to fix only need one status display, force expired if the user updated the status.
+		<update> in the index.blade change name:Active into On Going -->
 
 

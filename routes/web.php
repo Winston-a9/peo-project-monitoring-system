@@ -35,8 +35,10 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
     Route::resource('projects', ProjectController::class);
 
+    Route::get('/projects/{project}/export-pdf', [ProjectController::class, 'exportPdf'])->name('projects.export-pdf');
     Route::get('/reports',          [ProjectController::class, 'reports'])->name('reports.index');
     Route::get('/reports/generate', [ProjectController::class, 'generateReport'])->name('reports.generate');
+    
 });
 // User Routes
 Route::middleware(['auth', 'role:user'])->prefix('user')->name('user.')->group(function () {

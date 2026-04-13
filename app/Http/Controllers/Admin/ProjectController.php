@@ -1163,9 +1163,261 @@ class ProjectController extends Controller
         exit;
     }
 
+    // ============================================================
+    // SECTION 9: project detail PDF generation
+    // ============================================================
+/**
+ * Generate and stream a single project detail PDF.
+ */
+public function exportPdf(Project $project)
+{
+    $clean = fn(string $s) => iconv('UTF-8', 'windows-1252//TRANSLIT//IGNORE', $s) ?: $s;
+    $fresh = $project->fresh();
+
+    $docs      = is_array($fresh->documents_pressed) ? $fresh->documents_pressed : [];
+    $teDays    = is_array($fresh->extension_days)    ? array_map('intval', $fresh->extension_days) : [];
+    $teCosts   = is_array($fresh->cost_involved)     ? $fresh->cost_involved     : [];
+    $dates     = is_array($fresh->date_requested)    ? $fresh->date_requested    : [];
+    $voDays    = is_array($fresh->vo_days)           ? array_map('intval', array_filter((array) $fresh->vo_days)) : [];
+    $voCosts   = is_array($fresh->vo_cost)           ? $fresh->vo_cost           : [];
+    $issuances = is_array($fresh->issuances)         ? $fresh->issuances         : [];
+
+    $billingAmounts = is_array($fresh->billing_amounts) ? $fresh->billing_amounts : [];
+    $billingDates   = is_array($fresh->billing_dates)   ? $fresh->billing_dates   : [];
+
+    $allCosts  = array_merge(
+        is_array($fresh->cost_involved) ? $fresh->cost_involved : [],
+        is_array($fresh->vo_cost)       ? $fresh->vo_cost       : []
+    );
+    $totalAdj  = collect($allCosts)->filter(fn($c) => $c !== null && (float) $c != 0)->sum();
+    $adjusted  = max(0, (float) $fresh->original_contract_amount + $totalAdj);
+    $hasSO     = collect($docs)->contains('Suspension Order');
+
+    $teCount   = collect($docs)->filter(fn($d) => str_starts_with((string) $d, 'Time Extension'))->count();
+
+    // ── Init PDF ──────────────────────────────────────────────
+    $pdf = new ProjectReportPdf('P', 'mm', 'A4');
+    $pdf->SetMargins(15, 15, 15);
+    $pdf->SetAutoPageBreak(true, 20);
+    $pdf->AddPage();
+    $pdf->SetFont('Helvetica', '', 9);
+
+    // ── Helper closures ───────────────────────────────────────
+    $sectionHeader = function (string $title) use ($pdf) {
+        $pdf->Ln(4);
+        $pdf->SetFillColor(107, 79, 53);
+        $pdf->SetTextColor(255, 255, 255);
+        $pdf->SetFont('helvetica', 'B', 9);
+        $pdf->Cell(0, 7, strtoupper($title), 0, 1, 'L', true);
+        $pdf->SetTextColor(0, 0, 0);
+        $pdf->SetFont('helvetica', '', 9);
+        $pdf->Ln(1);
+    };
+
+    $labelValue = function (string $label, string $value) use ($pdf) {
+        $pdf->SetFont('helvetica', 'B', 9);
+        $pdf->Cell(65, 6, $label . ':', 0, 0, 'L');
+        $pdf->SetFont('helvetica', '', 9);
+        $pdf->MultiCell(0, 6, $value, 0, 'L');
+    };
+
+    $twoCol = function (string $l1, string $v1, string $l2, string $v2) use ($pdf) {
+        $pdf->SetFont('helvetica', 'B', 9);
+        $pdf->Cell(50, 6, $l1 . ($l1 !== '' ? ':' : ''), 0, 0);  
+        $pdf->SetFont('helvetica', '', 9);
+        $pdf->Cell(45, 6, $v1, 0, 0);                            
+        $pdf->SetFont('helvetica', 'B', 9);
+        $pdf->Cell(50, 6, $l2 . ($l2 !== '' ? ':' : ''), 0, 0);  
+        $pdf->SetFont('helvetica', '', 9);
+        $pdf->Cell(0, 6, $v2, 0, 1);
+    };
+
+    // ── Title Block ───────────────────────────────────────────
+    $pdf->SetFont('helvetica', 'B', 14);
+    $pdf->SetTextColor(107, 79, 53);
+    $pdf->Cell(0, 8, 'PROJECT DETAIL REPORT', 0, 1, 'C');
+    $pdf->SetFont('helvetica', '', 9);
+    $pdf->SetTextColor(100, 100, 100);
+    $pdf->Cell(0, 5, 'Generated: ' . now()->format('F d, Y  h:i A'), 0, 1, 'C');
+    $pdf->SetTextColor(0, 0, 0);
+    $pdf->Line(15, $pdf->GetY(), 195, $pdf->GetY());
+
+    // ── Section 1: Basic Info ─────────────────────────────────
+    $sectionHeader('Project Information');
+    $twoCol('Contract ID',  $clean($fresh->contract_id ?? ''), 'Status', ucfirst($fresh->status ?? ''));
+    $labelValue('Project Title', $clean($fresh->project_title ?? ''));
+    $twoCol('In Charge',    $clean($fresh->in_charge ?? ''),   'Contractor', $clean($fresh->contractor ?? ''));
+    $labelValue('Location', $clean($fresh->location ?? ''));
+
+    // ── Section 2: Contract Schedule ─────────────────────────
+    $sectionHeader('Contract Schedule');
+    $twoCol(
+        'Date Started',             optional($fresh->date_started)->format('M d, Y') ?? 'N/A',
+        'Contract Days',            (string) ($fresh->contract_days ?? 'N/A')
+    );
+    $twoCol(
+        'Original Contract Expiry', optional($fresh->original_contract_expiry)->format('M d, Y') ?? 'N/A',
+        'Revised Contract Expiry',  optional($fresh->revised_contract_expiry)?->format('M d, Y') ?? 'N/A'
+    );
+    $twoCol(
+        'Completed At',             optional($fresh->completed_at)?->format('M d, Y') ?? 'N/A',
+        'Suspension Days',          $hasSO ? (string) (int) ($fresh->suspension_days ?? 0) : 'N/A'
+    );
+
+    // ── Section 3: Contract Amounts ───────────────────────────
+    $sectionHeader('Contract Amounts');
+    $twoCol(
+        'Original Contract Amount', 'PHP ' . number_format((float) $fresh->original_contract_amount, 2),
+        'Total Cost Adjustments',   'PHP ' . number_format($totalAdj, 2)
+    );
+    $twoCol(
+        'Adjusted Contract Amount', 'PHP ' . number_format($adjusted, 2),
+        'Total Amount Billed',      'PHP ' . number_format((float) ($fresh->total_amount_billed ?? 0), 2)
+    );
+    $twoCol(
+        'Remaining Balance',        'PHP ' . number_format((float) ($fresh->remaining_balance ?? 0), 2),
+        'Advance Billing Amount',   $fresh->advance_billing_amount !== null ? 'PHP ' . number_format((float) $fresh->advance_billing_amount, 2) : 'N/A'
+    );
+    $twoCol(
+        'Advance Billing %',        $fresh->advance_billing_pct !== null ? $fresh->advance_billing_pct . '%' : 'N/A',
+        'Retention Amount',         $fresh->retention_amount !== null ? 'PHP ' . number_format((float) $fresh->retention_amount, 2) : 'N/A'
+    );
+    $labelValue('Retention %', $fresh->retention_pct !== null ? $fresh->retention_pct . '%' : 'N/A');
+
+    // ── Section 4: Progress ───────────────────────────────────
+    $sectionHeader('Progress');
+    $twoCol('As Planned',  $fresh->as_planned . '%', 'Work Done',  $fresh->work_done . '%');
+    $slip     = (float) ($fresh->slippage ?? 0);
+    $slipStr  = ($slip > 0 ? '+' : '') . number_format($slip, 2) . '%';
+    $labelValue('Slippage', $slipStr);
+
+    // ── Section 5: Billing History ────────────────────────────
+    $sectionHeader('Billing History');
+    if (count($billingAmounts) > 0) {
+        // Table header
+        $pdf->SetFillColor(230, 220, 210);
+        $pdf->SetFont('helvetica', 'B', 8);
+        $pdf->Cell(15,  6, '#',       'B', 0, 'C', true);
+        $pdf->Cell(100, 6, 'Amount',  'B', 0, 'L', true);
+        $pdf->Cell(0,   6, 'Date',    'B', 1, 'L', true);
+        $pdf->SetFont('helvetica', '', 8);
+        foreach ($billingAmounts as $i => $amount) {
+            $even = $i % 2 === 0;
+            if ($even) $pdf->SetFillColor(250, 248, 245); else $pdf->SetFillColor(255, 255, 255);
+            $date = $billingDates[$i] ?? null;
+            $pdf->Cell(15,  6, (string) ($i + 1), 0, 0, 'C', true);
+            $pdf->Cell(100, 6, 'PHP ' . number_format((float) $amount, 2), 0, 0, 'L', true);
+            $pdf->Cell(0,   6, $date ? Carbon::parse($date)->format('M d, Y') : 'N/A', 0, 1, 'L', true);
+        }
+    } else {
+        $pdf->Cell(0, 6, 'No billing entries recorded.', 0, 1);
+    }
+
+    // ── Section 6: Time Extensions ────────────────────────────
+    $sectionHeader('Time Extensions');
+    if ($teCount > 0) {
+        $pdf->SetFillColor(230, 220, 210);
+        $pdf->SetFont('helvetica', 'B', 8);
+        $pdf->Cell(8,  6, '#',             'B', 0, 'C', true);
+        $pdf->Cell(55, 6, 'Label',         'B', 0, 'L', true);
+        $pdf->Cell(20, 6, 'Days',          'B', 0, 'C', true);
+        $pdf->Cell(55, 6, 'Cost Involved', 'B', 0, 'R', true);
+        $pdf->Cell(0,  6, 'Date Requested','B', 1, 'L', true);
+        $pdf->SetFont('helvetica', '', 8);
+        $teIndex = 0;
+        foreach ($docs as $doc) {
+            if (str_starts_with((string) $doc, 'Time Extension')) {
+                $even = $teIndex % 2 === 0;
+                if ($even) $pdf->SetFillColor(250, 248, 245); else $pdf->SetFillColor(255, 255, 255);
+                $cost = isset($teCosts[$teIndex]) && $teCosts[$teIndex] !== null ? 'PHP ' . number_format((float) $teCosts[$teIndex], 2) : 'N/A';
+                $date = isset($dates[$teIndex]) && $dates[$teIndex] ? Carbon::parse($dates[$teIndex])->format('M d, Y') : 'N/A';
+                $pdf->Cell(8,  6, (string) ($teIndex + 1), 0, 0, 'C', true);
+                $pdf->Cell(55, 6, $clean($doc), 0, 0, 'L', true);
+                $pdf->Cell(20, 6, (string) ($teDays[$teIndex] ?? 0), 0, 0, 'C', true);
+                $pdf->Cell(55, 6, $cost, 0, 0, 'R', true);
+                $pdf->Cell(0,  6, $date, 0, 1, 'L', true);
+                $teIndex++;
+            }
+        }
+    } else {
+        $pdf->Cell(0, 6, 'No time extensions recorded.', 0, 1);
+    }
+
+    // ── Section 7: Variation Orders ───────────────────────────
+    $sectionHeader('Variation Orders');
+    $voCount = collect($docs)->filter(fn($d) => str_starts_with((string) $d, 'Variation Order'))->count();
+    if ($voCount > 0) {
+        $pdf->SetFillColor(230, 220, 210);
+        $pdf->SetFont('helvetica', 'B', 8);
+        $pdf->Cell(8,  6, '#',             'B', 0, 'C', true);
+        $pdf->Cell(55, 6, 'Label',         'B', 0, 'L', true);
+        $pdf->Cell(20, 6, 'Days',          'B', 0, 'C', true);
+        $pdf->Cell(55, 6, 'Cost Involved', 'B', 0, 'R', true);
+        $pdf->Cell(0,  6, 'Date Requested','B', 1, 'L', true);
+        $pdf->SetFont('helvetica', '', 8);
+        $voIndex = 0;
+        foreach ($docs as $doc) {
+            if (str_starts_with((string) $doc, 'Variation Order')) {
+                $even = $voIndex % 2 === 0;
+                if ($even) $pdf->SetFillColor(250, 248, 245); else $pdf->SetFillColor(255, 255, 255);
+                $cost = isset($voCosts[$voIndex]) && $voCosts[$voIndex] !== null ? 'PHP ' . number_format((float) $voCosts[$voIndex], 2) : 'N/A';
+                $date = isset($dates[$teCount + $voIndex]) && $dates[$teCount + $voIndex] ? Carbon::parse($dates[$teCount + $voIndex])->format('M d, Y') : 'N/A';
+                $pdf->Cell(8,  6, (string) ($voIndex + 1), 0, 0, 'C', true);
+                $pdf->Cell(55, 6, $clean($doc), 0, 0, 'L', true);
+                $pdf->Cell(20, 6, (string) ($voDays[$voIndex] ?? 0), 0, 0, 'C', true);
+                $pdf->Cell(55, 6, $cost, 0, 0, 'R', true);
+                $pdf->Cell(0,  6, $date, 0, 1, 'L', true);
+                $voIndex++;
+            }
+        }
+    } else {
+        $pdf->Cell(0, 6, 'No variation orders recorded.', 0, 1);
+    }
+
+    // ── Section 8: Issuances ──────────────────────────────────
+    $sectionHeader('Issuances');
+    if (count($issuances) > 0) {
+        foreach ($issuances as $i => $issuance) {
+            $pdf->Cell(8, 6, ($i + 1) . '.', 0, 0);
+            $pdf->Cell(0, 6, $clean($issuance), 0, 1);
+        }
+    } else {
+        $pdf->Cell(0, 6, 'No issuances recorded.', 0, 1);
+    }
+
+    // ── Section 9: Liquidated Damages ─────────────────────────
+    $sectionHeader('Liquidated Damages');
+    $twoCol(
+        'Accomplished (%)', $fresh->ld_accomplished  !== null ? $fresh->ld_accomplished . '%'                                    : 'N/A',
+        'Unworked (%)',     $fresh->ld_unworked      !== null ? $fresh->ld_unworked . '%'                                        : 'N/A'
+    );
+    $twoCol(
+        'LD Per Day',       $fresh->ld_per_day       !== null ? 'PHP ' . number_format((float) $fresh->ld_per_day, 2)            : 'N/A',
+        'Days Overdue',     $fresh->ld_days_overdue  !== null ? (string) $fresh->ld_days_overdue                                 : 'N/A'
+    );
+    $twoCol(
+        'Total LD',         $fresh->total_ld         !== null ? 'PHP ' . number_format((float) $fresh->total_ld, 2)              : 'N/A',
+        '',                 ''
+    );
+
+    // ── Section 10: Remarks ───────────────────────────────────
+    $sectionHeader('Remarks & Recommendations');
+    $remarks = trim($fresh->remarks_recommendation ?? '');
+    if ($remarks !== '') {
+        $pdf->SetFont('helvetica', '', 8);
+        $pdf->MultiCell(0, 5, $clean($remarks), 0, 'L');
+    } else {
+        $pdf->Cell(0, 6, 'No remarks recorded.', 0, 1);
+    }
+
+    // ── Stream ────────────────────────────────────────────────
+    $filename = 'project-' . str_replace(['/', ' '], '-', $fresh->contract_id) . '-' . now()->format('Y-m-d') . '.pdf';
+    $pdf->Output($filename, 'D');
+    exit;
+}
 
     // ============================================================
-    // SECTION 9: DELETE
+    // SECTION 10: DELETE
     // ============================================================
 
     /**
