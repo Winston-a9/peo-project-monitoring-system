@@ -149,6 +149,7 @@ if expired
 ==================================================================================================================================================================================================================================================================================================
 FIXED/added:
 ADMIN
+updated user blades, displays the same admin-style data layout and tabbed view, but with user-compatible routes and asset references.
 		bug:percentage of advance billin and retention should only be max of 100% with 2 decimals
 		cost involve should also add or decrease the remaining balance
 

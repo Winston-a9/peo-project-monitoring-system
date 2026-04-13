@@ -504,17 +504,25 @@
                                         $baseDate = $project->original_contract_expiry;
                                         $runningDays = 0;
                                         $allRows = [];
-                                        $costInvolved = is_array($project->cost_involved ?? null) ? $project->cost_involved : [];
 
+                                        // TE costs: indexed directly from project->cost_involved
+                                        $costInvolved = is_array($project->cost_involved ?? null)
+                                            ? array_values($project->cost_involved)
+                                            : [];
+
+                                        // VO costs: indexed directly from project->vo_cost
+                                        $voCostsArr = is_array($project->vo_cost ?? null)
+                                            ? array_values($project->vo_cost)
+                                            : [];
+
+                                        // Parse reasons from remarks
                                         $remarksText = $project->remarks_recommendation ?? '';
                                         $teReasonMap = [];
                                         $voReasonMap = [];
 
                                         preg_match_all(
                                             '/\[.*?\]\s+(Time Extension\s+\d+)\s+(?:edited|added)\s+—\s+Reason:\s+(.+?)(?=\s*\[|$)/s',
-                                            $remarksText,
-                                            $teMatches,
-                                            PREG_SET_ORDER
+                                            $remarksText, $teMatches, PREG_SET_ORDER
                                         );
                                         foreach ($teMatches as $match) {
                                             $teReasonMap[trim($match[1])] = trim($match[2]);
@@ -522,52 +530,62 @@
 
                                         preg_match_all(
                                             '/\[.*?\]\s+(Variation Order\s+\d+)\s+(?:edited|added)\s+—\s+Reason:\s+(.+?)(?=\s*\[|$)/s',
-                                            $remarksText,
-                                            $voMatches,
-                                            PREG_SET_ORDER
+                                            $remarksText, $voMatches, PREG_SET_ORDER
                                         );
                                         foreach ($voMatches as $match) {
                                             $voReasonMap[trim($match[1])] = trim($match[2]);
                                         }
 
+                                        // Build TE rows
                                         foreach ($teEntries as $idx => $label) {
                                             $days = (int) ($extensionDays[$idx] ?? 0);
-                                            $cost = $costInvolved[$idx] ?? null;
+                                            $cost = isset($costInvolved[$idx]) && (float)$costInvolved[$idx] != 0
+                                                ? (float) $costInvolved[$idx]
+                                                : null;
                                             $date = $dateRequested[$idx] ?? null;
                                             $runningDays += $days;
                                             $allRows[] = [
-                                                'type' => 'te',
-                                                'label' => $label,
-                                                'days' => $days,
-                                                'running' => $runningDays,
-                                                'cost' => $cost,
+                                                'type'           => 'te',
+                                                'label'          => $label,
+                                                'days'           => $days,
+                                                'running'        => $runningDays,
+                                                'cost'           => $cost,
                                                 'date_requested' => $date,
-                                                'revised' => (clone $baseDate)->addDays($runningDays),
-                                                'reason' => $teReasonMap[$label] ?? null,
+                                                'revised'        => (clone $baseDate)->addDays($runningDays),
+                                                'reason'         => $teReasonMap[$label] ?? null,
                                             ];
                                         }
+
+                                        // Build VO rows — offset date_requested by teEntries count
                                         $voDateOffset = $teEntries->count();
                                         foreach ($voEntries as $vIdx => $label) {
                                             $days = (int) ($voDays[$vIdx] ?? 0);
-                                            $cost = $voCosts[$vIdx] ?? null;
+                                            $cost = isset($voCostsArr[$vIdx]) && (float)$voCostsArr[$vIdx] != 0
+                                                ? (float) $voCostsArr[$vIdx]
+                                                : null;
                                             $date = $dateRequested[$voDateOffset + $vIdx] ?? null;
                                             $runningDays += $days;
                                             $allRows[] = [
-                                                'type' => 'vo',
-                                                'label' => $label,
-                                                'days' => $days,
-                                                'running' => $runningDays,
-                                                'cost' => $cost,
+                                                'type'           => 'vo',
+                                                'label'          => $label,
+                                                'days'           => $days,
+                                                'running'        => $runningDays,
+                                                'cost'           => $cost,
                                                 'date_requested' => $date,
-                                                'revised' => (clone $baseDate)->addDays($runningDays),
-                                                'reason' => $voReasonMap[$label] ?? null,
+                                                'revised'        => (clone $baseDate)->addDays($runningDays),
+                                                'reason'         => $voReasonMap[$label] ?? null,
                                             ];
                                         }
+
+                                        // Sort by date_requested ascending, nulls last
                                         usort($allRows, function ($a, $b) {
                                             $dateA = $a['date_requested'] ? strtotime($a['date_requested']) : PHP_INT_MAX;
                                             $dateB = $b['date_requested'] ? strtotime($b['date_requested']) : PHP_INT_MAX;
                                             return $dateA - $dateB;
                                         });
+
+                                        // Pre-compute total cost for the footer
+                                        $totalExtCost = collect($allRows)->sum(fn($r) => (float) ($r['cost'] ?? 0));
                                     @endphp
                                     @foreach($allRows as $ri => $row)
                                         @php $isEven = $ri % 2 === 0;
@@ -641,10 +659,13 @@
                                             @endif
                                         </td>
                                         <td style="text-align:right;">
-                                            @php $totalCost = collect($allRows)->sum(fn($r) => (float) ($r['cost'] ?? 0)); @endphp
-                                            @if($totalCost > 0)<span
-                                            style="font-weight:800;color:#16a34a;white-space:nowrap;">₱{{ number_format($totalCost, 2) }}</span>@else<span
-                                                style="color:#9ca3af;">—</span>@endif
+                                            @if($totalExtCost > 0)
+                                                <span style="font-weight:800;color:#16a34a;white-space:nowrap;">
+                                                    ₱{{ number_format($totalExtCost, 2) }}
+                                                </span>
+                                            @else
+                                                <span style="color:#9ca3af;">—</span>
+                                            @endif
                                         </td>
                                     </tr>
                                 </tbody>
@@ -930,20 +951,49 @@
                                     @endforeach
                                 </tbody>
                                 <tfoot>
-                                    <tr>
-                                        <td colspan="2"
-                                            style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink2);">
-                                            Total</td>
-                                        <td style="text-align:right;"><span
-                                                style="font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:800;color:#16a34a;">₱{{ number_format($totalBilled, 2) }}</span>
-                                        </td>
-                                        <td style="text-align:right;"><span
-                                                style="font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:800;color:#16a34a;">₱{{ number_format($totalBilled, 2) }}</span>
-                                        </td>
-                                        <td style="text-align:right;"><span
-                                                style="font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:800;color:{{ ($adjustedContract - $totalBilled) >= 0 ? '#3b82f6' : '#dc2626' }};">₱{{ number_format($adjustedContract - $totalBilled, 2) }}</span>
-                                        </td>
-                                </tfoot>
+    <tr>
+        <td colspan="2"
+            style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink2);">
+            Total
+        </td>
+
+        {{-- Amount: sum of billings + ext cost adjustments --}}
+        <td style="text-align:right;">
+            @php
+                $totalExtCostFinancials = collect($tableRows)
+                    ->where('type', 'ext')
+                    ->sum(fn($r) => (float) $r['amount']);
+                $grandTotal = $totalBilled + $totalExtCostFinancials;
+            @endphp
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
+                @if($totalExtCostFinancials > 0)
+                    <span style="font-size:0.7rem;color:#6366f1;font-weight:600;">
+                        +₱{{ number_format($totalExtCostFinancials, 2) }} adj.
+                    </span>
+                @endif
+                <span style="font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:800;color:#16a34a;">
+                    ₱{{ number_format($totalBilled, 2) }}
+                </span>
+            </div>
+        </td>
+
+        {{-- Cumulative total: billed only --}}
+        <td style="text-align:right;">
+            <span style="font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:800;color:#16a34a;">
+                ₱{{ number_format($totalBilled, 2) }}
+            </span>
+        </td>
+
+        {{-- Remaining balance: adjusted contract minus billed --}}
+        <td style="text-align:right;">
+            @php $finalRemaining = $adjustedContract - $totalBilled; @endphp
+            <span style="font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:800;
+                color:{{ $finalRemaining >= 0 ? '#3b82f6' : '#dc2626' }};">
+                ₱{{ number_format($finalRemaining, 2) }}
+            </span>
+        </td>
+    </tr>
+</tfoot>
                             </table>
                         </div>
                     </div>
