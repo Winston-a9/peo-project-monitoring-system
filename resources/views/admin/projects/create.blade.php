@@ -43,10 +43,14 @@
                     <div class="section-body" style="display:grid; grid-template-columns:1fr 1fr; gap:1.25rem;">
                         <div style="grid-column:1/-1;">
                             <label class="field-label">Contract ID</label>
-                            <input type="number" name="contract_id"
+                            <input type="text" name="contract_id"
                                 class="field-input {{ $errors->has('contract_id') ? 'has-error' : '' }}"
-                                placeholder="Enter unique contract ID" value="{{ old('contract_id') }}" min="1" step="1"
-                                onkeydown="return event.key !== '-' && event.key !== 'e'" required>
+                                placeholder="Enter contract ID (e.g. 223-123-341)"
+                                value="{{ old('contract_id') }}"
+                                pattern="[\d\-]+"
+                                title="Only numbers and dashes allowed (e.g. 223-123-341)"
+                                oninput="this.value = this.value.replace(/[^0-9\-]/g, '')"
+                                required>
                             @error('contract_id')
                                 <p class="field-error"><i class="fas fa-exclamation-circle"></i>{{ $message }}</p>
                             @enderror

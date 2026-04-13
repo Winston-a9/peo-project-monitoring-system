@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('projects', function (Blueprint $table) {
             // Primary identifiers
             $table->id();
-            $table->integer('contract_id')->unique();
+            $table->string('contract_id')->unique();
 
             // Overview
             $table->string('in_charge');

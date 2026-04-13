@@ -114,7 +114,7 @@ TO ADD/FIX:
 
 create.blade
 	Contract ID range value adjust (debugg subject for change)
-	accept "-" in contract id input
+	allow "-" in contract id input
 	change my formula when calculating original expiry date from -1 to +1 day (SUBJECT FOR CHANGE)
 
 edit.blade
