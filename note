@@ -119,25 +119,19 @@ create.blade
 
 edit.blade
 	overview
-		contract amount editable(to prevent bugs didnt include project information inputtable update)
-
 		move performance bond in the overview tab
 
 	performance
-
 		FIXED DATE START TO FINISH in LD (major addition)
 
 	extensions
 	billing 
-		bug:billing remaining balance calculation js fix
 	admin
 
 show.blade 
 	overview
 	extensions
 	financial 
-		bug: amount total of TE and VO cost involved not being calculated and display 
-			 total in amount determine if deduction is greater than addition add "-" before the pesos sign
 	admin
 		performance bond date not being shown
 
@@ -145,11 +139,18 @@ show.blade
 if complete
 
 if expired
+	LD is shown
 	
 	
 ==================================================================================================================================================================================================================================================================================================
 FIXED/added:
 ADMIN
+remaining balance display amount display after the updated adjustment also
+		change the sorting of the financial table from oldest -> earliest on the bottom
+		contract amount editable(to prevent bugs didnt include project information inputtable update)
+bug: amount total of TE and VO cost involved not being calculated and display 
+			 total in amount determine if deduction is greater than addition add "-" before the pesos sign
+		bug:billing remaining balance calculation js fix
 updated user blades, displays the same admin-style data layout and tabbed view, but with user-compatible routes and asset references.
 		bug:percentage of advance billin and retention should only be max of 100% with 2 decimals
 		cost involve should also add or decrease the remaining balance

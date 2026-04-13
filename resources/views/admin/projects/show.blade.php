@@ -844,7 +844,7 @@
                                 <thead>
                                     <tr>
                                         <th style="text-align:left;">Entry</th>
-                                        <th style="text-align:center;">Date</th>
+                                        <th style="text-align:center;">Date Requested</th>
                                         <th style="text-align:right;">Amount</th>
                                         <th style="text-align:right;">Remaining Balance</th>
                                     </tr>
@@ -853,51 +853,95 @@
                                 <tbody>
                                     @php
                                         $tableRows = [];
+
                                         $allExtCosts = array_merge(
                                             is_array($project->cost_involved ?? null) ? $project->cost_involved : [],
                                             is_array($project->vo_cost ?? null) ? $project->vo_cost : []
                                         );
                                         $allDocs = array_values(array_filter(
                                             is_array($project->documents_pressed ?? null) ? $project->documents_pressed : [],
-                                            fn($d) => str_starts_with((string) $d, 'Time Extension') 
+                                            fn($d) => str_starts_with((string) $d, 'Time Extension')
                                                 || str_starts_with((string) $d, 'Variation Order')
                                         ));
+
+                                        // Build TE/VO ext rows — use date_requested from allRows context
+                                        // We re-derive date_requested per ext entry using the same offset logic as the extensions tab
+                                        $teCount_fin    = collect($allDocs)->filter(fn($d) => str_starts_with($d, 'Time Extension'))->count();
+                                        $voCount_fin    = collect($allDocs)->filter(fn($d) => str_starts_with($d, 'Variation Order'))->count();
+                                        $dateReqAll_fin = is_array($project->date_requested ?? null) ? $project->date_requested : [];
+
+                                        // TE entries occupy date_requested[0..teCount-1], VO entries occupy [teCount..teCount+voCount-1]
+                                        $extDateMap = [];
+                                        $teIdx = 0; $voIdx = 0;
+                                        foreach ($allDocs as $di => $doc) {
+                                            if (str_starts_with($doc, 'Time Extension')) {
+                                                $extDateMap[$di] = $dateReqAll_fin[$teIdx] ?? null;
+                                                $teIdx++;
+                                            } elseif (str_starts_with($doc, 'Variation Order')) {
+                                                $extDateMap[$di] = $dateReqAll_fin[$teCount_fin + $voIdx] ?? null;
+                                                $voIdx++;
+                                            }
+                                        }
+
                                         foreach ($allExtCosts as $ei => $cost) {
                                             if ($cost !== null && (float) $cost != 0) {
                                                 $tableRows[] = [
-                                                    'type'       => 'ext',
-                                                    'label'      => $allDocs[$ei] ?? 'Extension Cost',
-                                                    'date'       => null,
-                                                    'amount'     => (float) $cost,   // preserve sign — negative = deduction
-                                                    'isDeduct'   => (float) $cost < 0,
+                                                    'type'     => 'ext',
+                                                    'label'    => $allDocs[$ei] ?? 'Extension Cost',
+                                                    'date'     => $extDateMap[$ei] ?? null,
+                                                    'amount'   => (float) $cost,
+                                                    'isDeduct' => (float) $cost < 0,
                                                 ];
                                             }
                                         }
+
                                         foreach ($billingAmounts as $bi => $amount) {
                                             $tableRows[] = [
                                                 'type'    => 'billing',
                                                 'label'   => 'Billing No.' . ($bi + 1),
                                                 'date'    => $billingDates[$bi] ?? null,
                                                 'amount'  => (float) $amount,
-                                                'isLast'  => $bi === $billingCount - 1,
                                                 'isDeduct'=> false,
                                             ];
                                         }
 
-                                        // Adjusted contract = original + sum of ext costs (signed)
+                                        // Sort by date ascending (oldest → newest / most recent at bottom), nulls first
+                                        usort($tableRows, function ($a, $b) {
+                                            $da = $a['date'] ? strtotime($a['date']) : 0;
+                                            $db = $b['date'] ? strtotime($b['date']) : 0;
+                                            return $da - $db;
+                                        });
+
+                                        // Re-stamp isLast on the last billing row after sort
+                                        $lastBillingIdx = null;
+                                        foreach ($tableRows as $ri => $row) {
+                                            if ($row['type'] === 'billing') $lastBillingIdx = $ri;
+                                        }
+                                        foreach ($tableRows as $ri => &$row) {
+                                            if ($row['type'] === 'billing') {
+                                                $row['isLast'] = ($ri === $lastBillingIdx);
+                                            }
+                                        }
+                                        unset($row);
+
+                                        // Adjusted contract = original + sum of all signed ext costs
                                         $adjustedContract = (float) $project->original_contract_amount
                                             + collect($tableRows)->where('type', 'ext')->sum('amount');
 
                                         $runningBilled = 0;
+                                        $runningAdjustedContract = (float) $project->original_contract_amount;
                                     @endphp
-                                    @foreach($tableRows as $ri => $row)
-                                        @php
-                                            $isEven = $ri % 2 === 0;
-                                            $isExt = $row['type'] === 'ext';
-                                            if (!$isExt)
-                                                $runningBilled += $row['amount'];
-                                            $runningRemain = $adjustedContract - $runningBilled;
-                                        @endphp
+                                        @foreach($tableRows as $ri => $row)
+                                            @php
+                                                $isEven = $ri % 2 === 0;
+                                                $isExt = $row['type'] === 'ext';
+                                                if ($isExt) {
+                                                    $runningAdjustedContract += $row['amount']; // apply signed adjustment
+                                                } else {
+                                                    $runningBilled += $row['amount'];
+                                                }
+                                                $runningRemain = $runningAdjustedContract - $runningBilled;
+                                            @endphp
                                         <tr style="background:{{ $isEven ? 'var(--bg)' : 'var(--bg2)' }};"
                                             onmouseover="this.style.background='rgba({{ $isExt ? '99,102,241' : '34,197,94' }},0.04)'"
                                             onmouseout="this.style.background='{{ $isEven ? 'var(--bg)' : 'var(--bg2)' }}'">
@@ -962,7 +1006,12 @@
                                             </td>
                                             <td style="text-align:right;">
                                                 @if($isExt)
-                                                    <span style="color:#9ca3af;font-size:0.8rem;">—</span>
+                                                    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px;">
+                                                        <span style="font-weight:700;color:{{ $runningRemain >= 0 ? '#3b82f6' : '#dc2626' }};">
+                                                            ₱{{ number_format($runningRemain, 2) }}
+                                                        </span>
+                                                        <span style="font-size:0.62rem;color:#9ca3af;">after adj.</span>
+                                                    </div>
                                                 @else
                                                     <span
                                                         style="font-weight:700;color:{{ $runningRemain >= 0 ? '#3b82f6' : '#dc2626' }};">₱{{ number_format($runningRemain, 2) }}</span>
