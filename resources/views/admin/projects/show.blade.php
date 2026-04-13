@@ -860,17 +860,35 @@
                                         );
                                         $allDocs = array_values(array_filter(
                                             is_array($project->documents_pressed ?? null) ? $project->documents_pressed : [],
-                                            fn($d) => str_starts_with((string) $d, 'Time Extension') || str_starts_with((string) $d, 'Variation Order')
+                                            fn($d) => str_starts_with((string) $d, 'Time Extension') 
+                                                || str_starts_with((string) $d, 'Variation Order')
                                         ));
                                         foreach ($allExtCosts as $ei => $cost) {
                                             if ($cost !== null && (float) $cost != 0) {
-                                                $tableRows[] = ['type' => 'ext', 'label' => $allDocs[$ei] ?? 'Extension Cost', 'date' => null, 'amount' => (float) $cost];
+                                                $tableRows[] = [
+                                                    'type'       => 'ext',
+                                                    'label'      => $allDocs[$ei] ?? 'Extension Cost',
+                                                    'date'       => null,
+                                                    'amount'     => (float) $cost,   // preserve sign — negative = deduction
+                                                    'isDeduct'   => (float) $cost < 0,
+                                                ];
                                             }
                                         }
                                         foreach ($billingAmounts as $bi => $amount) {
-                                            $tableRows[] = ['type' => 'billing', 'label' => 'Billing No.' . ($bi + 1), 'date' => $billingDates[$bi] ?? null, 'amount' => (float) $amount, 'isLast' => $bi === $billingCount - 1];
+                                            $tableRows[] = [
+                                                'type'    => 'billing',
+                                                'label'   => 'Billing No.' . ($bi + 1),
+                                                'date'    => $billingDates[$bi] ?? null,
+                                                'amount'  => (float) $amount,
+                                                'isLast'  => $bi === $billingCount - 1,
+                                                'isDeduct'=> false,
+                                            ];
                                         }
-                                        $adjustedContract = max(0, (float) $project->original_contract_amount + collect($allExtCosts)->filter(fn($c) => $c !== null && (float) $c != 0)->sum());
+
+                                        // Adjusted contract = original + sum of ext costs (signed)
+                                        $adjustedContract = (float) $project->original_contract_amount
+                                            + collect($tableRows)->where('type', 'ext')->sum('amount');
+
                                         $runningBilled = 0;
                                     @endphp
                                     @foreach($tableRows as $ri => $row)
@@ -887,17 +905,23 @@
                                             <td>
                                                 <div style="display:flex;align-items:center;gap:0.5rem;">
                                                     <div
-                                                        style="width:26px;height:26px;border-radius:7px;background:{{ $isExt ? 'rgba(99,102,241,0.1)' : 'rgba(34,197,94,0.1)' }};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                                        style="width:26px;height:26px;border-radius:7px;background:{{ $isExt ? ($row['amount'] < 0 ? 'rgba(239,68,68,0.1)' : 'rgba(99,102,241,0.1)') : 'rgba(34,197,94,0.1)' }};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                                                         <i class="fas {{ $isExt ? 'fa-file-signature' : 'fa-file-invoice-dollar' }}"
-                                                            style="font-size:0.65rem;color:{{ $isExt ? '#6366f1' : '#16a34a' }};"></i>
+                                                            style="font-size:0.65rem;color:{{ $isExt ? ($row['amount'] < 0 ? '#dc2626' : '#6366f1') : '#16a34a' }};"></i>
                                                     </div>
                                                     <div>
                                                         <span
-                                                            style="font-weight:700;color:{{ $isExt ? '#6366f1' : 'var(--tx)' }};">{{ $row['label'] }}</span>
+                                                            style="font-weight:700;color:{{ $isExt ? ($row['amount'] < 0 ? '#dc2626' : '#6366f1') : 'var(--tx)' }};">{{ $row['label'] }}</span>
                                                         @if($isExt)
+                                                            @php $isDeduct = $row['amount'] < 0; @endphp
                                                             <span
-                                                                style="font-size:0.6rem;font-weight:700;background:rgba(99,102,241,0.1);color:#6366f1;border:1px solid rgba(99,102,241,0.2);border-radius:99px;padding:1px 6px;margin-left:4px;">Contract
-                                                                Adj.</span>
+                                                                style="font-size:0.6rem;font-weight:700;
+                                                                    background:{{ $isDeduct ? 'rgba(239,68,68,0.1)' : 'rgba(99,102,241,0.1)' }};
+                                                                    color:{{ $isDeduct ? '#dc2626' : '#6366f1' }};
+                                                                    border:1px solid {{ $isDeduct ? 'rgba(239,68,68,0.2)' : 'rgba(99,102,241,0.2)' }};
+                                                                    border-radius:99px;padding:1px 6px;margin-left:4px;">
+                                                                {{ $isDeduct ? 'Deduction' : 'Contract Adj.' }}
+                                                            </span>
                                                         @endif
                                                         @if(!$isExt && ($row['isLast'] ?? false))
                                                             <span
@@ -916,19 +940,25 @@
                                             </td>
                                             <td style="text-align:right;">
                                                 @if($isExt)
-                                                    <span
-                                                        style="font-weight:600;color:{{ $row['amount'] >= 0 ? '#16a34a' : '#dc2626' }};opacity:0.7;font-size:0.85rem;">
-                                                        {{ $row['amount'] >= 0 ? '+' : '−' }}₱{{ number_format(abs($row['amount']), 2) }}
+                                                    @php $isDeduct = $row['amount'] < 0; @endphp
+                                                    <span style="font-weight:600;
+                                                        color:{{ $isDeduct ? '#dc2626' : '#16a34a' }};
+                                                        opacity:0.85;font-size:0.85rem;">
+                                                        {{ $isDeduct ? '−' : '+' }}₱{{ number_format(abs($row['amount']), 2) }}
                                                     </span>
-                                                    <p style="font-size:0.6rem;color:#9ca3af;margin-top:1px;text-align:right;">
-                                                        contract adj.</p>
+                                                    <p style="font-size:0.6rem;
+                                                        color:{{ $isDeduct ? '#dc2626' : '#9ca3af' }};
+                                                        margin-top:1px;text-align:right;">
+                                                        {{ $isDeduct ? 'deduction' : 'contract adj.' }}
+                                                    </p>
                                                 @else
-                                                    <span
-                                                        style="font-weight:700;color:#dc2626;font-family:'Syne',sans-serif;font-size:0.95rem;">
+                                                    <span style="font-weight:700;color:#dc2626;
+                                                        font-family:'Syne',sans-serif;font-size:0.95rem;">
                                                         −₱{{ number_format($row['amount'], 2) }}
                                                     </span>
                                                     <p style="font-size:0.6rem;color:#9ca3af;margin-top:1px;text-align:right;">
-                                                        payment</p>
+                                                        payment
+                                                    </p>
                                                 @endif
                                             </td>
                                             <td style="text-align:right;">
