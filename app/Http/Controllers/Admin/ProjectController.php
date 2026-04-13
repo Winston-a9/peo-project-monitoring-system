@@ -181,7 +181,8 @@ class ProjectController extends Controller
         $voReasonMap = [];
 
         preg_match_all(
-            '/\[.*?\]\s+(Time Extension\s+\d+)\s+(?:edited|added)\s+—\s+Reason:\s+(.+?)(?=\n\n|\z)/s',
+            '/(?:\[.*?\]\s*)?(?:●\s*\d{1,2}:\d{2}\s+(?:AM|PM)(?:\s+•\s*[^
+]+)?\n)?\s*(Time Extension\s+\d+|Extension\s+#\d+)\s+(?:added|edited|updated|deleted)\s*\n(?:Justification|Reason):\s*(.+?)(?=\n\n|\z)/si',
             $remarksText,
             $teMatches,
             PREG_SET_ORDER
@@ -191,7 +192,8 @@ class ProjectController extends Controller
         }
 
         preg_match_all(
-            '/\[.*?\]\s+(Variation Order\s+\d+)\s+(?:edited|added)\s+—\s+Reason:\s+(.+?)(?=\n\n|\z)/s',
+            '/(?:\[.*?\]\s*)?(?:●\s*\d{1,2}:\d{2}\s+(?:AM|PM)(?:\s+•\s*[^
+]+)?\n)?\s*(Variation Order\s+\d+|Variation\s+#\d+)\s+(?:added|edited|updated|deleted)\s*\n(?:Justification|Reason):\s*(.+?)(?=\n\n|\z)/si',
             $remarksText,
             $voMatches,
             PREG_SET_ORDER
@@ -411,8 +413,7 @@ class ProjectController extends Controller
 
             if ($newSOReason !== '') {
                 $existing  = trim($data['remarks_recommendation'] ?? $fresh->remarks_recommendation ?? '');
-                $timestamp = now()->format('F d, Y \a\t h:i A');
-                $note      = "[{$timestamp}] Suspension Order added — Reason: {$newSOReason}";
+                $note      = $this->formatEntryRemark('Suspension Order', 'added', $newSOReason);
                 $data['remarks_recommendation'] = $existing !== ''
                     ? $existing . "\n\n" . $note
                     : $note;
@@ -723,7 +724,7 @@ class ProjectController extends Controller
 
         // ── Append edit note to remarks_recommendation ────────────
         $existing  = trim($fresh->remarks_recommendation ?? '');
-        $note      = $this->formatEntryRemark($resolvedLabel, 'edited', $reason);
+        $note      = $this->formatEntryRemark($resolvedLabel, 'updated', $reason);
         $data['remarks_recommendation'] = $existing !== '' ? $existing . "\n\n" . $note : $note;
 
         $project->update($data);
@@ -734,23 +735,20 @@ class ProjectController extends Controller
     }
 
     /**
-     * Build a compact plain-text remark entry with a small table row.
+     * Build a compact plain-text remark entry with the requested updated layout.
      */
     private function formatEntryRemark(string $label, string $action, string $reason): string
     {
-        $timestamp = now()->format('F d, Y \a\t h:i A');
-        $time = now()->format('h:i A');
-        $rowId = $this->resolveRemarkRowId($label);
+        $timestamp = now();
+        $time = $timestamp->format('h:i A');
+        $date = $timestamp->format('F d, Y');
+        $cleanAction = $action === 'edited' ? 'updated' : $action;
         $cleanReason = trim(preg_replace('/\s+/', ' ', $reason));
-        $header = '#   Time       Reason';
-        $row    = sprintf('%-3s %-11s %s', $rowId, $time, $cleanReason);
+        $shortLabel = preg_match('/^(Time Extension|Variation Order)\s+(\d+)$/', $label, $matches)
+            ? sprintf('%s #%s', $matches[1] === 'Time Extension' ? 'Extension' : 'Variation', $matches[2])
+            : $label;
 
-        return "[{$timestamp}] {$label} {$action} — Reason: {$cleanReason}\n{$header}\n{$row}";
-    }
-
-    private function resolveRemarkRowId(string $label): string
-    {
-        return preg_match('/\b(\d+)\b$/', $label, $matches) ? $matches[1] : $label;
+        return "● {$time} • {$date}\n  {$shortLabel} {$cleanAction}\n  Justification: {$cleanReason}";
     }
 
     /**

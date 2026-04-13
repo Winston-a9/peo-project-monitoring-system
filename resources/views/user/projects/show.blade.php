@@ -509,23 +509,33 @@
                                         $voReasonMap = [];
 
                                         preg_match_all(
-                                            '/\[.*?\]\s+(Time Extension\s+\d+)\s+(?:edited|added)\s+—\s+Reason:\s+(.+?)(?=\s*\[|$)/s',
+                                            '/(?:\[.*?\]\s*)?(?:●\s*\d{1,2}:\d{2}\s+(?:AM|PM)(?:\s+•\s*[^
+]+)?\n)?\s*(Time Extension\s+\d+|Extension\s+#\d+)\s+(?:added|edited|updated|deleted)\s*\n(?:Justification|Reason):\s*(.+?)(?=\s*\[|$)/si',
                                             $remarksText,
                                             $teMatches,
                                             PREG_SET_ORDER
                                         );
                                         foreach ($teMatches as $match) {
-                                            $teReasonMap[trim($match[1])] = trim($match[2]);
+                                            $label = trim($match[1]);
+                                            if (str_starts_with($label, 'Extension #')) {
+                                                $label = 'Time Extension ' . substr($label, 11);
+                                            }
+                                            $teReasonMap[$label] = trim($match[2]);
                                         }
 
                                         preg_match_all(
-                                            '/\[.*?\]\s+(Variation Order\s+\d+)\s+(?:edited|added)\s+—\s+Reason:\s+(.+?)(?=\s*\[|$)/s',
+                                            '/(?:\[.*?\]\s*)?(?:●\s*\d{1,2}:\d{2}\s+(?:AM|PM)(?:\s+•\s*[^
+]+)?\n)?\s*(Variation Order\s+\d+|Variation\s+#\d+)\s+(?:added|edited|updated|deleted)\s*\n(?:Justification|Reason):\s*(.+?)(?=\s*\[|$)/si',
                                             $remarksText,
                                             $voMatches,
                                             PREG_SET_ORDER
                                         );
                                         foreach ($voMatches as $match) {
-                                            $voReasonMap[trim($match[1])] = trim($match[2]);
+                                            $label = trim($match[1]);
+                                            if (str_starts_with($label, 'Variation #')) {
+                                                $label = 'Variation Order ' . substr($label, 11);
+                                            }
+                                            $voReasonMap[$label] = trim($match[2]);
                                         }
 
                                         foreach ($teEntries as $idx => $label) {
