@@ -1451,8 +1451,21 @@
                     <div class="section-body">
                         <textarea name="remarks_recommendation" rows="5" class="field-input"
                             style="resize:none; font-family:'Instrument Sans',sans-serif;"
-                            placeholder="Add any remarks, notes, or observations about this project…">{{ old('remarks_recommendation', $project->remarks_recommendation) }}</textarea>
+                            placeholder="Add any remarks, notes, or observations about this project…">{{ old('remarks_recommendation', $remarksManual) }}</textarea>
+
+                        {{-- Hidden: auto-generated timeline entries preserved but not editable --}}
+                        <input type="hidden" name="remarks_auto_hidden"
+                            value="{{ old('remarks_auto_hidden', $remarksAutoHidden) }}">
+
                         <p class="field-hint">This field is for project notes and observations</p>
+
+                        @if($remarksAutoHidden)
+                            @php $hiddenCount = substr_count($remarksAutoHidden, '●'); @endphp
+                            <p class="field-hint" style="margin-top:0.3rem; color:#9ca3af;">
+                                <i class="fas fa-lock" style="font-size:0.65rem;"></i>
+                                {{ $hiddenCount }} auto-logged {{ $hiddenCount === 1 ? 'entry' : 'entries' }} preserved (not shown)
+                            </p>
+                        @endif
                     </div>
                 </div>{{-- /form-card: Remarks --}}
 

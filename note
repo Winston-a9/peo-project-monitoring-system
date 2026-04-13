@@ -127,7 +127,7 @@ edit.blade
 	extensions
 	billing 
 	admin
-		remarks and recommendation reformat (dotn display the reason/coverage entries to prevent modification through admin-remarks/recommendation input)
+		remarks and recommendation reformat (dont display the reason/coverage entries to prevent modification through admin-remarks/recommendation input)
 
 show.blade 
 	overview

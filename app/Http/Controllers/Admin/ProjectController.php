@@ -176,6 +176,9 @@ class ProjectController extends Controller
         $soCount = $hasSO ? 1 : 0;
 
         $remarksText = $fresh->remarks_recommendation ?? '';
+        $split = $this->splitRemarks($fresh->remarks_recommendation ?? '');
+        $remarksManual = $split['manual'];
+        $remarksAutoHidden = $split['auto'];
 
         $teReasonMap = [];
         $voReasonMap = [];
@@ -223,6 +226,8 @@ class ProjectController extends Controller
             'nextVoNumber' => $nextVoNumber,
             'hasSO'        => $hasSO,
             'soCount'      => $soCount,
+            'remarksManual'     => $remarksManual,
+            'remarksAutoHidden' => $remarksAutoHidden,
         ]);
     }
 
@@ -290,6 +295,13 @@ class ProjectController extends Controller
         ]);
 
         $data['slippage'] = (float) $request->work_done - (float) $request->as_planned;
+        // ── Step 1b: Reconstruct remarks (manual editable + preserved auto entries) ──
+        $manualRemarks = trim($request->input('remarks_recommendation', ''));
+        $autoHidden    = trim($request->input('remarks_auto_hidden', ''));
+
+        $data['remarks_recommendation'] = collect([$manualRemarks, $autoHidden])
+            ->filter()
+            ->implode("\n\n");
 
         // ── Step 2: Issuances ─────────────────────────────────────
         $data['issuances'] = array_values(
@@ -357,8 +369,8 @@ class ProjectController extends Controller
             $existingDays[]  = $newTEDays;
             $existingCosts[] = ($newTECost !== null && $newTECost !== '') ? (float) $newTECost : null;
             if ($newTEReason !== '') {
-                $existing  = trim($fresh->remarks_recommendation ?? '');
-                $note      = $this->formatEntryRemark($newTELabel, 'added', $newTEReason);
+                $existing = trim($data['remarks_recommendation'] ?? '');
+                $note     = $this->formatEntryRemark($newTELabel, 'added', $newTEReason);
                 $data['remarks_recommendation'] = $existing !== '' ? $existing . "\n\n" . $note : $note;
             }
 
@@ -387,8 +399,8 @@ class ProjectController extends Controller
             $existingVoCosts[] = ($newVoCost !== null && $newVoCost !== '') ? (float) $newVoCost : null;
             $existingDates[]   = $newVODate ?: null;
             if ($newVOReason !== '') {
-                $existing  = trim($data['remarks_recommendation'] ?? $fresh->remarks_recommendation ?? '');
-                $note      = $this->formatEntryRemark($newVOLabel, 'added', $newVOReason);
+                $existing = trim($data['remarks_recommendation'] ?? '');
+                $note     = $this->formatEntryRemark($newVOLabel, 'added', $newVOReason);
                 $data['remarks_recommendation'] = $existing !== '' ? $existing . "\n\n" . $note : $note;
             }
         }
@@ -412,8 +424,8 @@ class ProjectController extends Controller
             $data['suspension_days'] = $existingSuspDay + $newSODays;
 
             if ($newSOReason !== '') {
-                $existing  = trim($data['remarks_recommendation'] ?? $fresh->remarks_recommendation ?? '');
-                $note      = $this->formatEntryRemark('Suspension Order', 'added', $newSOReason);
+                $existing = trim($data['remarks_recommendation'] ?? '');
+                $note     = $this->formatEntryRemark('Suspension Order', 'added', $newSOReason);
                 $data['remarks_recommendation'] = $existing !== ''
                     ? $existing . "\n\n" . $note
                     : $note;
@@ -749,6 +761,24 @@ class ProjectController extends Controller
             : $label;
 
         return "● {$time} • {$date}\n  {$shortLabel} {$cleanAction}\n  Justification: {$cleanReason}";
+    }
+    private function splitRemarks(string $raw): array
+    {
+    $pattern = '/(?:^|\n\n)(●\s+\d{1,2}:\d{2}\s+(?:AM|PM)\s+•\s+[^\n]+(?:\n[ \t]+[^\n]+)*)/m';
+
+    $auto = [];
+    preg_match_all($pattern, $raw, $matches);
+    foreach ($matches[1] as $m) {
+        $auto[] = trim($m);
+    }
+
+    $manual = trim(preg_replace($pattern, '', $raw));
+    $manual = trim(preg_replace('/\n{3,}/', "\n\n", $manual));
+
+    return [
+        'manual' => $manual,
+        'auto'   => implode("\n\n", $auto),
+    ];
     }
 
     /**
