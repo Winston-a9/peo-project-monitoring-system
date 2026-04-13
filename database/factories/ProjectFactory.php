@@ -23,7 +23,7 @@ class ProjectFactory extends Factory
         $dateStarted    = $this->faker->dateTimeBetween('-2 years', '-3 months');
         $contractDays   = $this->faker->numberBetween(90, 365);
         $originalExpiry = Carbon::instance($dateStarted)->addDays($contractDays);
-        $contractAmount = $this->faker->randomFloat(2, 500000, 50000000); // original amount
+        $contractAmount = $this->faker->randomFloat(2, 500000, 50000000);
 
         // ── Extensions ──────────────────────────────────────────────
         $hasTe = $this->faker->boolean(40);
@@ -45,26 +45,26 @@ class ProjectFactory extends Factory
         if ($hasTe) {
             $teCount = $this->faker->numberBetween(1, 3);
             for ($i = 1; $i <= $teCount; $i++) {
-                $days             = $this->faker->numberBetween(15, 90);
-                $cost             = $this->faker->boolean(60) ? $this->faker->randomFloat(2, 10000, 500000) : null;
+                $days               = $this->faker->numberBetween(15, 90);
+                $cost               = $this->faker->boolean(60) ? $this->faker->randomFloat(2, 10000, 500000) : null;
                 $documentsPressed[] = "Time Extension {$i}";
-                $extensionDays[]  = $days;
-                $costInvolved[]   = $cost;
-                $dateRequested[]  = Carbon::instance($dateStarted)->addDays(rand(30, 180))->format('Y-m-d');
-                $totalTeDays     += $days;
+                $extensionDays[]    = $days;
+                $costInvolved[]     = $cost;
+                $dateRequested[]    = Carbon::instance($dateStarted)->addDays(rand(30, 180))->format('Y-m-d');
+                $totalTeDays       += $days;
             }
         }
 
         if ($hasVo) {
             $voCount = $this->faker->numberBetween(1, 2);
             for ($i = 1; $i <= $voCount; $i++) {
-                $days             = $this->faker->numberBetween(10, 60);
-                $cost             = $this->faker->boolean(50) ? $this->faker->randomFloat(2, 5000, 200000) : null;
+                $days               = $this->faker->numberBetween(10, 60);
+                $cost               = $this->faker->boolean(50) ? $this->faker->randomFloat(2, 5000, 200000) : null;
                 $documentsPressed[] = "Variation Order {$i}";
-                $voDays[]         = $days;
-                $voCost[]         = $cost;
-                $dateRequested[]  = Carbon::instance($dateStarted)->addDays(rand(60, 240))->format('Y-m-d');
-                $totalVoDays     += $days;
+                $voDays[]           = $days;
+                $voCost[]           = $cost;
+                $dateRequested[]    = Carbon::instance($dateStarted)->addDays(rand(60, 240))->format('Y-m-d');
+                $totalVoDays       += $days;
             }
         }
 
@@ -79,7 +79,7 @@ class ProjectFactory extends Factory
             $revisedExpiry = $originalExpiry->copy()->addDays($totalExtDays)->format('Y-m-d');
         }
 
-        // ── Adjusted contract amount (original + TE/VO costs) ────────
+        // ── Adjusted contract days & amount ──────────────────────────
         $adjustedContractDays = $contractDays + $totalTeDays + $totalVoDays;
         $totalCostAdjustment  = array_sum(array_filter(array_merge($costInvolved, $voCost)));
         $adjustedAmount       = max(0, $contractAmount + $totalCostAdjustment);
@@ -99,18 +99,18 @@ class ProjectFactory extends Factory
                 ->format('Y-m-d');
         }
 
-        // ── Work progress ────────────────────────────────────────────
+        // ── Work progress (decimal 5,2 — max 999.99, use 0–100) ──────
         $asPlanned = match ($status) {
-            'completed' => 100.000,
-            'expired'   => round($this->faker->randomFloat(3, 60, 95), 3),
-            default     => round($this->faker->randomFloat(3, 10, 100), 3),
+            'completed' => 100.00,
+            'expired'   => round($this->faker->randomFloat(2, 60, 95), 2),
+            default     => round($this->faker->randomFloat(2, 10, 100), 2),
         };
         $workDone = match ($status) {
-            'completed' => 100.000,
-            'expired'   => round($this->faker->randomFloat(3, 40, $asPlanned), 3),
-            default     => round($this->faker->randomFloat(3, 0, min($asPlanned + 20, 100)), 3),
+            'completed' => 100.00,
+            'expired'   => round($this->faker->randomFloat(2, 40, $asPlanned), 2),
+            default     => round($this->faker->randomFloat(2, 0, min($asPlanned + 20, 100)), 2),
         };
-        $slippage = round($workDone - $asPlanned, 3);
+        $slippage = round($workDone - $asPlanned, 2);
 
         // ── Issuances ────────────────────────────────────────────────
         $issuanceOptions = [
@@ -133,6 +133,12 @@ class ProjectFactory extends Factory
         $remainingBalance  = null;
         $totalAmountBilled = null;
 
+        // Advance billing & retention (only when there is billing activity)
+        $advanceBillingPct    = null;
+        $advanceBillingAmount = null;
+        $retentionPct         = null;
+        $retentionAmount      = null;
+
         if ($this->faker->boolean(50)) {
             $billingCount = $this->faker->numberBetween(1, 4);
             for ($b = 0; $b < $billingCount; $b++) {
@@ -142,13 +148,22 @@ class ProjectFactory extends Factory
                 $totalBilled     += $amt;
             }
             $totalAmountBilled = round($totalBilled, 2);
-            // Remaining balance uses ORIGINAL contract amount, not adjusted
             $remainingBalance  = round($contractAmount - $totalBilled, 2);
+
+            // Advance billing: typically 15% or 20% of contract amount
+            if ($this->faker->boolean(60)) {
+                $advanceBillingPct    = $this->faker->randomElement([10.00, 15.00, 20.00]);
+                $advanceBillingAmount = round($contractAmount * $advanceBillingPct / 100, 2);
+            }
+
+            // Retention: typically 5% or 10%
+            if ($this->faker->boolean(70)) {
+                $retentionPct    = $this->faker->randomElement([5.00, 10.00]);
+                $retentionAmount = round($totalBilled * $retentionPct / 100, 2);
+            }
         }
 
         // ── Liquidated Damages ───────────────────────────────────────
-        // Formula: LD/day = (unworked / 100) × ORIGINAL contract amount × 0.001
-        // unworked = 100 - accomplished (full precision, NOT rounded)
         $ldAccomplished = null;
         $ldUnworked     = null;
         $ldPerDay       = null;
@@ -156,15 +171,23 @@ class ProjectFactory extends Factory
         $ldDaysOverdue  = null;
 
         if ($status === 'expired' && $this->faker->boolean(60)) {
-            $ldAccomplished = round($workDone, 3);                          // 3dp, matches migration 5,3
-            $ldUnworked     = round(100 - $ldAccomplished, 2);             // 2dp for display
-            $ldPerDayFull   = (100 - $ldAccomplished) / 100 * $contractAmount * 0.001; // full precision calc
+            $ldAccomplished = round($workDone, 3);                          // decimal(5,3)
+            $ldUnworked     = round(100 - $ldAccomplished, 2);             // decimal(5,2)
+            $ldPerDayFull   = (100 - $ldAccomplished) / 100 * $contractAmount * 0.001;
             $ldPerDay       = round($ldPerDayFull, 2);
             $ldDaysOverdue  = $this->faker->numberBetween(5, 120);
             $totalLd        = round($ldPerDayFull * $ldDaysOverdue, 2);
         }
 
+        // ── contract_id ───────────────────────────────────────────────
+        // Format: PROJ-{YEAR}-{5-digit sequence}, unique via static counter + random suffix
+        static $sequence = 0;
+        $sequence++;
+        $year       = Carbon::instance($dateStarted)->year;
+        $contractId = sprintf('PROJ-%d-%05d', $year, $sequence);
+
         return [
+            'contract_id'              => $contractId,
             'in_charge'                => $this->faker->randomElement($inChargeOptions),
             'project_title'            => 'Construction of ' . $this->faker->randomElement([
                 'Barangay Road', 'Multi-Purpose Hall', 'Water System', 'Drainage Canal',
@@ -178,10 +201,13 @@ class ProjectFactory extends Factory
             'revised_contract_expiry'  => $revisedExpiry,
             'status'                   => $status,
             'completed_at'             => $completedAt,
-            'original_contract_amount' => $contractAmount,           // always the raw original
+            'original_contract_amount' => $contractAmount,
             'as_planned'               => $asPlanned,
             'work_done'                => $workDone,
             'slippage'                 => $slippage,
+            'progress_updated_at'      => Carbon::instance($dateStarted)
+                                            ->addDays(rand(30, 300))
+                                            ->format('Y-m-d'),
             'remarks_recommendation'   => $this->faker->boolean(30) ? $this->faker->sentences(2, true) : null,
 
             // Documents & Extensions
@@ -204,6 +230,10 @@ class ProjectFactory extends Factory
             'billing_dates'            => empty($billingDates) ? null : $billingDates,
             'total_amount_billed'      => $totalAmountBilled,
             'remaining_balance'        => $remainingBalance,
+            'advance_billing_pct'      => $advanceBillingPct,
+            'advance_billing_amount'   => $advanceBillingAmount,
+            'retention_pct'            => $retentionPct,
+            'retention_amount'         => $retentionAmount,
 
             // Liquidated Damages
             'ld_accomplished'          => $ldAccomplished,
