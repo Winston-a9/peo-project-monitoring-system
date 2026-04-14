@@ -20,11 +20,18 @@ class ProjectReportPdf extends FPDF
     {
         $this->filterLabel = $label;
     }
+    private bool $suppressHeader = false;
+
+    public function suppressAutoHeader(bool $val = true): void
+    {
+        $this->suppressHeader = $val;
+    }
     
 
     // ── Page header ──────────────────────────────────────────
     public function Header()
 {
+    if ($this->suppressHeader) return;
     // Orange accent bar at top
     $this->SetFillColor(249, 115, 22);
     $this->Rect(0, 0, 297, 3, 'F');
@@ -236,4 +243,45 @@ class ProjectReportPdf extends FPDF
             $style
         ));
     }
+    // ── Portrait detail-report header (with logo) ────────────
+public function DetailHeader(): void
+{
+    $logoPath = public_path('assets/app_logo.png');
+
+    // Orange accent bar at top
+    $this->SetFillColor(249, 115, 22);
+    $this->Rect(0, 0, 210, 3, 'F');
+
+    // Logo — left side
+    if (file_exists($logoPath)) {
+        $this->Image($logoPath, 15, 4, 18, 0, 'PNG');
+    }
+    $rightLogoPath = public_path('assets/province_seal.png'); 
+    if (file_exists($rightLogoPath)) {
+        $this->Image($rightLogoPath, 175, 4, 18, 0, 'PNG');
+    }
+
+    // Title — centered across full page width
+    $this->SetXY(0, 9);
+    $this->SetFont('Helvetica', 'B', 14);
+    $this->SetTextColor(107, 79, 53);
+    $this->Cell(210, 8, 'PROJECT DETAIL REPORT', 0, 1, 'C');
+
+    // Generated date — centered, smaller
+    $this->SetX(0);
+    $this->SetFont('Helvetica', '', 8);
+    $this->SetTextColor(100, 100, 100);
+    $this->Cell(210, 5, 'Generated: ' . $this->generatedAt, 0, 1, 'C');
+
+    // Divider line
+    $this->SetDrawColor(249, 115, 22);
+    $this->SetLineWidth(0.4);
+    $this->Line(15, $this->GetY() + 1, 195, $this->GetY() + 1);
+    $this->SetLineWidth(0.2);
+    $this->SetDrawColor(0, 0, 0);
+    $this->SetTextColor(0, 0, 0);
+
+    // Move cursor below header
+    $this->SetY($this->GetY() + 5);
+}
 }

@@ -142,8 +142,11 @@ if complete
 if expired
 	LD is shown
 	
-<add> add a contract id coloumn in the all projects reports generator (add also in the table design the same in the index page)
-<update> pdf report status not the same when pdf is generated from the index status display
+extra updates:
+	Dashboard Notification
+	pdf report generator not finished!
+		<add> add a contract id coloumn in the all projects reports generator (add also in the table design the same in the index page)
+		<update> pdf report status not the same when pdf is generated from the index status display
 
 ==================================================================================================================================================================================================================================================================================================
 FIXED/added:
