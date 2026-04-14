@@ -127,20 +127,19 @@ edit.blade
 	extensions
 	billing 
 	admin
-		remarks and recommendation reformat (dont display the reason/coverage entries to prevent modification through admin-remarks/recommendation input)
 
 show.blade 
 	overview
 	extensions
 	financial 
 	admin
-		performance bond date not being shown
+		performance bond date display
 
 
 if complete
 
 if expired
-	LD is shown
+	LD is accesable 
 	
 extra updates:
 	Dashboard Notification
@@ -151,6 +150,9 @@ extra updates:
 ==================================================================================================================================================================================================================================================================================================
 FIXED/added:
 
+<update> remarks and recommendation reformat (dont display the reason/coverage entries to prevent modification through admin-remarks/recommendation input)
+
+<update> updated pdf generator, added PEO and Province logo
 <add> added a pdf report generator inside a project
 
 4/13-17/26
