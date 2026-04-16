@@ -122,8 +122,12 @@ edit.blade
 		move performance bond in the overview tab
 
 	performance
-		FIXED DATE START TO FINISH in LD (major addition)
-
+		<major update> Reconstructed LD calculation
+			<new> ld start and end date
+			<new> add a termination button
+			<logic> all calculation stays the same except for the Days Overdue = how many days from ld start date, instead of expiry
+			<update> Penalty starts only when user decides — and ends when user stops or project completes (project complete when work done is 100%). verify: if the penalty will stop calculating if the project is completed or terminated. the end date is for the date stamp on when the LDA penalty stopped. 
+				logs:
 	extensions
 	billing 
 	admin
@@ -139,7 +143,7 @@ show.blade
 if complete
 
 if expired
-	LD is accesable 
+	LD is accesible 
 	
 extra updates:
 	Dashboard Notification

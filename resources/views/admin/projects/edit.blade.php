@@ -1111,8 +1111,8 @@
                                         </div>
                                         <div
                                             style="margin-top:0.75rem; padding:0.875rem 1rem; border-radius:10px; display:flex; align-items:center; justify-content:space-between;
-                                            background:{{ $remainingBal >= 0 ? 'rgba(59,130,246,0.04)' : 'rgba(239,68,68,0.04)' }};
-                                            border:1px solid {{ $remainingBal >= 0 ? 'rgba(59,130,246,0.18)' : 'rgba(239,68,68,0.18)' }};">
+                                                background:{{ $remainingBal >= 0 ? 'rgba(59,130,246,0.04)' : 'rgba(239,68,68,0.04)' }};
+                                                border:1px solid {{ $remainingBal >= 0 ? 'rgba(59,130,246,0.18)' : 'rgba(239,68,68,0.18)' }};">
                                             <span
                                                 style="font-size:0.8rem; font-weight:600; color:var(--ink-muted); display:flex; align-items:center; gap:0.4rem;">
                                                 <i class="fas fa-wallet"
@@ -1757,7 +1757,6 @@
             document.body.appendChild(form);
             form.submit();
         }
-        { { --Billing Edit Modal JS-- } }
         window._billingEditIndex = 0;
 
         window.openBillingEditModal = function (index, amount, date) {

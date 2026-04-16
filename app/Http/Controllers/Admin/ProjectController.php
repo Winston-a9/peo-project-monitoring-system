@@ -345,21 +345,25 @@ class ProjectController extends Controller
             ->count();
 
         // ── Step 3b: Carry forward & append billing ───────────────
-        $existingBillingAmounts = is_array($fresh->billing_amounts) ? array_map('floatval', $fresh->billing_amounts) : [];
-        $existingBillingDates = is_array($fresh->billing_dates) ? $fresh->billing_dates : [];
+$existingBillingAmounts = is_array($fresh->billing_amounts)
+    ? array_map('floatval', $fresh->billing_amounts) : [];
+$existingBillingDates = is_array($fresh->billing_dates)
+    ? $fresh->billing_dates : [];
 
-        $newBillingAmount = $request->input('new_billing_amount');
-        $newBillingDate = $request->input('new_billing_date');
+$newBillingAmount = $request->input('new_billing_amount');
+$newBillingDate   = $request->input('new_billing_date');
 
-        if ($newBillingAmount !== null && $newBillingAmount !== '' && (float) $newBillingAmount > 0) {
-            $existingBillingAmounts[] = (float) $newBillingAmount;
-            $existingBillingDates[] = $newBillingDate ?: null;
-        }
+if ($newBillingAmount !== null && $newBillingAmount !== ''
+    && (float) $newBillingAmount > 0) {
+    $existingBillingAmounts[] = (float) $newBillingAmount;
+    $existingBillingDates[]   = $newBillingDate ?: null;
+}
 
-        $data['billing_amounts'] = array_values($existingBillingAmounts);
-        $data['billing_dates'] = array_values($existingBillingDates);
+$data['billing_amounts'] = array_values($existingBillingAmounts);
+$data['billing_dates']   = array_values($existingBillingDates);
 
-        $saveLdDaysOverdue = Schema::getColumnType('projects', 'ld_days_overdue') !== 'date';
+$saveLdDaysOverdue = Schema::getColumnType('projects', 'ld_days_overdue') !== 'date';
+
 
         // ── Step 3c: Billing summary fields ──────────────────────────
         $data['total_amount_billed'] = array_sum($data['billing_amounts']);
@@ -428,6 +432,22 @@ class ProjectController extends Controller
         $data['date_requested'] = empty($existingDates)
             ? null
             : array_values(array_map(fn($d) => ($d !== '' ? $d : null), $existingDates));
+            // ── Step 4c: Billing summary — computed here so it includes
+//             any TE/VO costs appended in Steps 4 and 4b ────
+$data['total_amount_billed'] = array_sum($data['billing_amounts']);
+
+// Use the live $existingCosts / $existingVoCosts (already include
+// the new entries from this request, not just what's in the DB).
+$allCurrentCosts = array_merge(
+    array_values($existingCosts),   // TE costs — includes new TE cost
+    array_values($existingVoCosts)  // VO costs — includes new VO cost
+);
+$totalCostAdj = collect($allCurrentCosts)
+    ->filter(fn($c) => $c !== null && (float) $c !== 0.0)
+    ->sum();
+
+$adjustedContractAmount  = max(0, (float) $request->original_contract_amount + $totalCostAdj);
+$data['remaining_balance'] = $adjustedContractAmount - $data['total_amount_billed'];
 
         // ── Step 5: Handle Suspension Order ──────────────────────
         $newSODays = (int) $request->input('new_so_days', 0);
@@ -584,6 +604,21 @@ class ProjectController extends Controller
                     $data['status'] = 'ongoing';
             }
         }
+        // ── Recompute billing summary after cost edit ────────────
+$freshBillingAmounts = is_array($fresh->billing_amounts)
+    ? array_map('floatval', $fresh->billing_amounts) : [];
+$totalBilled = array_sum($freshBillingAmounts);
+
+$allCostsAfterEdit = array_merge(
+    array_values($data['cost_involved'] ?? $fresh->cost_involved ?? []),
+    array_values($data['vo_cost']       ?? $fresh->vo_cost       ?? [])
+);
+$costAdj = collect($allCostsAfterEdit)
+    ->filter(fn($c) => $c !== null && (float) $c != 0)
+    ->sum();
+
+$data['total_amount_billed'] = $totalBilled;
+$data['remaining_balance']   = max(0, (float) $fresh->original_contract_amount + $costAdj) - $totalBilled;
 
         $project->update($data);
 
