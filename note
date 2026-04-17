@@ -130,6 +130,7 @@ edit.blade
 				logs:
 	extensions
 	billing 
+		(fix) bug: 171 amount should deduct the remaining balance amount
 	admin
 
 show.blade 

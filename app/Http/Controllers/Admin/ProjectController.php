@@ -604,21 +604,20 @@ $data['remaining_balance'] = $adjustedContractAmount - $data['total_amount_bille
                     $data['status'] = 'ongoing';
             }
         }
-        // ── Recompute billing summary after cost edit ────────────
-$freshBillingAmounts = is_array($fresh->billing_amounts)
-    ? array_map('floatval', $fresh->billing_amounts) : [];
-$totalBilled = array_sum($freshBillingAmounts);
+        // ── Final billing summary — uses $data['billing_amounts'] which already
+        //    includes any newly-appended entry from Step 3b ──────────────────────
+        $totalBilled = array_sum($data['billing_amounts']);
 
-$allCostsAfterEdit = array_merge(
-    array_values($data['cost_involved'] ?? $fresh->cost_involved ?? []),
-    array_values($data['vo_cost']       ?? $fresh->vo_cost       ?? [])
-);
-$costAdj = collect($allCostsAfterEdit)
-    ->filter(fn($c) => $c !== null && (float) $c != 0)
-    ->sum();
+        $allCostsAfterEdit = array_merge(
+            array_values($data['cost_involved'] ?? []),
+            array_values($data['vo_cost']       ?? [])
+        );
+        $costAdj = collect($allCostsAfterEdit)
+            ->filter(fn($c) => $c !== null && (float) $c != 0)
+            ->sum();
 
-$data['total_amount_billed'] = $totalBilled;
-$data['remaining_balance']   = max(0, (float) $fresh->original_contract_amount + $costAdj) - $totalBilled;
+        $data['total_amount_billed'] = $totalBilled;
+        $data['remaining_balance']   = (float) $request->original_contract_amount + $costAdj - $totalBilled;
 
         $project->update($data);
 
