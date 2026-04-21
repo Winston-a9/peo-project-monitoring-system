@@ -36,6 +36,9 @@ return new class extends Migration
             $table->integer('ld_days_overdue')->nullable();
             $table->decimal('ld_per_day', 15, 2)->nullable();
             $table->decimal('total_ld', 15, 2)->nullable();
+            $table->date('ld_start_date')->nullable();
+            $table->date('ld_end_date')->nullable();
+            $table->enum('ld_status', ['inactive', 'active', 'terminated', 'completed'])->default('inactive');
 
             // Extensions
             $table->json('documents_pressed')->nullable();

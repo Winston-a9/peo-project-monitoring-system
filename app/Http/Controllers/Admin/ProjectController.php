@@ -291,6 +291,8 @@ class ProjectController extends Controller
             'new_te_reason' => 'nullable|string|max:1000',
             'new_vo_reason' => 'nullable|string|max:1000',
             'new_so_reason' => 'nullable|string|max:1000',
+            'ld_start_date' => 'nullable|date',
+            'ld_end_date' => 'nullable|date|after_or_equal:ld_start_date',
         ]);
 
         // ── Step 1: Basic scalar fields ───────────────────────────
@@ -345,24 +347,26 @@ class ProjectController extends Controller
             ->count();
 
         // ── Step 3b: Carry forward & append billing ───────────────
-$existingBillingAmounts = is_array($fresh->billing_amounts)
-    ? array_map('floatval', $fresh->billing_amounts) : [];
-$existingBillingDates = is_array($fresh->billing_dates)
-    ? $fresh->billing_dates : [];
+        $existingBillingAmounts = is_array($fresh->billing_amounts)
+            ? array_map('floatval', $fresh->billing_amounts) : [];
+        $existingBillingDates = is_array($fresh->billing_dates)
+            ? $fresh->billing_dates : [];
 
-$newBillingAmount = $request->input('new_billing_amount');
-$newBillingDate   = $request->input('new_billing_date');
+        $newBillingAmount = $request->input('new_billing_amount');
+        $newBillingDate = $request->input('new_billing_date');
 
-if ($newBillingAmount !== null && $newBillingAmount !== ''
-    && (float) $newBillingAmount > 0) {
-    $existingBillingAmounts[] = (float) $newBillingAmount;
-    $existingBillingDates[]   = $newBillingDate ?: null;
-}
+        if (
+            $newBillingAmount !== null && $newBillingAmount !== ''
+            && (float) $newBillingAmount > 0
+        ) {
+            $existingBillingAmounts[] = (float) $newBillingAmount;
+            $existingBillingDates[] = $newBillingDate ?: null;
+        }
 
-$data['billing_amounts'] = array_values($existingBillingAmounts);
-$data['billing_dates']   = array_values($existingBillingDates);
+        $data['billing_amounts'] = array_values($existingBillingAmounts);
+        $data['billing_dates'] = array_values($existingBillingDates);
 
-$saveLdDaysOverdue = Schema::getColumnType('projects', 'ld_days_overdue') !== 'date';
+        $saveLdDaysOverdue = Schema::getColumnType('projects', 'ld_days_overdue') !== 'date';
 
 
         // ── Step 3c: Billing summary fields ──────────────────────────
@@ -432,22 +436,22 @@ $saveLdDaysOverdue = Schema::getColumnType('projects', 'ld_days_overdue') !== 'd
         $data['date_requested'] = empty($existingDates)
             ? null
             : array_values(array_map(fn($d) => ($d !== '' ? $d : null), $existingDates));
-            // ── Step 4c: Billing summary — computed here so it includes
+        // ── Step 4c: Billing summary — computed here so it includes
 //             any TE/VO costs appended in Steps 4 and 4b ────
-$data['total_amount_billed'] = array_sum($data['billing_amounts']);
+        $data['total_amount_billed'] = array_sum($data['billing_amounts']);
 
-// Use the live $existingCosts / $existingVoCosts (already include
+        // Use the live $existingCosts / $existingVoCosts (already include
 // the new entries from this request, not just what's in the DB).
-$allCurrentCosts = array_merge(
-    array_values($existingCosts),   // TE costs — includes new TE cost
-    array_values($existingVoCosts)  // VO costs — includes new VO cost
-);
-$totalCostAdj = collect($allCurrentCosts)
-    ->filter(fn($c) => $c !== null && (float) $c !== 0.0)
-    ->sum();
+        $allCurrentCosts = array_merge(
+            array_values($existingCosts),   // TE costs — includes new TE cost
+            array_values($existingVoCosts)  // VO costs — includes new VO cost
+        );
+        $totalCostAdj = collect($allCurrentCosts)
+            ->filter(fn($c) => $c !== null && (float) $c !== 0.0)
+            ->sum();
 
-$adjustedContractAmount  = max(0, (float) $request->original_contract_amount + $totalCostAdj);
-$data['remaining_balance'] = $adjustedContractAmount - $data['total_amount_billed'];
+        $adjustedContractAmount = max(0, (float) $request->original_contract_amount + $totalCostAdj);
+        $data['remaining_balance'] = $adjustedContractAmount - $data['total_amount_billed'];
 
         // ── Step 5: Handle Suspension Order ──────────────────────
         $newSODays = (int) $request->input('new_so_days', 0);
@@ -535,39 +539,85 @@ $data['remaining_balance'] = $adjustedContractAmount - $data['total_amount_bille
             $data['retention_amount'] = null;
         }
 
-        // ── Step 8: Liquidated Damages (server-side computation) ─
+        // ── Step 8: Liquidated Damages ────────────────────────────────
+
         $ldAccomplished = isset($data['ld_accomplished']) && $data['ld_accomplished'] !== null
             ? (float) $data['ld_accomplished']
             : 0.0;
-        $contractAmount = (float) ($data['original_contract_amount'] ?? 0);
-        $daysOverdue = (int) $request->input('ld_days_overdue', 0);
 
-        // Formula: LD per day = (unworked% / 100) × original_contract_amount × 0.001
+        $contractAmount = (float) ($data['original_contract_amount'] ?? 0);
         $ldUnworked = max(0, 100 - $ldAccomplished);
         $ldPerDay = ($ldUnworked / 100) * $contractAmount * 0.001;
 
         $data['ld_per_day'] = $ldPerDay > 0 ? round($ldPerDay, 2) : null;
         $data['ld_unworked'] = $ldPerDay > 0 ? round($ldUnworked, 2) : null;
-        if ($saveLdDaysOverdue) {
-            $data['ld_days_overdue'] = $daysOverdue > 0 ? $daysOverdue : null;
+
+        // ── Resolve submitted dates ───────────────────────────────────
+
+        $ldStartDate = $request->input('ld_start_date');
+        $ldEndDate = $request->input('ld_end_date');
+        $workDone = (float) $request->input('work_done', 0);
+        $today = now()->startOfDay();
+
+        $data['ld_start_date'] = $ldStartDate ?: null;
+        $data['ld_end_date'] = $ldEndDate ?: null;
+
+        // ── Derive ld_status ──────────────────────────────────────────
+
+        if (!$ldStartDate) {
+            // No start date set at all
+            $data['ld_status'] = 'inactive';
+
+        } else {
+            $start = \Carbon\Carbon::parse($ldStartDate)->startOfDay();
+
+            if ($today->lt($start)) {
+                // Start date is in the future
+                $data['ld_status'] = 'inactive';
+
+            } elseif ($workDone >= 100) {
+                // Work fully done — auto-complete
+                $data['ld_status'] = 'completed';
+                $data['ld_end_date'] = $ldEndDate ?: $today->toDateString();
+
+            } elseif ($ldEndDate && $today->gte(\Carbon\Carbon::parse($ldEndDate)->startOfDay())) {
+                // Optional end date has been reached
+                $data['ld_status'] = 'terminated';
+
+            } else {
+                // Start date passed, no end condition met
+                $data['ld_status'] = 'active';
+            }
         }
+
+        // ── Compute days overdue ──────────────────────────────────────
+
+        $daysOverdue = 0;
+
+        if (
+            in_array($data['ld_status'], ['active', 'terminated', 'completed'])
+            && !empty($data['ld_start_date'])
+        ) {
+            $start = \Carbon\Carbon::parse($data['ld_start_date'])->startOfDay();
+            $end = !empty($data['ld_end_date'])
+                ? \Carbon\Carbon::parse($data['ld_end_date'])->startOfDay()
+                : $today;
+
+            $daysOverdue = (int) max(0, $start->diffInDays($end, false));
+        }
+
+        $data['ld_days_overdue'] = $daysOverdue > 0 ? $daysOverdue : null;
         $data['total_ld'] = ($ldPerDay > 0 && $daysOverdue > 0)
             ? round($ldPerDay * $daysOverdue, 2)
             : null;
 
-        // ── Step 9: Clear LD fields when inputs are blank ─────────
-        // Note: LD is independent of issuances — do not wipe based on notification list.
+        // ── Step 9: Clear LD fields when inputs are blank ─────────────
+
         if ($ldAccomplished <= 0) {
             $data['ld_accomplished'] = null;
             $data['ld_unworked'] = null;
             $data['ld_per_day'] = null;
             $data['total_ld'] = null;
-        }
-        if ($daysOverdue <= 0) {
-            $data['ld_days_overdue'] = null;
-            if ($ldAccomplished <= 0) {
-                $data['total_ld'] = null;
-            }
         }
 
         // ── Step 10: Auto-derive status (with manual overrides) ───
@@ -610,14 +660,14 @@ $data['remaining_balance'] = $adjustedContractAmount - $data['total_amount_bille
 
         $allCostsAfterEdit = array_merge(
             array_values($data['cost_involved'] ?? []),
-            array_values($data['vo_cost']       ?? [])
+            array_values($data['vo_cost'] ?? [])
         );
         $costAdj = collect($allCostsAfterEdit)
             ->filter(fn($c) => $c !== null && (float) $c != 0)
             ->sum();
 
         $data['total_amount_billed'] = $totalBilled;
-        $data['remaining_balance']   = (float) $request->original_contract_amount + $costAdj - $totalBilled;
+        $data['remaining_balance'] = (float) $request->original_contract_amount + $costAdj - $totalBilled;
 
         $project->update($data);
 

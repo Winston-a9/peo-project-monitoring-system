@@ -35,6 +35,9 @@ class Project extends Model
         'ld_per_day',
         'total_ld',
         'ld_days_overdue',
+        'ld_status',
+        'ld_start_date',
+        'ld_end_date',
         //Extension
         'time_extension',
         'extension_days',
@@ -95,6 +98,9 @@ class Project extends Model
             'vo_days'                  => 'array',
             'vo_cost'                  => 'array',
             'date_requested'           => 'array',
+            'ld_start_date'            => 'date',
+            'ld_end_date'              => 'date',
+
 
         ];
     }

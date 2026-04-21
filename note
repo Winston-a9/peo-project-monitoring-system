@@ -105,7 +105,7 @@ add a billing information table tab
 
 
 
-
+i am developing a project monitoring system, help me with my problems and additions of the system. act like a senior developer. DONT MAKE MISTAKES
 
 
 
@@ -130,7 +130,6 @@ edit.blade
 				logs:
 	extensions
 	billing 
-		(fix) bug: 171 amount should deduct the remaining balance amount
 	admin
 
 show.blade 
@@ -140,6 +139,7 @@ show.blade
 	admin
 		performance bond date display
 
+<fix> bug: edit modals not working properly, both extensions and billing
 
 if complete
 
@@ -154,9 +154,8 @@ extra updates:
 
 ==================================================================================================================================================================================================================================================================================================
 FIXED/added:
-
+		(fix) bug: 171 amount should deduct the remaining balance amount
 <update> remarks and recommendation reformat (dont display the reason/coverage entries to prevent modification through admin-remarks/recommendation input)
-
 <update> updated pdf generator, added PEO and Province logo
 <add> added a pdf report generator inside a project
 

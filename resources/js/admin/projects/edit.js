@@ -98,6 +98,10 @@ window.toggleLDAReadOnly = function (isComplete) {
     const ldSection = ldAccomplishedInput?.closest('.form-card');
     if (!ldSection) return;
 
+    // Guard: don't touch anything if the LD section isn't active/visible yet
+    const fieldsChunk = document.getElementById('ld-chunk-fields');
+    if (!fieldsChunk || fieldsChunk.style.display === 'none') return;
+
     const inputs = ldSection.querySelectorAll('input:not([type="hidden"])');
 
     if (isComplete) {
@@ -128,8 +132,8 @@ window.toggleLDAReadOnly = function (isComplete) {
                 </p>
             `;
             // Insert before the grid inside section-body
-            const sectionBody = ldSection.querySelector('.section-body');
-            if (sectionBody) sectionBody.prepend(notice);
+            const fieldsChunk = document.getElementById('ld-chunk-fields');
+if (fieldsChunk) fieldsChunk.prepend(notice);
         }
 
         // Zero out LD values visually and in hidden inputs
@@ -199,42 +203,56 @@ function fmtNum(n, decimals) {
  * - Contract overdue       → shows "X days overdue" in red, hidden input = X
  */
 window.calculateDaysOverdue = function () {
-    const expiryStr = (typeof revisedExpiry !== 'undefined' && revisedExpiry !== '')
-        ? revisedExpiry
-        : (typeof originalExpiry !== 'undefined' ? originalExpiry : null);
+    const hiddenEl  = document.getElementById('ld_days_overdue_input');
+    const displayEl = document.getElementById('ld_days_overdue_display');
+    const unitEl    = document.getElementById('ld_days_unit');
+    const hintEl    = document.getElementById('ld_overdue_hint');
 
-    if (!expiryStr) return;
+    // Read from the live date inputs so preview updates as user types
+    const startStr = document.querySelector('[name="ld_start_date"]')?.value || ldStartDate;
+    const endStr   = document.querySelector('[name="ld_end_date"]')?.value   || ldEndDate;
 
-    const expiry = new Date(expiryStr + 'T00:00:00');
+    if (!startStr) {
+        if (displayEl) displayEl.textContent = '0';
+        if (unitEl)    unitEl.textContent = 'days — no start date set';
+        if (hiddenEl)  hiddenEl.value = 0;
+        if (hintEl)    hintEl.innerHTML = '<i class="fas fa-info-circle"></i> Set an LD start date to begin counting';
+        window.calculateLDTotal();
+        return;
+    }
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const diffMs = today - expiry;
-    const diffDays = Math.floor(Math.abs(diffMs) / 86400000);
-    const isOverdue = diffMs > 0;
+    const start = new Date(startStr + 'T00:00:00');
+    const end   = endStr ? new Date(endStr + 'T00:00:00') : today;
 
-    const hiddenEl = document.getElementById('ld_days_overdue_input');
-    const displayEl = document.getElementById('ld_days_overdue_display');
-    const unitEl = document.getElementById('ld_days_unit');
-    const hintEl = document.getElementById('ld_overdue_hint');
-    const boxEl = displayEl ? displayEl.closest('[id="ld_days_box"], div') : null;
+    // If start date is still in the future
+    if (today < start) {
+        if (displayEl) { displayEl.textContent = '0'; displayEl.style.color = '#9ca3af'; }
+        if (unitEl)    { unitEl.textContent = 'days — not yet started'; unitEl.style.color = '#9ca3af'; }
+        if (hiddenEl)  hiddenEl.value = 0;
+        if (hintEl)    { hintEl.style.color = '#9ca3af'; hintEl.innerHTML = '<i class="fas fa-clock"></i> Penalty starts on ' + start.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }); }
+        window.calculateLDTotal();
+        return;
+    }
 
-    // Set the hidden input — only store overdue count when contract is actually overdue
-    if (hiddenEl) hiddenEl.value = isOverdue ? diffDays : 0;
+    const diffDays = Math.max(0, Math.floor((end - start) / 86400000));
+
+    if (hiddenEl)  hiddenEl.value = diffDays;
     if (displayEl) displayEl.textContent = diffDays;
 
-    if (isOverdue) {
-        if (displayEl) displayEl.style.color = '#dc2626';
-        if (unitEl) { unitEl.textContent = 'days overdue'; unitEl.style.color = '#dc2626'; }
-        if (hintEl) { hintEl.style.color = '#dc2626'; hintEl.innerHTML = '<i class="fas fa-triangle-exclamation"></i> Contract is overdue — LD is accumulating'; }
-    } else if (diffDays === 0) {
-        if (displayEl) displayEl.style.color = '#f59e0b';
-        if (unitEl) { unitEl.textContent = 'days — expires today'; unitEl.style.color = '#f59e0b'; }
-        if (hintEl) { hintEl.style.color = '#d97706'; hintEl.innerHTML = '<i class="fas fa-clock"></i> Contract expires today'; }
-    } else {
-        if (displayEl) displayEl.style.color = '#16a34a';
-        if (unitEl) { unitEl.textContent = 'days remaining'; unitEl.style.color = '#16a34a'; }
-        if (hintEl) { hintEl.style.color = '#16a34a'; hintEl.innerHTML = '<i class="fas fa-check-circle"></i> Contract still active — no LD applies'; }
+    // Color based on whether penalty is still running or stopped
+    const isStopped = endStr && end <= today;
+    const color = isStopped ? '#d97706' : '#dc2626';
+
+    if (displayEl) displayEl.style.color = color;
+    if (unitEl)    { unitEl.textContent = isStopped ? 'days (stopped)' : 'days overdue'; unitEl.style.color = color; }
+    if (hintEl) {
+        hintEl.style.color = color;
+        hintEl.innerHTML = isStopped
+            ? '<i class="fas fa-circle-stop"></i> Penalty ended on ' + end.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+            : '<i class="fas fa-triangle-exclamation"></i> Penalty is accumulating';
     }
 
     window.calculateLDTotal();
@@ -432,6 +450,102 @@ window.updateBillingPreview = function () {
 
 /* ── Init on DOMContentLoaded ── */
 document.addEventListener('DOMContentLoaded', () => {
+    // ── LD Progressive Disclosure ─────────────────────────────────────────
+    //
+    // TEACH: This is a state machine with 4 possible states:
+    //   'inactive' → only the Start button visible
+    //   'setup'    → Start button hidden, date inputs visible, fields hidden
+    //   'active'   → date inputs + fields both visible, penalty running
+    //   'terminated'/'completed' → same as active, just banner differs
+    //
+    // The single source of truth for which state we're in is the
+    // data-ld-status attribute on #ld-card, set by PHP on page load.
+    // JS reads it once, then manages transitions from there.
+
+    window.ldSetState = function (state) {
+        // Grab all three chunks
+        const chunkStart  = document.getElementById('ld-chunk-start');
+        const chunkDates  = document.getElementById('ld-chunk-dates');
+        const chunkFields = document.getElementById('ld-chunk-fields');
+
+        if (state === 'inactive') {
+            // Only the start button. Nothing else.
+            chunkStart.style.display  = 'block';
+            chunkDates.style.display  = 'none';
+            chunkFields.style.display = 'none';
+
+        } else if (state === 'setup') {
+            // User clicked Start but hasn't entered a date yet.
+            // Show dates, hide fields — don't confuse them with empty calculations.
+            chunkStart.style.display  = 'none';
+            chunkDates.style.display  = 'block';
+            chunkFields.style.display = 'none';
+
+        } else {
+            // active, terminated, completed — show everything except the Start button
+            chunkStart.style.display  = 'none';
+            chunkDates.style.display  = 'block';
+            chunkFields.style.display = 'block';
+
+            // Update the status banner to reflect the correct state
+            window.ldSetStatusBanner(state);
+
+            // Now safe to run calculations — all display elements exist in the DOM
+            window.calculateDaysOverdue();
+            window.calculateLDPerDay();
+        }
+    };
+
+    // Updates the banner text/color inside ld-chunk-fields to match the current state
+    window.ldSetStatusBanner = function (state) {
+        const banner = document.getElementById('ld-status-banner');
+        const icon   = document.getElementById('ld-banner-icon');
+        const label  = document.getElementById('ld-banner-label');
+        const dates  = document.getElementById('ld-banner-dates');
+        if (!banner) return;
+
+        // Config map — same pattern as your existing PHP $ldBannerConfig
+        const cfg = {
+            active:     { bg: 'rgba(220,38,38,0.06)',  border: 'rgba(220,38,38,0.2)',  color: '#dc2626', icon: 'fa-circle-play',  label: 'LD Penalty: Penalty Running' },
+            terminated: { bg: 'rgba(234,179,8,0.06)',   border: 'rgba(234,179,8,0.2)',  color: '#d97706', icon: 'fa-circle-stop',  label: 'LD Penalty: Terminated' },
+            completed:  { bg: 'rgba(22,163,74,0.06)',   border: 'rgba(22,163,74,0.2)',  color: '#16a34a', icon: 'fa-circle-check', label: 'LD Penalty: Completed' },
+        };
+
+        const c = cfg[state] || cfg.active;
+        banner.style.background   = c.bg;
+        banner.style.borderColor  = c.border;
+        icon.className            = 'fas ' + c.icon;
+        icon.style.color          = c.color;
+        label.style.color         = c.color;
+        label.textContent         = c.label;
+
+        // Show the date range in the banner if we have them
+        const startVal = document.getElementById('ld_start_date_input')?.value;
+        const endVal   = document.getElementById('ld_end_date_input')?.value;
+        if (startVal && dates) {
+            const fmt = (s) => new Date(s + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            dates.textContent = 'Started ' + fmt(startVal) + (endVal ? ' → Ended ' + fmt(endVal) : '');
+        }
+    };
+
+    // Called by oninput on the start date field
+    // TEACH: This is the transition guard — it decides whether we go to
+    // 'setup' (no date yet) or 'active' (date entered).
+    window.ldOnStartDateChange = function () {
+        const startVal = document.getElementById('ld_start_date_input')?.value;
+
+        if (startVal) {
+            // Date entered — reveal the full calculation section
+            window.ldSetState('active');
+        } else {
+            // Date cleared — step back to setup (dates visible, fields hidden)
+            window.ldSetState('setup');
+        }
+
+        // Always recalculate whenever start date changes
+        window.calculateDaysOverdue();
+    };
+
     const delReasonInput = document.getElementById('del-reason-input');
     if (delReasonInput) {
         delReasonInput.addEventListener('input', function () {
@@ -448,7 +562,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const issuancesList = document.getElementById('issuances-list');
     if (issuancesList) window.updateCount('issuances-list', 'issuance-count');
 
-    window.calculateDaysOverdue();
+    // TEACH: Boot the LD section into the correct state on page load.
+    // We read data-ld-status stamped by PHP, not a JS variable,
+    // so this works correctly even after a failed form validation redirect.
+    const ldCard = document.getElementById('ld-card');
+    const initialLdStatus = ldCard?.dataset?.ldStatus ?? 'inactive';
+
+    if (initialLdStatus === 'inactive') {
+        window.ldSetState('inactive');
+    } else {
+        // active, terminated, completed all show the full section
+        window.ldSetState(initialLdStatus);
+    }
+
+    document.querySelector('[name="ld_end_date"]')
+        ?.addEventListener('change', window.calculateDaysOverdue);
 
     const ldAccomplished = document.getElementById('ld_accomplished');
     if (ldAccomplished && ldAccomplished.value && initialWD < 100) {
