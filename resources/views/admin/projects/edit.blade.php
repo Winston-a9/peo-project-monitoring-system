@@ -488,216 +488,202 @@
                     </div>
                 </div>{{-- /form-card: Work Progress --}}
 
-                {{-- Liquidated Damages card --}}
-                {{-- 
-  WHY: We stamp the server-known status onto a data attribute.
-  JS reads this on DOMContentLoaded to boot into the right state.
-  We never hard-code show/hide in PHP — that's JS's job.
---}}
-<div class="form-card" style="margin-bottom:1.5rem;" id="ld-card" data-ld-status="{{ $project->ld_status ?? 'inactive' }}">
+                <div class="form-card" style="margin-bottom:1.5rem;" id="ld-card"
+                    data-ld-status="{{ $project->ld_status ?? 'inactive' }}">
 
-    <div class="section-header">
-        <i class="fas fa-calculator"></i>
-        <span>Liquidated Damages Assessment</span>
-    </div>
+                    <div class="section-header">
+                        <i class="fas fa-calculator"></i>
+                        <span>Liquidated Damages Assessment</span>
+                    </div>
 
-    <div class="section-body">
+                    <div class="section-body">
 
-        <input type="hidden" name="ld_action" id="ld_action_input" value="">
+                        <input type="hidden" name="ld_action" id="ld_action_input" value="">
 
-        {{-- 
-          CHUNK 1: The "Start" button.
-          WHY a separate div: JS hides this entire chunk as one unit.
-          We don't want to toggle individual elements — we toggle chunks.
-        --}}
-        <div id="ld-chunk-start">
-            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.75rem;
+                        {{--
+                        CHUNK 1: The "Start" button.
+                        WHY a separate div: JS hides this entire chunk as one unit.
+                        We don't want to toggle individual elements — we toggle chunks.
+                        --}}
+                        <div id="ld-chunk-start">
+                            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.75rem;
                         padding:0.85rem 1rem; border-radius:10px;
                         background:rgba(156,163,175,0.08); border:1.5px solid rgba(156,163,175,0.2);">
-                <div style="display:flex; align-items:center; gap:0.6rem;">
-                    <i class="fas fa-circle-pause" style="color:#9ca3af; font-size:0.9rem;"></i>
-                    <span style="font-size:0.82rem; font-weight:700; color:#9ca3af;">LD Penalty: Not Started</span>
-                </div>
-                <button type="button" id="ld-start-btn" onclick="ldSetState('setup')"
-                    style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.4rem 1rem;
+                                <div style="display:flex; align-items:center; gap:0.6rem;">
+                                    <i class="fas fa-circle-pause" style="color:#9ca3af; font-size:0.9rem;"></i>
+                                    <span style="font-size:0.82rem; font-weight:700; color:#9ca3af;">LD Penalty: Not
+                                        Started</span>
+                                </div>
+                                <button type="button" id="ld-start-btn" onclick="ldSetState('setup')" style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.4rem 1rem;
                            border-radius:8px;border:none;background:#dc2626;color:white;
                            font-size:0.75rem;font-weight:700;cursor:pointer;
                            font-family:'Instrument Sans',sans-serif;
                            box-shadow:0 2px 6px rgba(220,38,38,0.25);">
-                    <i class="fas fa-circle-play" style="font-size:0.7rem;"></i> Start LD Penalty
-                </button>
-            </div>
-        </div>
+                                    <i class="fas fa-circle-play" style="font-size:0.7rem;"></i> Start LD Penalty
+                                </button>
+                            </div>
+                        </div>
 
-        {{-- 
-          CHUNK 2: Date inputs.
-          WHY hidden by default in blade: PHP knows it's inactive, so we
-          start hidden. JS will reveal this when user clicks "Start".
-          
-          IMPORTANT: We keep the actual <input> names here so they submit
-          correctly when the form saves. We never strip them from the DOM.
-        --}}
-        <div id="ld-chunk-dates" style="display:none;">
+                        <div id="ld-chunk-dates" style="display:none;">
 
-            {{-- 
-              WHY this info banner: Guides the user — they just clicked
-              "Start" and need to know what to do next. 
-            --}}
-            <div style="display:flex; align-items:center; gap:0.6rem; margin-bottom:1.25rem;
+                            <div style="display:flex; align-items:center; gap:0.6rem; margin-bottom:1.25rem;
                         padding:0.75rem 1rem; border-radius:9px;
                         background:rgba(220,38,38,0.06); border:1.5px solid rgba(220,38,38,0.18);">
-                <i class="fas fa-circle-play" style="color:#dc2626; font-size:0.85rem; flex-shrink:0;"></i>
-                <p style="margin:0; font-size:0.8rem; color:#dc2626; font-weight:600;">
-                    Set the penalty start date to begin calculating liquidated damages.
-                </p>
-            </div>
+                                <i class="fas fa-circle-play"
+                                    style="color:#dc2626; font-size:0.85rem; flex-shrink:0;"></i>
+                                <p style="margin:0; font-size:0.8rem; color:#dc2626; font-weight:600;">
+                                    Set the penalty start date to begin calculating liquidated damages.
+                                </p>
+                            </div>
 
-            <div class="grid-2col">
-                <div class="field-group">
-                    <label class="field-label">LD Start Date</label>
-                    {{-- 
-                      WHY oninput not onchange:
-                      oninput fires immediately as the user types/picks.
-                      onchange only fires on blur. For date pickers, both
-                      work but oninput feels more responsive.
-                    --}}
-                    <input type="date" name="ld_start_date" id="ld_start_date_input" class="field-input"
-                        value="{{ old('ld_start_date', $project->ld_start_date?->format('Y-m-d') ?? '') }}"
-                        oninput="ldOnStartDateChange()">
-                    <p class="field-hint">Penalty begins counting from this date</p>
-                    @error('ld_start_date')
-                        <p class="field-error"><i class="fas fa-exclamation-circle"></i> {{ $message }}</p>
-                    @enderror
-                </div>
-                <div class="field-group">
-                    <label class="field-label">
-                        LD End Date
-                        <span style="font-weight:400; color:#9ca3af;">(optional)</span>
-                    </label>
-                    <input type="date" name="ld_end_date" id="ld_end_date_input" class="field-input"
-                        value="{{ old('ld_end_date', $project->ld_end_date?->format('Y-m-d') ?? '') }}"
-                        oninput="window.calculateDaysOverdue()">
-                    <p class="field-hint">Leave blank to count until work is 100% complete</p>
-                    @error('ld_end_date')
-                        <p class="field-error"><i class="fas fa-exclamation-circle"></i> {{ $message }}</p>
-                    @enderror
-                </div>
-            </div>
-        </div>
+                            <div class="grid-2col">
+                                <div class="field-group">
+                                    <label class="field-label">LD Start Date</label>
 
-        {{-- 
-          CHUNK 3: The full calculation fields + status banner.
-          WHY hidden by default: Only revealed once start date exists.
-          Everything here is read-only display — inputs are type="hidden",
-          displays are <span> tags updated by your existing JS functions.
-        --}}
-        <div id="ld-chunk-fields" style="display:none;">
+                                    <input type="date" name="ld_start_date" id="ld_start_date_input" class="field-input"
+                                        value="{{ old('ld_start_date', $project->ld_start_date?->format('Y-m-d') ?? '') }}"
+                                        oninput="ldOnStartDateChange()">
+                                    <p class="field-hint">Penalty begins counting from this date</p>
+                                    @error('ld_start_date')
+                                        <p class="field-error"><i class="fas fa-exclamation-circle"></i> {{ $message }}</p>
+                                    @enderror
+                                </div>
+                                <div class="field-group">
+                                    <label class="field-label">
+                                        LD End Date
+                                        <span style="font-weight:400; color:#9ca3af;">(optional)</span>
+                                    </label>
+                                    <input type="date" name="ld_end_date" id="ld_end_date_input" class="field-input"
+                                        value="{{ old('ld_end_date', $project->ld_end_date?->format('Y-m-d') ?? '') }}"
+                                        oninput="window.calculateDaysOverdue()">
+                                    <p class="field-hint">Leave blank to count until work is 100% complete</p>
+                                    @error('ld_end_date')
+                                        <p class="field-error"><i class="fas fa-exclamation-circle"></i> {{ $message }}</p>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
 
-            {{-- Status banner — dynamically updated by ldSetStatusBanner() --}}
-            <div id="ld-status-banner"
-                style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.75rem;
+                            <div id="ld-chunk-fields" style="display:none;">
+
+                                {{-- Status banner — dynamically updated by ldSetStatusBanner() --}}
+                                <div id="ld-status-banner" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.75rem;
                        padding:0.85rem 1rem; border-radius:10px; margin-bottom:1.25rem;
                        background:rgba(220,38,38,0.06); border:1.5px solid rgba(220,38,38,0.2);">
-                <div style="display:flex; align-items:center; gap:0.6rem;">
-                    <i id="ld-banner-icon" class="fas fa-circle-play" style="color:#dc2626; font-size:0.9rem;"></i>
-                    <span id="ld-banner-label" style="font-size:0.82rem; font-weight:700; color:#dc2626;">
-                        LD Penalty: Penalty Running
-                    </span>
-                    <span id="ld-banner-dates" style="font-size:0.72rem; color:#9ca3af; font-weight:500;"></span>
-                </div>
+                                    <div style="display:flex; align-items:center; gap:0.6rem;">
+                                        <i id="ld-banner-icon" class="fas fa-circle-play"
+                                            style="color:#dc2626; font-size:0.9rem;"></i>
+                                        <span id="ld-banner-label"
+                                            style="font-size:0.82rem; font-weight:700; color:#dc2626;">
+                                            LD Penalty: Penalty Running
+                                        </span>
+                                        <span id="ld-banner-dates"
+                                            style="font-size:0.72rem; color:#9ca3af; font-weight:500;"></span>
+                                    </div>
 
-                {{-- Terminate button — only shown when active --}}
-                @if(($project->ld_status ?? 'inactive') === 'active')
-                    <button type="submit" id="ld-terminate-btn"
-                        onclick="document.getElementById('ld_action_input').value='terminate'"
-                        style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.4rem 1rem;
-                               border-radius:8px;border:none;background:#d97706;color:white;
-                               font-size:0.75rem;font-weight:700;cursor:pointer;
-                               font-family:'Instrument Sans',sans-serif;
-                               box-shadow:0 2px 6px rgba(217,119,6,0.25);">
-                        <i class="fas fa-circle-stop" style="font-size:0.7rem;"></i> Terminate Penalty
-                    </button>
-                @endif
-            </div>
+                                    {{-- Terminate button — only shown when active --}}
+                                    @if(($project->ld_status ?? 'inactive') === 'active')
+                                                <button type="submit" id="ld-terminate-btn"
+                                                    onclick="document.getElementById('ld_action_input').value='terminate'" style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.4rem 1rem;
+                                           border-radius:8px;border:none;background:#d97706;color:white;
+                                           font-size:0.75rem;font-weight:700;cursor:pointer;
+                                           font-family:'Instrument Sans',sans-serif;
+                                           box-shadow:0 2px 6px rgba(217,119,6,0.25);">
+                                                    <i class="fas fa-circle-stop" style="font-size:0.7rem;"></i> Terminate Penalty
+                                                </button>
+                                    @endif
+                                </div>
 
-            {{-- Calculation grid — your existing fields, untouched --}}
-            <div class="grid-2col">
+                                {{-- Calculation grid — your existing fields, untouched --}}
+                                <div class="grid-2col">
 
-                <div class="field-group">
-                    <label class="field-label">Accomplished (%)</label>
-                    <input type="number" id="ld_accomplished" name="ld_accomplished" class="field-input"
-                        value="{{ old('ld_accomplished', $project->ld_accomplished ?? '') }}"
-                        min="0" max="100" step="0.001" style="padding-right:2.5rem;"
-                        onkeydown="return event.key !== '-' && event.key !== 'e'"
-                        oninput="if(parseFloat(this.value)>100)this.value=100; calculateLDPerDay()">
-                    <p class="field-hint">Percentage of work completed</p>
-                </div>
+                                    <div class="field-group">
+                                        <label class="field-label">Accomplished (%)</label>
+                                        <input type="number" id="ld_accomplished" name="ld_accomplished"
+                                            class="field-input"
+                                            value="{{ old('ld_accomplished', $project->ld_accomplished ?? '') }}"
+                                            min="0" max="100" step="0.001" style="padding-right:2.5rem;"
+                                            onkeydown="return event.key !== '-' && event.key !== 'e'"
+                                            oninput="if(parseFloat(this.value)>100)this.value=100; calculateLDPerDay()">
+                                        <p class="field-hint">Percentage of work completed</p>
+                                    </div>
 
-                <div class="field-group">
-                    <label class="field-label">
-                        Unworked (%) <span style="font-weight:400; color:#9ca3af;">(auto)</span>
-                    </label>
-                    <input type="hidden" id="ld_unworked" name="ld_unworked"
-                        value="{{ old('ld_unworked', $project->ld_unworked ?? '') }}">
-                    <p style="font-size:0.9rem; font-weight:600; color:var(--text-primary); margin:0; padding:0.1rem 0;">
-                        <span id="ld_unworked_display">{{ old('ld_unworked', $project->ld_unworked ?? '—') }}</span>
-                        <span style="color:var(--ink-muted); font-weight:500; margin-left:2px;">%</span>
-                    </p>
-                </div>
+                                    <div class="field-group">
+                                        <label class="field-label">
+                                            Unworked (%) <span style="font-weight:400; color:#9ca3af;">(auto)</span>
+                                        </label>
+                                        <input type="hidden" id="ld_unworked" name="ld_unworked"
+                                            value="{{ old('ld_unworked', $project->ld_unworked ?? '') }}">
+                                        <p
+                                            style="font-size:0.9rem; font-weight:600; color:var(--text-primary); margin:0; padding:0.1rem 0;">
+                                            <span
+                                                id="ld_unworked_display">{{ old('ld_unworked', $project->ld_unworked ?? '—') }}</span>
+                                            <span
+                                                style="color:var(--ink-muted); font-weight:500; margin-left:2px;">%</span>
+                                        </p>
+                                    </div>
 
-                <div class="field-group">
-                    <label class="field-label">
-                        Days Overdue <span style="font-weight:400; color:#9ca3af;">(auto)</span>
-                    </label>
-                    <input type="hidden" id="ld_days_overdue_input" name="ld_days_overdue"
-                        value="{{ old('ld_days_overdue', $project->ld_days_overdue ?? 0) }}">
-                    <div style="padding:0.75rem 1rem; border:1.5px solid var(--border); border-radius:9px; background:var(--bg-secondary);">
-                        <p style="margin:0; display:flex; align-items:baseline; gap:0.4rem;">
-                            <span id="ld_days_overdue_display"
-                                style="font-size:1.1rem; font-weight:800; font-family:'Syne',sans-serif; letter-spacing:-0.02em; color:var(--tx2);">—</span>
-                            <span id="ld_days_unit"
-                                style="font-size:0.8rem; font-weight:600; color:var(--tx2);">calculating…</span>
-                        </p>
-                        <p style="font-size:0.68rem; color:#9ca3af; margin:3px 0 0;">
-                            {{ $project->revised_contract_expiry
-                                ? 'Revised Expiry: ' . $project->revised_contract_expiry->format('M d, Y')
-                                : 'Original Expiry: ' . $project->original_contract_expiry->format('M d, Y') }}
-                        </p>
+                                    <div class="field-group">
+                                        <label class="field-label">
+                                            Days Overdue <span style="font-weight:400; color:#9ca3af;">(auto)</span>
+                                        </label>
+                                        <input type="hidden" id="ld_days_overdue_input" name="ld_days_overdue"
+                                            value="{{ old('ld_days_overdue', $project->ld_days_overdue ?? 0) }}">
+                                        <div
+                                            style="padding:0.75rem 1rem; border:1.5px solid var(--border); border-radius:9px; background:var(--bg-secondary);">
+                                            <p style="margin:0; display:flex; align-items:baseline; gap:0.4rem;">
+                                                <span id="ld_days_overdue_display"
+                                                    style="font-size:1.1rem; font-weight:800; font-family:'Syne',sans-serif; letter-spacing:-0.02em; color:var(--tx2);">—</span>
+                                                <span id="ld_days_unit"
+                                                    style="font-size:0.8rem; font-weight:600; color:var(--tx2);">calculating…</span>
+                                            </p>
+                                            <p style="font-size:0.68rem; color:#9ca3af; margin:3px 0 0;">
+                                                {{ $project->revised_contract_expiry
+    ? 'Revised Expiry: ' . $project->revised_contract_expiry->format('M d, Y')
+    : 'Original Expiry: ' . $project->original_contract_expiry->format('M d, Y') }}
+                                            </p>
+                                        </div>
+                                        <p class="field-hint" id="ld_overdue_hint">
+                                            Auto-calculated from
+                                            {{ $project->revised_contract_expiry ? 'revised' : 'original' }} contract
+                                            expiry
+                                        </p>
+                                    </div>
+
+                                    <div class="field-group">
+                                        <label class="field-label">
+                                            LD per Day (₱) <span style="font-weight:400; color:#9ca3af;">(auto)</span>
+                                        </label>
+                                        <input type="hidden" id="ld_per_day" name="ld_per_day"
+                                            value="{{ old('ld_per_day', $project->ld_per_day ?? '0') }}">
+                                        <p
+                                            style="font-size:0.9rem; font-weight:700; color:var(--text-primary); margin:0; padding:0.1rem 0; font-family:'Syne',sans-serif;">
+                                            ₱<span
+                                                id="ld_per_day_display">{{ number_format((float) old('ld_per_day', $project->ld_per_day ?? 0), 2) }}</span>
+                                        </p>
+                                        <p class="field-hint">Formula: (Unworked % ÷ 100) × Remaining Balance × 0.001
+                                        </p>
+                                    </div>
+
+                                    <div class="field-group" style="grid-column:1/-1;">
+                                        <label class="field-label">
+                                            Total LD (₱) <span style="font-weight:400; color:#9ca3af;">(auto)</span>
+                                        </label>
+                                        <input type="hidden" id="total_ld" name="total_ld"
+                                            value="{{ old('total_ld', $project->total_ld ?? '0') }}">
+                                        <p
+                                            style="font-size:1.35rem; font-weight:800; color:#dc2626; margin:0; padding:0.1rem 0; font-family:'Syne',sans-serif; letter-spacing:-0.02em;">
+                                            ₱<span
+                                                id="total_ld_display">{{ number_format((float) old('total_ld', $project->total_ld ?? 0), 2) }}</span>
+                                        </p>
+                                        <p class="field-hint">Formula: LD per Day × Days Overdue</p>
+                                    </div>
+
+                                </div>
+                            </div>
+
                     </div>
-                    <p class="field-hint" id="ld_overdue_hint">
-                        Auto-calculated from {{ $project->revised_contract_expiry ? 'revised' : 'original' }} contract expiry
-                    </p>
                 </div>
-
-                <div class="field-group">
-                    <label class="field-label">
-                        LD per Day (₱) <span style="font-weight:400; color:#9ca3af;">(auto)</span>
-                    </label>
-                    <input type="hidden" id="ld_per_day" name="ld_per_day"
-                        value="{{ old('ld_per_day', $project->ld_per_day ?? '0') }}">
-                    <p style="font-size:0.9rem; font-weight:700; color:var(--text-primary); margin:0; padding:0.1rem 0; font-family:'Syne',sans-serif;">
-                        ₱<span id="ld_per_day_display">{{ number_format((float) old('ld_per_day', $project->ld_per_day ?? 0), 2) }}</span>
-                    </p>
-                    <p class="field-hint">Formula: (Unworked % ÷ 100) × Remaining Balance × 0.001</p>
-                </div>
-
-                <div class="field-group" style="grid-column:1/-1;">
-                    <label class="field-label">
-                        Total LD (₱) <span style="font-weight:400; color:#9ca3af;">(auto)</span>
-                    </label>
-                    <input type="hidden" id="total_ld" name="total_ld"
-                        value="{{ old('total_ld', $project->total_ld ?? '0') }}">
-                    <p style="font-size:1.35rem; font-weight:800; color:#dc2626; margin:0; padding:0.1rem 0; font-family:'Syne',sans-serif; letter-spacing:-0.02em;">
-                        ₱<span id="total_ld_display">{{ number_format((float) old('total_ld', $project->total_ld ?? 0), 2) }}</span>
-                    </p>
-                    <p class="field-hint">Formula: LD per Day × Days Overdue</p>
-                </div>
-
-            </div>
-        </div>
-
-    </div>
-</div>
 
             </div>{{-- /tab-progress --}}
 
@@ -736,12 +722,11 @@
                                             Extensions
                                         </p>
                                         <div
-                                            style="display:grid; grid-template-columns:18px 1fr 5rem 5rem 5rem; gap:0 0.75rem; padding:0 0.25rem; margin-bottom:0.4rem;">
+                                            style="display:grid; grid-template-columns:18px 1fr 5rem 5rem; gap:0 0.75rem; padding:0 0.25rem; margin-bottom:0.4rem;">
                                             <span></span>
                                             <p class="h-col-hdr">Extension</p>
                                             <p class="h-col-hdr" style="text-align:center;">Action</p>
                                             <p class="h-col-hdr" style="text-align:center;">Days Added</p>
-                                            <p class="h-col-hdr" style="text-align:center;">Cumulative</p>
                                         </div>
                                         <div class="history-timeline">
                                             @php $teRunning = 0; @endphp
@@ -786,11 +771,6 @@
                                                         style="display:flex; align-items:flex-start; justify-content:center; padding-top:2px;">
                                                         <span
                                                             class="h-pill {{ $entry['days'] > 0 ? 'h-pill-orange' : 'h-pill-gray' }}">+{{ $entry['days'] }}d</span>
-                                                    </div>
-                                                    <div
-                                                        style="display:flex; align-items:flex-start; justify-content:center; padding-top:2px;">
-                                                        <span
-                                                            class="h-pill {{ $teIsLast ? 'h-pill-cum-last' : 'h-pill-gray' }}">{{ $teRunning }}d</span>
                                                     </div>
                                                 </div>
                                             @endforeach
@@ -1221,8 +1201,8 @@
                                         </div>
                                         <div
                                             style="margin-top:0.75rem; padding:0.875rem 1rem; border-radius:10px; display:flex; align-items:center; justify-content:space-between;
-                                                    background:{{ $remainingBal >= 0 ? 'rgba(59,130,246,0.04)' : 'rgba(239,68,68,0.04)' }};
-                                                    border:1px solid {{ $remainingBal >= 0 ? 'rgba(59,130,246,0.18)' : 'rgba(239,68,68,0.18)' }};">
+                                                        background:{{ $remainingBal >= 0 ? 'rgba(59,130,246,0.04)' : 'rgba(239,68,68,0.04)' }};
+                                                        border:1px solid {{ $remainingBal >= 0 ? 'rgba(59,130,246,0.18)' : 'rgba(239,68,68,0.18)' }};">
                                             <span
                                                 style="font-size:0.8rem; font-weight:600; color:var(--ink-muted); display:flex; align-items:center; gap:0.4rem;">
                                                 <i class="fas fa-wallet"
@@ -1602,9 +1582,9 @@
         <script>
             const originalExpiry = '{{ $project->original_contract_expiry->format("Y-m-d") }}';
             const revisedExpiry = '{{ $project->revised_contract_expiry?->format("Y-m-d") ?? '' }}';
-            const ldStatus    = '{{ $project->ld_status ?? "inactive" }}';
+            const ldStatus = '{{ $project->ld_status ?? "inactive" }}';
             const ldStartDate = '{{ $project->ld_start_date?->format("Y-m-d") ?? "" }}';
-            const ldEndDate   = '{{ $project->ld_end_date?->format("Y-m-d") ?? "" }}';
+            const ldEndDate = '{{ $project->ld_end_date?->format("Y-m-d") ?? "" }}';
             const existingTEDays = {{ (int) collect($project->extension_days ?? [])->filter(fn($v) => is_numeric($v))->sum() }};
             const existingVODays = {{ (int) collect($project->vo_days ?? [])->filter(fn($v) => is_numeric($v))->sum() }};
             const existingSODays = {{ (int) ($project->suspension_days ?? 0) }};

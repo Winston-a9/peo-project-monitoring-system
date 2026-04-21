@@ -122,8 +122,8 @@ edit.blade
 		move performance bond in the overview tab
 
 	performance
+		<fix> bug: termination button not working
 	extensions
-		<fix> bug: edit modals not working properly.
 	billing
 		<fix> bug: edit modals not working properly.
 	admin
@@ -149,6 +149,7 @@ extra updates:
 
 ==================================================================================================================================================================================================================================================================================================
 FIXED/added:
+<fix> bug: edit modals not working properly.
 		<major update> Reconstructed LD calculation
 			<new> ld start and end date
 			<new> add a termination button

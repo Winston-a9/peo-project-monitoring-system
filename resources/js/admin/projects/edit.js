@@ -155,7 +155,7 @@ window.toggleLDAReadOnly = function (isComplete) {
             `;
             // Insert before the grid inside section-body
             const fieldsChunk = document.getElementById('ld-chunk-fields');
-if (fieldsChunk) fieldsChunk.prepend(notice);
+            if (fieldsChunk) fieldsChunk.prepend(notice);
         }
 
         // Zero out LD values visually and in hidden inputs
@@ -225,26 +225,26 @@ function fmtNum(n, decimals) {
  * - Contract overdue       → shows "X days overdue" in red, hidden input = X
  */
 window.calculateDaysOverdue = function () {
-    const hiddenEl  = document.getElementById('ld_days_overdue_input');
+    const hiddenEl = document.getElementById('ld_days_overdue_input');
     const displayEl = document.getElementById('ld_days_overdue_display');
-    const unitEl    = document.getElementById('ld_days_unit');
-    const hintEl    = document.getElementById('ld_overdue_hint');
+    const unitEl = document.getElementById('ld_days_unit');
+    const hintEl = document.getElementById('ld_overdue_hint');
 
     const startStr = document.querySelector('[name="ld_start_date"]')?.value || ldStartDate;
-    const endStr   = document.querySelector('[name="ld_end_date"]')?.value   || ldEndDate;
+    const endStr = document.querySelector('[name="ld_end_date"]')?.value || ldEndDate;
 
     if (!startStr) {
         if (displayEl) displayEl.textContent = '0';
-        if (unitEl)    unitEl.textContent = 'days — no start date set';
-        if (hiddenEl)  hiddenEl.value = 0;
-        if (hintEl)    hintEl.innerHTML = '<i class="fas fa-info-circle"></i> Set an LD start date to begin counting';
+        if (unitEl) unitEl.textContent = 'days — no start date set';
+        if (hiddenEl) hiddenEl.value = 0;
+        if (hintEl) hintEl.innerHTML = '<i class="fas fa-info-circle"></i> Set an LD start date to begin counting';
         window.calculateLDTotal();
         return;
     }
 
     const todayStr = new Date().toISOString().substring(0, 10);
-    const today    = toUTCDay(todayStr);
-    const start    = toUTCDay(startStr);
+    const today = toUTCDay(todayStr);
+    const start = toUTCDay(startStr);
 
     // FIX 3: For stopped states, always cap at the stored end date so the
     // displayed total never drifts upward after termination/completion.
@@ -257,8 +257,8 @@ window.calculateDaysOverdue = function () {
     // Variables are now defined before this check, so no ReferenceError.
     if (endStr && end < start) {
         if (displayEl) { displayEl.textContent = '0'; displayEl.style.color = '#ef4444'; }
-        if (unitEl)    { unitEl.textContent = 'invalid — end date before start'; unitEl.style.color = '#ef4444'; }
-        if (hiddenEl)  hiddenEl.value = 0;
+        if (unitEl) { unitEl.textContent = 'invalid — end date before start'; unitEl.style.color = '#ef4444'; }
+        if (hiddenEl) hiddenEl.value = 0;
         window.calculateLDTotal();
         return;
     }
@@ -266,9 +266,9 @@ window.calculateDaysOverdue = function () {
     // If start date is still in the future
     if (today < start) {
         if (displayEl) { displayEl.textContent = '0'; displayEl.style.color = '#9ca3af'; }
-        if (unitEl)    { unitEl.textContent = 'days — not yet started'; unitEl.style.color = '#9ca3af'; }
-        if (hiddenEl)  hiddenEl.value = 0;
-        if (hintEl)    { hintEl.style.color = '#9ca3af'; hintEl.innerHTML = '<i class="fas fa-clock"></i> Penalty starts on ' + start.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }); }
+        if (unitEl) { unitEl.textContent = 'days — not yet started'; unitEl.style.color = '#9ca3af'; }
+        if (hiddenEl) hiddenEl.value = 0;
+        if (hintEl) { hintEl.style.color = '#9ca3af'; hintEl.innerHTML = '<i class="fas fa-clock"></i> Penalty starts on ' + start.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }); }
         window.calculateLDTotal();
         return;
     }
@@ -276,7 +276,7 @@ window.calculateDaysOverdue = function () {
     // FIX 2: +1 so that start == end counts as 1 day (penalty applies on start day itself).
     const diffDays = Math.max(0, Math.floor((end - start) / 86400000));
 
-    if (hiddenEl)  hiddenEl.value = diffDays;
+    if (hiddenEl) hiddenEl.value = diffDays;
     if (displayEl) displayEl.textContent = diffDays;
 
     // FIX 3 continued: isStopped for display coloring — single declaration, no conflict.
@@ -285,7 +285,7 @@ window.calculateDaysOverdue = function () {
     const color = isStopped ? '#d97706' : '#dc2626';
 
     if (displayEl) displayEl.style.color = color;
-    if (unitEl)    { unitEl.textContent = isStopped ? 'days (stopped)' : 'days overdue'; unitEl.style.color = color; }
+    if (unitEl) { unitEl.textContent = isStopped ? 'days (stopped)' : 'days overdue'; unitEl.style.color = color; }
     if (hintEl) {
         hintEl.style.color = color;
         hintEl.innerHTML = isStopped
@@ -502,27 +502,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.ldSetState = function (state) {
         // Grab all three chunks
-        const chunkStart  = document.getElementById('ld-chunk-start');
-        const chunkDates  = document.getElementById('ld-chunk-dates');
+        const chunkStart = document.getElementById('ld-chunk-start');
+        const chunkDates = document.getElementById('ld-chunk-dates');
         const chunkFields = document.getElementById('ld-chunk-fields');
 
         if (state === 'inactive') {
             // Only the start button. Nothing else.
-            chunkStart.style.display  = 'block';
-            chunkDates.style.display  = 'none';
+            chunkStart.style.display = 'block';
+            chunkDates.style.display = 'none';
             chunkFields.style.display = 'none';
 
         } else if (state === 'setup') {
             // User clicked Start but hasn't entered a date yet.
             // Show dates, hide fields — don't confuse them with empty calculations.
-            chunkStart.style.display  = 'none';
-            chunkDates.style.display  = 'block';
+            chunkStart.style.display = 'none';
+            chunkDates.style.display = 'block';
             chunkFields.style.display = 'none';
 
         } else {
             // active, terminated, completed — show everything except the Start button
-            chunkStart.style.display  = 'none';
-            chunkDates.style.display  = 'block';
+            chunkStart.style.display = 'none';
+            chunkDates.style.display = 'block';
             chunkFields.style.display = 'block';
 
             // Update the status banner to reflect the correct state
@@ -537,29 +537,29 @@ document.addEventListener('DOMContentLoaded', () => {
     // Updates the banner text/color inside ld-chunk-fields to match the current state
     window.ldSetStatusBanner = function (state) {
         const banner = document.getElementById('ld-status-banner');
-        const icon   = document.getElementById('ld-banner-icon');
-        const label  = document.getElementById('ld-banner-label');
-        const dates  = document.getElementById('ld-banner-dates');
+        const icon = document.getElementById('ld-banner-icon');
+        const label = document.getElementById('ld-banner-label');
+        const dates = document.getElementById('ld-banner-dates');
         if (!banner) return;
 
         // Config map — same pattern as your existing PHP $ldBannerConfig
         const cfg = {
-            active:     { bg: 'rgba(220,38,38,0.06)',  border: 'rgba(220,38,38,0.2)',  color: '#dc2626', icon: 'fa-circle-play',  label: 'LD Penalty: Penalty Running' },
-            terminated: { bg: 'rgba(234,179,8,0.06)',   border: 'rgba(234,179,8,0.2)',  color: '#d97706', icon: 'fa-circle-stop',  label: 'LD Penalty: Terminated' },
-            completed:  { bg: 'rgba(22,163,74,0.06)',   border: 'rgba(22,163,74,0.2)',  color: '#16a34a', icon: 'fa-circle-check', label: 'LD Penalty: Completed' },
+            active: { bg: 'rgba(220,38,38,0.06)', border: 'rgba(220,38,38,0.2)', color: '#dc2626', icon: 'fa-circle-play', label: 'LD Penalty: Penalty Running' },
+            terminated: { bg: 'rgba(234,179,8,0.06)', border: 'rgba(234,179,8,0.2)', color: '#d97706', icon: 'fa-circle-stop', label: 'LD Penalty: Terminated' },
+            completed: { bg: 'rgba(22,163,74,0.06)', border: 'rgba(22,163,74,0.2)', color: '#16a34a', icon: 'fa-circle-check', label: 'LD Penalty: Completed' },
         };
 
         const c = cfg[state] || cfg.active;
-        banner.style.background   = c.bg;
-        banner.style.borderColor  = c.border;
-        icon.className            = 'fas ' + c.icon;
-        icon.style.color          = c.color;
-        label.style.color         = c.color;
-        label.textContent         = c.label;
+        banner.style.background = c.bg;
+        banner.style.borderColor = c.border;
+        icon.className = 'fas ' + c.icon;
+        icon.style.color = c.color;
+        label.style.color = c.color;
+        label.textContent = c.label;
 
         // Show the date range in the banner if we have them
         const startVal = document.getElementById('ld_start_date_input')?.value;
-        const endVal   = document.getElementById('ld_end_date_input')?.value;
+        const endVal = document.getElementById('ld_end_date_input')?.value;
         if (startVal && dates) {
             const fmt = (s) => new Date(s + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
             dates.textContent = 'Started ' + fmt(startVal) + (endVal ? ' → Ended ' + fmt(endVal) : '');

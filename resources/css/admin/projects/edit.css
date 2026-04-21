@@ -438,7 +438,7 @@ textarea.field-input {
 
 .history-entry.te-entry,
 .history-entry.vo-entry {
-    grid-template-columns: 18px 1fr 5rem 5rem 5rem;
+    grid-template-columns: 18px 1fr 5rem 5rem;
 }
 
 .h-spine {
