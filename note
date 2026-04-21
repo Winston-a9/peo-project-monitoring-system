@@ -122,14 +122,10 @@ edit.blade
 		move performance bond in the overview tab
 
 	performance
-		<major update> Reconstructed LD calculation
-			<new> ld start and end date
-			<new> add a termination button
-			<logic> all calculation stays the same except for the Days Overdue = how many days from ld start date, instead of expiry
-			<update> Penalty starts only when user decides — and ends when user stops or project completes (project complete when work done is 100%). verify: if the penalty will stop calculating if the project is completed or terminated. the end date is for the date stamp on when the LDA penalty stopped. 
-				logs:
 	extensions
-	billing 
+		<fix> bug: edit modals not working properly.
+	billing
+		<fix> bug: edit modals not working properly.
 	admin
 
 show.blade 
@@ -139,7 +135,6 @@ show.blade
 	admin
 		performance bond date display
 
-<fix> bug: edit modals not working properly, both extensions and billing
 
 if complete
 
@@ -154,7 +149,14 @@ extra updates:
 
 ==================================================================================================================================================================================================================================================================================================
 FIXED/added:
-		(fix) bug: 171 amount should deduct the remaining balance amount
+		<major update> Reconstructed LD calculation
+			<new> ld start and end date
+			<new> add a termination button
+			<logic> all calculation stays the same except for the Days Overdue = how many days from ld start date, instead of expiry
+			<update> Penalty starts only when user decides — and ends when user stops or project completes (project complete when work done is 100%). verify: if the penalty will stop calculating if the project is completed or terminated. the end date is for the date stamp on when the LDA penalty stopped. 
+				logs:
+					<fix> bug: LDA status not being updated everytime the LDA is being started
+(fix) bug: 171 amount should deduct the remaining balance amount
 <update> remarks and recommendation reformat (dont display the reason/coverage entries to prevent modification through admin-remarks/recommendation input)
 <update> updated pdf generator, added PEO and Province logo
 <add> added a pdf report generator inside a project

@@ -1,3 +1,10 @@
+function toUTCDay(str) {
+    const y = parseInt(str.substring(0, 4));
+    const m = parseInt(str.substring(5, 7)) - 1;
+    const d = parseInt(str.substring(8, 10));
+    return new Date(Date.UTC(y, m, d));
+}
+
 /* ── Amount input comma formatter ── */
 (function () {
     function rawVal(str) {
@@ -98,9 +105,24 @@ window.toggleLDAReadOnly = function (isComplete) {
     const ldSection = ldAccomplishedInput?.closest('.form-card');
     if (!ldSection) return;
 
-    // Guard: don't touch anything if the LD section isn't active/visible yet
     const fieldsChunk = document.getElementById('ld-chunk-fields');
-    if (!fieldsChunk || fieldsChunk.style.display === 'none') return;
+    if (!fieldsChunk) return;
+
+    // If locking and the fields chunk is hidden, reveal it first so the lock
+    // can apply — otherwise the inputs are inaccessible but not actually locked.
+    if (isComplete && fieldsChunk.style.display === 'none') {
+        // We don't want to show the chunk visually in this case,
+        // so we lock the hidden input values directly instead of showing UI.
+        ['ld_per_day', 'total_ld', 'ld_unworked', 'ld_days_overdue_input'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = '0';
+        });
+        ['ld_per_day_display', 'total_ld_display', 'ld_unworked_display'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = '0.00';
+        });
+        return; // chunk stays hidden, but hidden inputs are zeroed
+    }
 
     const inputs = ldSection.querySelectorAll('input:not([type="hidden"])');
 
@@ -208,7 +230,6 @@ window.calculateDaysOverdue = function () {
     const unitEl    = document.getElementById('ld_days_unit');
     const hintEl    = document.getElementById('ld_overdue_hint');
 
-    // Read from the live date inputs so preview updates as user types
     const startStr = document.querySelector('[name="ld_start_date"]')?.value || ldStartDate;
     const endStr   = document.querySelector('[name="ld_end_date"]')?.value   || ldEndDate;
 
@@ -221,11 +242,26 @@ window.calculateDaysOverdue = function () {
         return;
     }
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const todayStr = new Date().toISOString().substring(0, 10);
+    const today    = toUTCDay(todayStr);
+    const start    = toUTCDay(startStr);
 
-    const start = new Date(startStr + 'T00:00:00');
-    const end   = endStr ? new Date(endStr + 'T00:00:00') : today;
+    // FIX 3: For stopped states, always cap at the stored end date so the
+    // displayed total never drifts upward after termination/completion.
+    const isStateStopped = (ldStatus === 'terminated' || ldStatus === 'completed') && endStr;
+    const end = isStateStopped
+        ? toUTCDay(endStr)
+        : (endStr ? toUTCDay(endStr) : today);
+
+    // FIX 4: Client-side guard — end date must not be before start date.
+    // Variables are now defined before this check, so no ReferenceError.
+    if (endStr && end < start) {
+        if (displayEl) { displayEl.textContent = '0'; displayEl.style.color = '#ef4444'; }
+        if (unitEl)    { unitEl.textContent = 'invalid — end date before start'; unitEl.style.color = '#ef4444'; }
+        if (hiddenEl)  hiddenEl.value = 0;
+        window.calculateLDTotal();
+        return;
+    }
 
     // If start date is still in the future
     if (today < start) {
@@ -237,13 +273,15 @@ window.calculateDaysOverdue = function () {
         return;
     }
 
+    // FIX 2: +1 so that start == end counts as 1 day (penalty applies on start day itself).
     const diffDays = Math.max(0, Math.floor((end - start) / 86400000));
 
     if (hiddenEl)  hiddenEl.value = diffDays;
     if (displayEl) displayEl.textContent = diffDays;
 
-    // Color based on whether penalty is still running or stopped
-    const isStopped = endStr && end <= today;
+    // FIX 3 continued: isStopped for display coloring — single declaration, no conflict.
+    // Uses isStateStopped (from ld_status) OR a manually entered end date that has passed.
+    const isStopped = isStateStopped || (endStr && end <= today);
     const color = isStopped ? '#d97706' : '#dc2626';
 
     if (displayEl) displayEl.style.color = color;

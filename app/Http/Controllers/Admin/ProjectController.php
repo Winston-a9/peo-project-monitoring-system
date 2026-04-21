@@ -542,12 +542,12 @@ class ProjectController extends Controller
         // ── Step 8: Liquidated Damages ────────────────────────────────
 
         $ldAccomplished = isset($data['ld_accomplished']) && $data['ld_accomplished'] !== null
-            ? (float) $data['ld_accomplished']
-            : 0.0;
+    ? (float) $data['ld_accomplished']
+    : 0.0;
 
-        $contractAmount = (float) ($data['original_contract_amount'] ?? 0);
-        $ldUnworked = max(0, 100 - $ldAccomplished);
-        $ldPerDay = ($ldUnworked / 100) * $contractAmount * 0.001;
+$ldBasisAmount = max(0, (float) ($data['remaining_balance'] ?? 0));
+$ldUnworked = max(0, 100 - $ldAccomplished);
+$ldPerDay = ($ldUnworked / 100) * $ldBasisAmount * 0.001;
 
         $data['ld_per_day'] = $ldPerDay > 0 ? round($ldPerDay, 2) : null;
         $data['ld_unworked'] = $ldPerDay > 0 ? round($ldUnworked, 2) : null;
@@ -603,7 +603,7 @@ class ProjectController extends Controller
                 ? \Carbon\Carbon::parse($data['ld_end_date'])->startOfDay()
                 : $today;
 
-            $daysOverdue = (int) max(0, $start->diffInDays($end, false));
+$daysOverdue = (int) max(0, $start->diffInDays($end, false));
         }
 
         $data['ld_days_overdue'] = $daysOverdue > 0 ? $daysOverdue : null;
