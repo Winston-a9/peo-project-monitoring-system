@@ -577,7 +577,18 @@
                     <span class="sb-active-dot"></span>
                 </a>
 
-           {{-- User nav section only — replace the @else block in navigation.blade.php --}}
+                {{-- Only super admins (division === null) see the user management link --}}
+                @if(Auth::user()->division === null)
+                    <span class="sb-section-label">Administration</span>
+
+                    <a href="{{ route('admin.users.index') }}"
+                       class="sb-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}"
+                       data-tooltip="User Management">
+                        <span class="sb-link-icon"><i class="fas fa-users-cog"></i></span>
+                        <span class="sb-link-label">User Management</span>
+                        <span class="sb-active-dot"></span>
+                    </a>
+                @endif
 
             @else
 
