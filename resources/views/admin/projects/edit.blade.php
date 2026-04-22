@@ -880,12 +880,11 @@
                                             <i class="fas fa-history" style="color:#6366f1;"></i> Existing Variation Orders
                                         </p>
                                         <div
-                                            style="display:grid; grid-template-columns:18px 1fr 5rem 5rem 5rem; gap:0 0.75rem; padding:0 0.25rem; margin-bottom:0.4rem;">
+                                            style="display:grid; grid-template-columns:18px 1fr 5rem 5rem; gap:0 0.75rem; padding:0 0.25rem; margin-bottom:0.4rem;">
                                             <span></span>
                                             <p class="h-col-hdr">Order</p>
                                             <p class="h-col-hdr" style="text-align:center;">Action</p>
                                             <p class="h-col-hdr" style="text-align:center;">Days Added</p>
-                                            <p class="h-col-hdr" style="text-align:center;">VO Cumulative</p>
                                         </div>
                                         <div class="history-timeline">
                                             @php $voRunning = 0; @endphp
@@ -930,13 +929,6 @@
                                                         style="display:flex; align-items:flex-start; justify-content:center; padding-top:2px;">
                                                         <span
                                                             class="h-pill {{ $entry['days'] > 0 ? 'h-pill-indigo' : 'h-pill-gray' }}">+{{ $entry['days'] }}d</span>
-                                                    </div>
-                                                    <div
-                                                        style="display:flex; align-items:flex-start; justify-content:center; padding-top:2px;">
-                                                        <span class="h-pill {{ $voIsLast ? '' : 'h-pill-gray' }}"
-                                                            style="{{ $voIsLast ? 'background:rgba(99,102,241,0.12);color:#6366f1;border:1px solid rgba(99,102,241,0.22);' : '' }}">
-                                                            {{ $voRunning }}d
-                                                        </span>
                                                     </div>
                                                 </div>
                                             @endforeach

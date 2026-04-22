@@ -125,7 +125,6 @@ edit.blade
 		<fix> bug: termination button not working
 	extensions
 	billing
-		<fix> bug: edit modals not working properly.
 	admin
 
 show.blade 
@@ -149,7 +148,8 @@ extra updates:
 
 ==================================================================================================================================================================================================================================================================================================
 FIXED/added:
-<fix> bug: edit modals not working properly.
+<fix> bug: billing edit modals not working properly.
+<fix> bug: extension edit modals not working properly.
 		<major update> Reconstructed LD calculation
 			<new> ld start and end date
 			<new> add a termination button
