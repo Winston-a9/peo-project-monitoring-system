@@ -93,6 +93,26 @@
                         </div>
 
                         <div>
+                            <label class="field-label">Division <span style="color:#ef4444;">*</span></label>
+                            <select name="division" class="field-input {{ $errors->has('division') ? 'has-error' : '' }}" required
+                                {{ !auth()->user()->isSuperAdmin() ? 'disabled' : '' }}>
+                                <option value="" disabled>Select a division</option>
+                                @foreach($divisions as $div)
+                                    <option value="{{ $div }}"
+                                        {{ old('division', $currentDivision) === $div ? 'selected' : '' }}>
+                                        {{ $div }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            {{-- If division admin, send value via hidden input since select is disabled --}}
+                            @if(!auth()->user()->isSuperAdmin())
+                                <input type="hidden" name="division" value="{{ $currentDivision }}">
+                            @endif
+                            @error('division')<p class="field-error"><i
+                            class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
+                        </div>
+
+                        <div>
                             <label class="field-label">Contract Amount</label>
                             <div class="prefix-wrap">
                                 <span class="prefix">₱</span>
@@ -108,17 +128,6 @@
                             </div>
                             @error('original_contract_amount')<p class="field-error"><i
                             class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
-                        </div>
-                        <div>
-                            <label class="field-label">Status <span
-                                    style="font-weight:400;color:#9ca3af;">(auto)</span></label>
-                            <span
-                                style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.4rem 0.85rem;border-radius:99px;background:rgba(34,197,94,0.1);color:#16a34a;font-size:0.8rem;font-weight:700;">
-                                <span
-                                    style="width:7px;height:7px;border-radius:50%;background:#22c55e;display:inline-block;"></span>
-                                Ongoing
-                            </span>
-                            <p class="field-hint" style="color:#9ca3af;">Auto-determined from expiry date on save</p>
                         </div>
                     </div>
                 </div>

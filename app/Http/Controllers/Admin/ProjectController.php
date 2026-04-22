@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Project;
 use App\Models\ProjectLog;
+use App\Traits\DivisionScope;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Services\ProjectReportPdf;
@@ -12,26 +13,44 @@ use Illuminate\Support\Facades\Schema;
 
 class ProjectController extends Controller
 {
+    use DivisionScope;
+
+    // Available divisions — single source of truth used by create/edit forms
+    public const DIVISIONS = [
+        'First District Engineering Office',
+        'Second District Engineering Office',
+        'Third District Engineering Office',
+        'Fourth District Engineering Office',
+        'Fifth District Engineering Office',
+    ];
+
     // ============================================================
     // SECTION 1: LISTING & DISPLAY
     // ============================================================
 
     /**
-     * List all projects with pagination.
+     * List projects — division admins only see their own division.
      */
     public function index()
     {
-        $perPage = in_array((int) request('per_page', 10), [10, 25, 50]) ? (int) request('per_page', 10) : 10;
-        $projects = Project::paginate($perPage)->withQueryString();
+        $perPage = in_array((int) request('per_page', 10), [10, 25, 50])
+            ? (int) request('per_page', 10)
+            : 10;
+
+        $projects = $this->divisionQuery()
+            ->paginate($perPage)
+            ->withQueryString();
 
         return view('admin.projects.index', compact('projects'));
     }
 
     /**
-     * Show a single project with its sorted activity logs.
+     * Show a single project — enforce division access.
      */
     public function show(Project $project)
     {
+        $this->authorizeProjectAccess($project);
+
         $project->load(['logs.user' => fn($q) => $q->select('id', 'name')]);
         $project->logs = $project->logs->sortByDesc('created_at');
 
@@ -43,22 +62,23 @@ class ProjectController extends Controller
     // SECTION 2: CREATE
     // ============================================================
 
-    /**
-     * Show the create project form.
-     */
     public function create()
     {
-        return view('admin.projects.create');
+        $divisions = self::DIVISIONS;
+        $currentDivision = $this->currentDivision(); // null for super admin
+
+        return view('admin.projects.create', compact('divisions', 'currentDivision'));
     }
 
     /**
      * Validate and store a new project.
-     * Auto-derives status from contract expiry date.
+     * Division admins can only create projects for their own division.
      */
     public function store(Request $request)
     {
         $request->validate([
             'in_charge' => 'required|string|max:255',
+            'division' => 'required|string|max:255',
             'contract_id' => ['required', 'string', 'regex:/^[\d\-]+$/', 'unique:projects,contract_id'],
             'project_title' => 'required|string|max:255',
             'location' => 'required|string|max:255',
@@ -73,8 +93,15 @@ class ProjectController extends Controller
             'completed_at' => 'nullable|date',
         ]);
 
+        // Division admins can ONLY create projects for their own division
+        $division = $request->division;
+        if (!$this->isSuperAdmin() && $division !== $this->currentDivision()) {
+            abort(403, 'You can only create projects for your own division.');
+        }
+
         $data = $request->only([
             'in_charge',
+            'division',
             'contract_id',
             'project_title',
             'location',
@@ -89,22 +116,17 @@ class ProjectController extends Controller
             'completed_at',
         ]);
 
-        // Derive status from days remaining until expiry
+        // Auto-derive status from expiry
         $expiry = Carbon::parse($data['original_contract_expiry']);
         $daysLeft = now()->startOfDay()->diffInDays($expiry->startOfDay(), false);
 
-        if ($daysLeft < 0)
-            $data['status'] = 'expired';
-        elseif ($daysLeft <= 30)
-            $data['status'] = 'expiring';
-        else
-            $data['status'] = 'ongoing';
-
+        $data['status'] = $daysLeft < 0 ? 'expired' : ($daysLeft <= 30 ? 'expiring' : 'ongoing');
         $data['completed_at'] = null;
 
         Project::create($data);
 
-        return redirect()->route('admin.projects.index')->with('success', 'Project created successfully.');
+        return redirect()->route('admin.projects.index')
+            ->with('success', 'Project created successfully.');
     }
 
 
@@ -112,15 +134,14 @@ class ProjectController extends Controller
     // SECTION 3: EDIT — FORM PREPARATION
     // ============================================================
 
-    /**
-     * Show the edit form, pre-populating:
-     *  - Time Extension history (teHistory)
-     *  - Variation Order history (voHistory)
-     *  - Suspension Order presence (hasSO)
-     */
     public function edit(Project $project)
     {
+        $this->authorizeProjectAccess($project);
+
         $fresh = $project->fresh();
+
+        $divisions = self::DIVISIONS;
+        $currentDivision = $this->currentDivision();
 
         // ── Normalize stored JSON arrays ──────────────────────────
         $existingDocs = $fresh->documents_pressed ?? [];
@@ -165,7 +186,7 @@ class ProjectController extends Controller
 
         $voHistory = [];
         $voIndex = 0;
-        $voDateOffset = $teCount;   // VO dates are stored after TE dates in date_requested
+        $voDateOffset = $teCount;
 
         foreach ($existingDocs as $doc) {
             if (str_starts_with((string) $doc, 'Variation Order')) {
@@ -226,7 +247,6 @@ class ProjectController extends Controller
         }
         unset($entry);
 
-
         return view('admin.projects.edit', [
             'project' => $fresh,
             'teHistory' => $teHistory,
@@ -239,6 +259,8 @@ class ProjectController extends Controller
             'soCount' => $soCount,
             'remarksManual' => $remarksManual,
             'remarksAutoHidden' => $remarksAutoHidden,
+            'divisions' => $divisions,
+            'currentDivision' => $currentDivision,
         ]);
     }
 
@@ -247,20 +269,14 @@ class ProjectController extends Controller
     // SECTION 4: UPDATE — MAIN PROJECT SAVE
     // ============================================================
 
-    /**
-     * Validate and persist all project changes, including:
-     *  - Time Extensions / Variation Orders / Suspension Orders
-     *  - Billing amounts
-     *  - Liquidated Damages
-     *  - Contract amount adjustments
-     *  - Revised expiry & contract days
-     *  - Status auto-derivation (or manual completion / reactivation)
-     */
     public function update(Request $request, Project $project)
     {
+        $this->authorizeProjectAccess($project);
+
         // ── Validation ────────────────────────────────────────────
         $request->validate([
             'in_charge' => 'required|string|max:255',
+            'division' => 'required|string|max:255',
             'project_title' => 'required|string|max:255',
             'location' => 'required|string|max:255',
             'contractor' => 'required|string|max:255',
@@ -295,9 +311,16 @@ class ProjectController extends Controller
             'ld_end_date' => 'nullable|date|after_or_equal:ld_start_date',
         ]);
 
+        // Division admins cannot reassign a project to a different division
+        $newDivision = $request->division;
+        if (!$this->isSuperAdmin() && $newDivision !== $this->currentDivision()) {
+            abort(403, 'You cannot reassign a project to a different division.');
+        }
+
         // ── Step 1: Basic scalar fields ───────────────────────────
         $data = $request->only([
             'in_charge',
+            'division',
             'project_title',
             'location',
             'contractor',
@@ -315,7 +338,8 @@ class ProjectController extends Controller
         ]);
 
         $data['slippage'] = (float) $request->work_done - (float) $request->as_planned;
-        // ── Step 1b: Reconstruct remarks (manual editable + preserved auto entries) ──
+
+        // ── Step 1b: Reconstruct remarks ──────────────────────────
         $manualRemarks = trim($request->input('remarks_recommendation', ''));
         $autoHidden = trim($request->input('remarks_auto_hidden', ''));
 
@@ -334,12 +358,9 @@ class ProjectController extends Controller
         $existingDocs = is_array($fresh->documents_pressed) ? $fresh->documents_pressed : [];
         $existingDays = is_array($fresh->extension_days) ? array_map('intval', $fresh->extension_days) : [];
         $existingCosts = is_array($fresh->cost_involved) ? array_map(fn($v) => $v !== null ? (float) $v : null, $fresh->cost_involved) : [];
-
         $existingSuspDay = (int) ($fresh->suspension_days ?? 0);
-
         $existingVoDays = is_array($fresh->vo_days) ? array_map('intval', array_filter((array) $fresh->vo_days)) : [];
         $existingVoCosts = is_array($fresh->vo_cost) ? array_map(fn($v) => $v !== null ? (float) $v : null, $fresh->vo_cost) : [];
-
         $existingDates = is_array($fresh->date_requested) ? $fresh->date_requested : [];
 
         $currentTECount = collect($existingDocs)
@@ -355,10 +376,7 @@ class ProjectController extends Controller
         $newBillingAmount = $request->input('new_billing_amount');
         $newBillingDate = $request->input('new_billing_date');
 
-        if (
-            $newBillingAmount !== null && $newBillingAmount !== ''
-            && (float) $newBillingAmount > 0
-        ) {
+        if ($newBillingAmount !== null && $newBillingAmount !== '' && (float) $newBillingAmount > 0) {
             $existingBillingAmounts[] = (float) $newBillingAmount;
             $existingBillingDates[] = $newBillingDate ?: null;
         }
@@ -366,17 +384,10 @@ class ProjectController extends Controller
         $data['billing_amounts'] = array_values($existingBillingAmounts);
         $data['billing_dates'] = array_values($existingBillingDates);
 
-        $saveLdDaysOverdue = Schema::getColumnType('projects', 'ld_days_overdue') !== 'date';
-
-
-        // ── Step 3c: Billing summary fields ──────────────────────────
+        // ── Step 3c: Billing summary fields ──────────────────────
         $data['total_amount_billed'] = array_sum($data['billing_amounts']);
 
-        // Adjusted contract amount = original + all TE/VO cost adjustments (positive adds, negative deducts)
-        $allCurrentCosts = array_merge(
-            array_values($existingCosts),   // TE costs already in DB
-            array_values($existingVoCosts)  // VO costs already in DB
-        );
+        $allCurrentCosts = array_merge(array_values($existingCosts), array_values($existingVoCosts));
         $totalCostAdj = collect($allCurrentCosts)->filter(fn($c) => $c !== null && (float) $c !== 0.0)->sum();
         $adjustedContractAmount = max(0, (float) $fresh->original_contract_amount + $totalCostAdj);
         $data['remaining_balance'] = $adjustedContractAmount - $data['total_amount_billed'];
@@ -385,7 +396,6 @@ class ProjectController extends Controller
         $newTEDays = (int) $request->input('new_te_days', 0);
         $newTECost = $request->input('new_te_cost');
         $newTEDate = $request->input('new_te_date');
-
         $newTEReason = trim($request->input('new_te_reason', ''));
 
         if ($newTEDays > 0) {
@@ -394,13 +404,13 @@ class ProjectController extends Controller
             $existingDocs[] = $newTELabel;
             $existingDays[] = $newTEDays;
             $existingCosts[] = ($newTECost !== null && $newTECost !== '') ? (float) $newTECost : null;
+
             if ($newTEReason !== '') {
                 $existing = trim($data['remarks_recommendation'] ?? '');
                 $note = $this->formatEntryRemark($newTELabel, 'added', $newTEReason);
                 $data['remarks_recommendation'] = $existing !== '' ? $existing . "\n\n" . $note : $note;
             }
 
-            // Insert TE date before VO dates in the shared date_requested array
             $teDates = array_slice($existingDates, 0, $currentTECount);
             $voDates = array_slice($existingDates, $currentTECount);
             $teDates[] = $newTEDate ?: null;
@@ -411,7 +421,6 @@ class ProjectController extends Controller
         $newVoDays = (int) $request->input('new_vo_days', 0);
         $newVoCost = $request->input('new_vo_cost');
         $newVODate = $request->input('new_vo_date');
-
         $newVOReason = trim($request->input('new_vo_reason', ''));
 
         if ($newVoDays > 0) {
@@ -424,6 +433,7 @@ class ProjectController extends Controller
             $existingVoDays[] = $newVoDays;
             $existingVoCosts[] = ($newVoCost !== null && $newVoCost !== '') ? (float) $newVoCost : null;
             $existingDates[] = $newVODate ?: null;
+
             if ($newVOReason !== '') {
                 $existing = trim($data['remarks_recommendation'] ?? '');
                 $note = $this->formatEntryRemark($newVOLabel, 'added', $newVOReason);
@@ -436,16 +446,11 @@ class ProjectController extends Controller
         $data['date_requested'] = empty($existingDates)
             ? null
             : array_values(array_map(fn($d) => ($d !== '' ? $d : null), $existingDates));
-        // ── Step 4c: Billing summary — computed here so it includes
-//             any TE/VO costs appended in Steps 4 and 4b ────
+
+        // ── Step 4c: Recalculate billing summary ──────────────────
         $data['total_amount_billed'] = array_sum($data['billing_amounts']);
 
-        // Use the live $existingCosts / $existingVoCosts (already include
-// the new entries from this request, not just what's in the DB).
-        $allCurrentCosts = array_merge(
-            array_values($existingCosts),   // TE costs — includes new TE cost
-            array_values($existingVoCosts)  // VO costs — includes new VO cost
-        );
+        $allCurrentCosts = array_merge(array_values($existingCosts), array_values($existingVoCosts));
         $totalCostAdj = collect($allCurrentCosts)
             ->filter(fn($c) => $c !== null && (float) $c !== 0.0)
             ->sum();
@@ -468,9 +473,7 @@ class ProjectController extends Controller
             if ($newSOReason !== '') {
                 $existing = trim($data['remarks_recommendation'] ?? '');
                 $note = $this->formatEntryRemark('Suspension Order', 'added', $newSOReason);
-                $data['remarks_recommendation'] = $existing !== ''
-                    ? $existing . "\n\n" . $note
-                    : $note;
+                $data['remarks_recommendation'] = $existing !== '' ? $existing . "\n\n" . $note : $note;
             }
         } else {
             $data['suspension_days'] = $existingSuspDay ?: null;
@@ -496,11 +499,9 @@ class ProjectController extends Controller
         $baseExpiry = Carbon::parse($request->original_contract_expiry);
         $totalExtDays = $totalTEDays + $totalVODays;
 
-        // Back out previously stored TE/VO days to recover the base contract days
         $existingTEInDB = (int) array_sum(array_map('intval', $fresh->extension_days ?? []));
         $existingVOInDB = (int) array_sum(array_map('intval', array_filter((array) ($fresh->vo_days ?? []))));
-        $originalContractDays = (int) Carbon::parse($fresh->date_started)
-            ->diffInDays(Carbon::parse($fresh->original_contract_expiry)) + 1;
+        $originalContractDays = (int) Carbon::parse($fresh->date_started)->diffInDays(Carbon::parse($fresh->original_contract_expiry)) + 1;
         $baseContractDays = max(1, (int) ($fresh->contract_days ?? $originalContractDays) - $existingTEInDB - $existingVOInDB);
 
         $data['contract_days'] = $baseContractDays + $totalTEDays + $totalVODays;
@@ -518,7 +519,7 @@ class ProjectController extends Controller
             $data['revised_contract_expiry'] = null;
         }
 
-        // ── Step 7b: Advance billing & retention (manual amounts) ──
+        // ── Step 7b: Advance billing & retention ─────────────────
         $advPct = $request->input('advance_billing_pct');
         $advAmt = $request->input('advance_billing_amount');
         if ($advAmt !== null && $advAmt !== '') {
@@ -539,8 +540,7 @@ class ProjectController extends Controller
             $data['retention_amount'] = null;
         }
 
-        // ── Step 8: Liquidated Damages ────────────────────────────────
-
+        // ── Step 8: Liquidated Damages ────────────────────────────
         $ldAccomplished = isset($data['ld_accomplished']) && $data['ld_accomplished'] !== null
             ? (float) $data['ld_accomplished']
             : 0.0;
@@ -552,8 +552,6 @@ class ProjectController extends Controller
         $data['ld_per_day'] = $ldPerDay > 0 ? round($ldPerDay, 2) : null;
         $data['ld_unworked'] = $ldPerDay > 0 ? round($ldUnworked, 2) : null;
 
-        // ── Resolve submitted dates ───────────────────────────────────
-
         $ldStartDate = $request->input('ld_start_date');
         $ldEndDate = $request->input('ld_end_date');
         $workDone = (float) $request->input('work_done', 0);
@@ -562,38 +560,24 @@ class ProjectController extends Controller
         $data['ld_start_date'] = $ldStartDate ?: null;
         $data['ld_end_date'] = $ldEndDate ?: null;
 
-        // ── Derive ld_status ──────────────────────────────────────────
-
         if (!$ldStartDate) {
-            // No start date set at all
             $data['ld_status'] = 'inactive';
-
         } else {
             $start = \Carbon\Carbon::parse($ldStartDate)->startOfDay();
 
             if ($today->lt($start)) {
-                // Start date is in the future
                 $data['ld_status'] = 'inactive';
-
             } elseif ($workDone >= 100) {
-                // Work fully done — auto-complete
                 $data['ld_status'] = 'completed';
                 $data['ld_end_date'] = $ldEndDate ?: $today->toDateString();
-
             } elseif ($ldEndDate && $today->gte(\Carbon\Carbon::parse($ldEndDate)->startOfDay())) {
-                // Optional end date has been reached
                 $data['ld_status'] = 'terminated';
-
             } else {
-                // Start date passed, no end condition met
                 $data['ld_status'] = 'active';
             }
         }
 
-        // ── Compute days overdue ──────────────────────────────────────
-
         $daysOverdue = 0;
-
         if (
             in_array($data['ld_status'], ['active', 'terminated', 'completed'])
             && !empty($data['ld_start_date'])
@@ -602,7 +586,6 @@ class ProjectController extends Controller
             $end = !empty($data['ld_end_date'])
                 ? \Carbon\Carbon::parse($data['ld_end_date'])->startOfDay()
                 : $today;
-
             $daysOverdue = (int) max(0, $start->diffInDays($end, false));
         }
 
@@ -611,8 +594,7 @@ class ProjectController extends Controller
             ? round($ldPerDay * $daysOverdue, 2)
             : null;
 
-        // ── Step 9: Clear LD fields when inputs are blank ─────────────
-
+        // ── Step 9: Clear LD fields when blank ───────────────────
         if ($ldAccomplished <= 0) {
             $data['ld_accomplished'] = null;
             $data['ld_unworked'] = null;
@@ -620,44 +602,29 @@ class ProjectController extends Controller
             $data['total_ld'] = null;
         }
 
-        // ── Step 10: Auto-derive status (with manual overrides) ───
+        // ── Step 10: Auto-derive status ───────────────────────────
         if ($request->input('status') === 'reactivate') {
-            // Reactivation: clear completion date, re-derive from effective expiry
             $data['completed_at'] = null;
             $effectiveExpiry = $data['revised_contract_expiry'] ?? $data['original_contract_expiry'] ?? null;
             if ($effectiveExpiry) {
                 $daysLeft = now()->startOfDay()->diffInDays(Carbon::parse($effectiveExpiry)->startOfDay(), false);
-                if ($daysLeft < 0)
-                    $data['status'] = 'expired';
-                elseif ($daysLeft <= 30)
-                    $data['status'] = 'expiring';
-                else
-                    $data['status'] = 'ongoing';
+                $data['status'] = $daysLeft < 0 ? 'expired' : ($daysLeft <= 30 ? 'expiring' : 'ongoing');
             } else {
                 $data['status'] = 'ongoing';
             }
         } elseif ($request->filled('completed_at')) {
-            // Manual completion
             $data['status'] = 'completed';
             $data['completed_at'] = $request->completed_at;
         } else {
-            // Default: derive from effective expiry
             $data['completed_at'] = null;
             $effectiveExpiry = $data['revised_contract_expiry'] ?? $data['original_contract_expiry'] ?? null;
             if ($effectiveExpiry) {
                 $daysLeft = now()->startOfDay()->diffInDays(Carbon::parse($effectiveExpiry)->startOfDay(), false);
-                if ($daysLeft < 0)
-                    $data['status'] = 'expired';
-                elseif ($daysLeft <= 30)
-                    $data['status'] = 'expiring';
-                else
-                    $data['status'] = 'ongoing';
+                $data['status'] = $daysLeft < 0 ? 'expired' : ($daysLeft <= 30 ? 'expiring' : 'ongoing');
             }
         }
-        // ── Final billing summary — uses $data['billing_amounts'] which already
-        //    includes any newly-appended entry from Step 3b ──────────────────────
-        $totalBilled = array_sum($data['billing_amounts']);
 
+        // ── Final billing summary ─────────────────────────────────
         $allCostsAfterEdit = array_merge(
             array_values($data['cost_involved'] ?? []),
             array_values($data['vo_cost'] ?? [])
@@ -666,8 +633,8 @@ class ProjectController extends Controller
             ->filter(fn($c) => $c !== null && (float) $c != 0)
             ->sum();
 
-        $data['total_amount_billed'] = $totalBilled;
-        $data['remaining_balance'] = (float) $request->original_contract_amount + $costAdj - $totalBilled;
+        $data['total_amount_billed'] = array_sum($data['billing_amounts']);
+        $data['remaining_balance'] = (float) $request->original_contract_amount + $costAdj - $data['total_amount_billed'];
 
         $project->update($data);
 
@@ -680,12 +647,10 @@ class ProjectController extends Controller
     // SECTION 5: BILLING
     // ============================================================
 
-    /**
-     * Edit an existing billing entry by index.
-     * Recomputes total billed and remaining balance.
-     */
     public function updateBilling(Request $request, Project $project)
     {
+        $this->authorizeProjectAccess($project);
+
         $request->validate([
             'billing_index' => 'required|integer|min:0',
             'billing_amount' => 'required|numeric|min:0',
@@ -708,8 +673,6 @@ class ProjectController extends Controller
         $billingDates[$index] = $date ?: null;
 
         $totalBilled = array_sum($billingAmounts);
-
-        // Recompute adjusted contract amount using saved TE/VO costs
         $allSavedCosts = array_merge(
             is_array($fresh->cost_involved) ? $fresh->cost_involved : [],
             is_array($fresh->vo_cost) ? $fresh->vo_cost : []
@@ -736,13 +699,10 @@ class ProjectController extends Controller
     // SECTION 6: TIME EXTENSION / VARIATION ORDER — INLINE EDIT & DELETE
     // ============================================================
 
-    /**
-     * Edit an existing TE or VO entry by index.
-     * Recomputes revised expiry, contract days, and contract amount.
-     * Appends an edit reason to remarks_recommendation.
-     */
     public function updateEntry(Request $request, Project $project)
     {
+        $this->authorizeProjectAccess($project);
+
         $request->validate([
             'edit_entry_type' => 'required|in:te,vo',
             'edit_entry_index' => 'required|integer|min:0',
@@ -769,7 +729,6 @@ class ProjectController extends Controller
 
         $data = [];
 
-        // ── Mutate the correct array (TE or VO) ──────────────────
         if ($type === 'te') {
             $extensionDays = is_array($fresh->extension_days) ? array_map('intval', $fresh->extension_days) : [];
             $costInvolved = is_array($fresh->cost_involved) ? $fresh->cost_involved : [];
@@ -785,7 +744,6 @@ class ProjectController extends Controller
             $data['extension_days'] = array_values($extensionDays);
             $data['cost_involved'] = array_values($costInvolved);
             $data['date_requested'] = array_values($dateRequested);
-
         } else {
             $voDays = is_array($fresh->vo_days) ? array_map('intval', array_filter((array) $fresh->vo_days)) : [];
             $voCosts = is_array($fresh->vo_cost) ? $fresh->vo_cost : [];
@@ -796,14 +754,14 @@ class ProjectController extends Controller
 
             $voDays[$index] = $days;
             $voCosts[$index] = ($cost !== null && $cost !== '') ? (float) $cost : null;
-            $dateRequested[$teCount + $index] = $date ?: null;  // VO dates offset by teCount
+            $dateRequested[$teCount + $index] = $date ?: null;
 
             $data['vo_days'] = array_values($voDays);
             $data['vo_cost'] = array_values($voCosts);
             $data['date_requested'] = array_values($dateRequested);
         }
 
-        // ── Recompute revised_contract_expiry ─────────────────────
+        // Recompute revised expiry
         $allExtDays = array_sum(array_map('intval', $data['extension_days'] ?? $fresh->extension_days ?? []));
         $allVODays = array_sum(array_map('intval', $data['vo_days'] ?? $fresh->vo_days ?? []));
         $sodays = (int) ($fresh->suspension_days ?? 0);
@@ -814,7 +772,7 @@ class ProjectController extends Controller
             ? Carbon::parse($fresh->original_contract_expiry)->addDays($total)->toDateString()
             : null;
 
-        // ── Recompute contract_days ───────────────────────────────
+        // Recompute contract_days
         $previousTEDays = (int) array_sum(array_map('intval', $fresh->extension_days ?? []));
         $previousVODays = (int) array_sum(array_map('intval', array_filter((array) ($fresh->vo_days ?? []))));
         $originalContractDays = (int) ($fresh->contract_days ?? 0) - $previousTEDays - $previousVODays;
@@ -822,16 +780,7 @@ class ProjectController extends Controller
         $currentVODays = (int) array_sum(array_map('intval', $data['vo_days'] ?? $fresh->vo_days ?? []));
         $data['contract_days'] = $originalContractDays + $currentTEDays + $currentVODays;
 
-        // ── Recompute contract amounts from original ─────────────
-        $originalAmount = (float) $fresh->original_contract_amount;
-        $allCosts = array_merge(
-            array_values($data['cost_involved'] ?? $fresh->cost_involved ?? []),
-            array_values($data['vo_cost'] ?? $fresh->vo_cost ?? [])
-        );
-        $adjustment = collect($allCosts)->filter(fn($c) => $c !== null && (float) $c != 0)->sum();
-        // contract_amount column has been removed; do not store a duplicate numeric field.
-
-        // ── Resolve the display label for this entry ──────────────
+        // Resolve label
         $labelCounter = 0;
         $resolvedLabel = ($type === 'te' ? 'Time Extension' : 'Variation Order') . ' ' . ($index + 1);
         foreach ($existingDocs as $doc) {
@@ -845,7 +794,7 @@ class ProjectController extends Controller
             }
         }
 
-        // ── Append edit note to remarks_recommendation ────────────
+        // Append edit note
         $existing = trim($fresh->remarks_recommendation ?? '');
         $note = $this->formatEntryRemark($resolvedLabel, 'updated', $reason);
         $data['remarks_recommendation'] = $existing !== '' ? $existing . "\n\n" . $note : $note;
@@ -857,9 +806,6 @@ class ProjectController extends Controller
             ->with('success', ucfirst($type === 'te' ? 'Time Extension' : 'Variation Order') . ' updated successfully.');
     }
 
-    /**
-     * Build a compact plain-text remark entry with the requested updated layout.
-     */
     private function formatEntryRemark(string $label, string $action, string $reason): string
     {
         $timestamp = now();
@@ -873,6 +819,7 @@ class ProjectController extends Controller
 
         return "● {$time} • {$date}\n  {$shortLabel} {$cleanAction}\n  Justification: {$cleanReason}";
     }
+
     private function splitRemarks(string $raw): array
     {
         $pattern = '/(?:^|\n\n)(●\s+\d{1,2}:\d{2}\s+(?:AM|PM)\s+•\s+[^\n]+(?:\n[ \t]+[^\n]+)*)/m';
@@ -892,13 +839,10 @@ class ProjectController extends Controller
         ];
     }
 
-    /**
-     * Delete a TE or VO entry by index.
-     * Renumbers remaining entries, recomputes expiry / contract days.
-     * Appends a delete reason to remarks_recommendation.
-     */
     public function destroyEntry(Request $request, Project $project)
     {
+        $this->authorizeProjectAccess($project);
+
         $request->validate([
             'entry_type' => 'required|in:te,vo',
             'entry_index' => 'required|integer|min:0',
@@ -921,7 +865,6 @@ class ProjectController extends Controller
             ->filter(fn($d) => str_starts_with((string) $d, 'Time Extension'))
             ->count();
 
-        // ── Locate and splice out the correct entry ───────────────
         if ($type === 'te') {
             $tesSeen = 0;
             $docIndexToRemove = null;
@@ -944,7 +887,6 @@ class ProjectController extends Controller
             array_splice($existingCosts, $index, 1);
             array_splice($existingDates, $index, 1);
 
-            // Renumber remaining Time Extensions
             $teNum = 1;
             foreach ($existingDocs as &$doc) {
                 if (str_starts_with((string) $doc, 'Time Extension')) {
@@ -953,7 +895,6 @@ class ProjectController extends Controller
                 }
             }
             unset($doc);
-
         } else {
             $vosSeen = 0;
             $docIndexToRemove = null;
@@ -974,9 +915,8 @@ class ProjectController extends Controller
             array_splice($existingDocs, $docIndexToRemove, 1);
             array_splice($existingVoDays, $index, 1);
             array_splice($existingVoCosts, $index, 1);
-            array_splice($existingDates, $teCount + $index, 1);   // VO dates offset by teCount
+            array_splice($existingDates, $teCount + $index, 1);
 
-            // Renumber remaining Variation Orders
             $voNum = 1;
             foreach ($existingDocs as &$doc) {
                 if (str_starts_with((string) $doc, 'Variation Order')) {
@@ -987,7 +927,6 @@ class ProjectController extends Controller
             unset($doc);
         }
 
-        // ── Build updated data arrays ─────────────────────────────
         $data = [
             'documents_pressed' => array_values($existingDocs),
             'extension_days' => array_values($existingDays),
@@ -999,16 +938,13 @@ class ProjectController extends Controller
             'vo_cost' => array_values($existingVoCosts),
         ];
 
-        // ── Recount TE / VO totals ────────────────────────────────
         $data['time_extension'] = collect($data['documents_pressed'])
             ->filter(fn($v) => str_starts_with($v ?? '', 'Time Extension'))
             ->count();
-
         $data['variation_order'] = collect($data['documents_pressed'])
             ->filter(fn($v) => str_starts_with($v ?? '', 'Variation Order'))
             ->count();
 
-        // ── Recompute revised_contract_expiry ─────────────────────
         $totalTE = (int) array_sum($data['extension_days']);
         $totalVO = (int) array_sum(array_map('intval', array_filter((array) ($data['vo_days'] ?? []))));
         $totalSO = (int) ($fresh->suspension_days ?? 0);
@@ -1019,19 +955,14 @@ class ProjectController extends Controller
             ? Carbon::parse($fresh->original_contract_expiry)->addDays($total)->toDateString()
             : null;
 
-        // ── Recompute contract_days ───────────────────────────────
         $previousTEDays = (int) array_sum(array_map('intval', $fresh->extension_days ?? []));
         $previousVODays = (int) array_sum(array_map('intval', array_filter((array) ($fresh->vo_days ?? []))));
         $originalContractDays = (int) ($fresh->contract_days ?? 0) - $previousTEDays - $previousVODays;
         $data['contract_days'] = $originalContractDays + $totalTE + $totalVO;
 
-        // ── Append delete note to remarks_recommendation ──────────
         $existing = trim($fresh->remarks_recommendation ?? '');
         $note = $this->formatEntryRemark($deletedLabel, 'deleted', $reason);
-
-        $data['remarks_recommendation'] = $existing !== ''
-            ? $existing . "\n\n" . $note
-            : $note;
+        $data['remarks_recommendation'] = $existing !== '' ? $existing . "\n\n" . $note : $note;
 
         $project->update($data);
 
@@ -1045,12 +976,10 @@ class ProjectController extends Controller
     // SECTION 7: STATUS MANAGEMENT
     // ============================================================
 
-    /**
-     * Reactivate a completed project.
-     * Clears completed_at and re-derives status from effective expiry.
-     */
     public function reactivate(Project $project)
     {
+        $this->authorizeProjectAccess($project);
+
         $effectiveExpiry = $project->revised_contract_expiry ?? $project->original_contract_expiry;
 
         $daysLeft = now()->startOfDay()->diffInDays(
@@ -1058,12 +987,7 @@ class ProjectController extends Controller
             false
         );
 
-        if ($daysLeft < 0)
-            $status = 'expired';
-        elseif ($daysLeft <= 30)
-            $status = 'expiring';
-        else
-            $status = 'ongoing';
+        $status = $daysLeft < 0 ? 'expired' : ($daysLeft <= 30 ? 'expiring' : 'ongoing');
 
         $project->update([
             'status' => $status,
@@ -1080,12 +1004,9 @@ class ProjectController extends Controller
     // SECTION 8: REPORTS & PDF GENERATION
     // ============================================================
 
-    /**
-     * Summary report page with aggregate counts (ongoing / completed / expired).
-     */
     public function reports()
     {
-        $projects = Project::orderBy('date_started', 'desc')->get();
+        $projects = $this->divisionQuery()->orderBy('date_started', 'desc')->get();
         $total = $projects->count();
         $ongoing = $projects->where('status', 'ongoing')->count();
         $completed = $projects->where('status', 'completed')->count();
@@ -1094,16 +1015,12 @@ class ProjectController extends Controller
         return view('admin.reports.index', compact('projects', 'total', 'ongoing', 'completed', 'expired'));
     }
 
-    /**
-     * Generate and stream a filtered PDF report.
-     * Supports filtering by search, in_charge, and status.
-     */
     public function generateReport()
     {
         $clean = fn(string $s) => iconv('UTF-8', 'windows-1252//TRANSLIT//IGNORE', $s) ?: $s;
 
-        // ── Apply filters ─────────────────────────────────────────
-        $query = \App\Models\Project::query();
+        // Start from division-scoped base
+        $query = $this->divisionQuery();
 
         if (request('search')) {
             $search = request('search');
@@ -1122,33 +1039,25 @@ class ProjectController extends Controller
         if ($status === 'completed') {
             $query->where('status', 'completed');
         } elseif ($status === 'active') {
-            $query->where('status', 'ongoing')
-                ->where(function ($q) {
-                    $q->whereNull('revised_contract_expiry')
-                        ->where('original_contract_expiry', '>', now()->addDays(30))
-                        ->orWhere('revised_contract_expiry', '>', now()->addDays(30));
-                });
+            $query->where('status', 'ongoing')->where(function ($q) {
+                $q->whereNull('revised_contract_expiry')->where('original_contract_expiry', '>', now()->addDays(30))
+                    ->orWhere('revised_contract_expiry', '>', now()->addDays(30));
+            });
         } elseif ($status === 'expiring') {
-            $query->where('status', '!=', 'completed')
-                ->where(function ($q) {
-                    $q->whereNull('revised_contract_expiry')
-                        ->whereBetween('original_contract_expiry', [now(), now()->addDays(30)])
-                        ->orWhereBetween('revised_contract_expiry', [now(), now()->addDays(30)]);
-                });
+            $query->where('status', '!=', 'completed')->where(function ($q) {
+                $q->whereNull('revised_contract_expiry')->whereBetween('original_contract_expiry', [now(), now()->addDays(30)])
+                    ->orWhereBetween('revised_contract_expiry', [now(), now()->addDays(30)]);
+            });
         } elseif ($status === 'expired') {
-            $query->where('status', '!=', 'completed')
-                ->where(function ($q) {
-                    $q->whereNull('revised_contract_expiry')
-                        ->where('original_contract_expiry', '<', now())
-                        ->orWhere('revised_contract_expiry', '<', now());
-                });
+            $query->where('status', '!=', 'completed')->where(function ($q) {
+                $q->whereNull('revised_contract_expiry')->where('original_contract_expiry', '<', now())
+                    ->orWhere('revised_contract_expiry', '<', now());
+            });
         } elseif ($status === 'ongoing') {
-            $query->where('status', 'ongoing')
-                ->where(function ($q) {
-                    $q->whereNull('revised_contract_expiry')
-                        ->where('original_contract_expiry', '>=', now())
-                        ->orWhere('revised_contract_expiry', '>=', now());
-                });
+            $query->where('status', 'ongoing')->where(function ($q) {
+                $q->whereNull('revised_contract_expiry')->where('original_contract_expiry', '>=', now())
+                    ->orWhere('revised_contract_expiry', '>=', now());
+            });
         }
 
         $projects = $query->orderBy('date_started', 'desc')->get();
@@ -1157,7 +1066,6 @@ class ProjectController extends Controller
         $completed = $projects->where('status', 'completed')->count();
         $expired = $projects->where('status', 'expired')->count();
 
-        // ── Build human-readable filter label ─────────────────────
         $filterParts = [];
         if (request('search'))
             $filterParts[] = 'Search: "' . request('search') . '"';
@@ -1165,9 +1073,14 @@ class ProjectController extends Controller
             $filterParts[] = 'In Charge: ' . request('in_charge');
         if ($status && $status !== 'all')
             $filterParts[] = 'Status: ' . ucfirst($status);
+
+        // Always include division in the label for division admins
+        if (!$this->isSuperAdmin()) {
+            $filterParts[] = 'Division: ' . $this->currentDivision();
+        }
+
         $filterLabel = count($filterParts) ? implode('  |  ', $filterParts) : 'All Projects';
 
-        // ── Initialize PDF ────────────────────────────────────────
         $pdf = new ProjectReportPdf('L', 'mm', 'A4');
         $pdf->SetAutoPageBreak(false);
         $pdf->SetMargins(10, 10, 10);
@@ -1175,7 +1088,6 @@ class ProjectController extends Controller
         $pdf->setFilterLabel($filterLabel);
         $pdf->AddPage();
 
-        // ── Table header ──────────────────────────────────────────
         $pdf->SetFont('Helvetica', 'B', 8);
         $pdf->SetTextColor(107, 79, 53);
         $pdf->Cell(0, 5, 'PROJECT DETAILS - ' . $total . ' records', 0, 1, 'L');
@@ -1196,7 +1108,6 @@ class ProjectController extends Controller
 
         $pdf->TableHeader($cols);
 
-        // ── Table rows ────────────────────────────────────────────
         foreach ($projects as $i => $project) {
             if ($pdf->GetY() + 7 > 200) {
                 $pdf->AddPage();
@@ -1208,13 +1119,7 @@ class ProjectController extends Controller
             $slipStr = ($slip > 0 ? '+' : '') . number_format($slip, 2) . '%';
             $even = $i % 2 === 0;
 
-            if ($slip > 0)
-                $slipColor = [22, 163, 74];
-            elseif ($slip < 0)
-                $slipColor = [220, 38, 38];
-            else
-                $slipColor = [107, 114, 128];
-
+            $slipColor = $slip > 0 ? [22, 163, 74] : ($slip < 0 ? [220, 38, 38] : [107, 114, 128]);
             $statusMap = [
                 'completed' => [[240, 253, 244], [22, 163, 74], 'Completed'],
                 'expired' => [[254, 242, 242], [220, 38, 38], 'Expired'],
@@ -1241,20 +1146,20 @@ class ProjectController extends Controller
             );
         }
 
-        // ── Stream PDF to browser ─────────────────────────────────
         $filename = 'projects-report-' . now()->format('Y-m-d') . '.pdf';
         $pdf->Output('D', $filename);
         exit;
     }
 
+
     // ============================================================
-    // SECTION 9: project detail PDF generation
+    // SECTION 9: SINGLE PROJECT PDF
     // ============================================================
-    /**
-     * Generate and stream a single project detail PDF.
-     */
+
     public function exportPdf(Project $project)
     {
+        $this->authorizeProjectAccess($project);
+
         $clean = fn(string $s) => iconv('UTF-8', 'windows-1252//TRANSLIT//IGNORE', $s) ?: $s;
         $fresh = $project->fresh();
 
@@ -1265,7 +1170,6 @@ class ProjectController extends Controller
         $voDays = is_array($fresh->vo_days) ? array_map('intval', array_filter((array) $fresh->vo_days)) : [];
         $voCosts = is_array($fresh->vo_cost) ? $fresh->vo_cost : [];
         $issuances = is_array($fresh->issuances) ? $fresh->issuances : [];
-
         $billingAmounts = is_array($fresh->billing_amounts) ? $fresh->billing_amounts : [];
         $billingDates = is_array($fresh->billing_dates) ? $fresh->billing_dates : [];
 
@@ -1276,10 +1180,8 @@ class ProjectController extends Controller
         $totalAdj = collect($allCosts)->filter(fn($c) => $c !== null && (float) $c != 0)->sum();
         $adjusted = max(0, (float) $fresh->original_contract_amount + $totalAdj);
         $hasSO = collect($docs)->contains('Suspension Order');
-
         $teCount = collect($docs)->filter(fn($d) => str_starts_with((string) $d, 'Time Extension'))->count();
 
-        // ── Init PDF ──────────────────────────────────────────────
         $pdf = new ProjectReportPdf('P', 'mm', 'A4');
         $pdf->SetMargins(15, 15, 15);
         $pdf->SetAutoPageBreak(true, 20);
@@ -1288,11 +1190,8 @@ class ProjectController extends Controller
         $pdf->AddPage();
         $pdf->SetFont('Helvetica', '', 9);
 
-        // ── Header (logo + title + divider) ───────────────────────
         $pdf->DetailHeader();
 
-
-        // ── Helper closures ───────────────────────────────────────
         $sectionHeader = function (string $title) use ($pdf) {
             $pdf->Ln(4);
             $pdf->SetFillColor(107, 79, 53);
@@ -1322,67 +1221,32 @@ class ProjectController extends Controller
             $pdf->Cell(0, 6, $v2, 0, 1);
         };
 
-        // ── Section 1: Basic Info ─────────────────────────────────
         $sectionHeader('Project Information');
         $twoCol('Contract ID', $clean($fresh->contract_id ?? ''), 'Status', ucfirst($fresh->status ?? ''));
         $labelValue('Project Title', $clean($fresh->project_title ?? ''));
         $twoCol('In Charge', $clean($fresh->in_charge ?? ''), 'Contractor', $clean($fresh->contractor ?? ''));
         $labelValue('Location', $clean($fresh->location ?? ''));
+        $labelValue('Division', $clean($fresh->division ?? 'N/A'));
 
-        // ── Section 2: Contract Schedule ─────────────────────────
         $sectionHeader('Contract Schedule');
-        $twoCol(
-            'Date Started',
-            optional($fresh->date_started)->format('M d, Y') ?? 'N/A',
-            'Contract Days',
-            (string) ($fresh->contract_days ?? 'N/A')
-        );
-        $twoCol(
-            'Original Contract Expiry',
-            optional($fresh->original_contract_expiry)->format('M d, Y') ?? 'N/A',
-            'Revised Contract Expiry',
-            optional($fresh->revised_contract_expiry)?->format('M d, Y') ?? 'N/A'
-        );
-        $twoCol(
-            'Completed At',
-            optional($fresh->completed_at)?->format('M d, Y') ?? 'N/A',
-            'Suspension Days',
-            $hasSO ? (string) (int) ($fresh->suspension_days ?? 0) : 'N/A'
-        );
+        $twoCol('Date Started', optional($fresh->date_started)->format('M d, Y') ?? 'N/A', 'Contract Days', (string) ($fresh->contract_days ?? 'N/A'));
+        $twoCol('Original Contract Expiry', optional($fresh->original_contract_expiry)->format('M d, Y') ?? 'N/A', 'Revised Contract Expiry', optional($fresh->revised_contract_expiry)?->format('M d, Y') ?? 'N/A');
+        $twoCol('Completed At', optional($fresh->completed_at)?->format('M d, Y') ?? 'N/A', 'Suspension Days', $hasSO ? (string) (int) ($fresh->suspension_days ?? 0) : 'N/A');
 
-        // ── Section 3: Contract Amounts ───────────────────────────
         $sectionHeader('Contract Amounts');
-        $twoCol(
-            'Original Contract Amount',
-            'PHP ' . number_format((float) $fresh->original_contract_amount, 2),
-            'Total Cost Adjustments',
-            'PHP ' . number_format($totalAdj, 2)
-        );
-        $twoCol(
-            'Remaining Balance',
-            'PHP ' . number_format((float) ($fresh->remaining_balance ?? 0), 2),
-            'Advance Billing Amount',
-            $fresh->advance_billing_amount !== null ? 'PHP ' . number_format((float) $fresh->advance_billing_amount, 2) : 'N/A'
-        );
-        $twoCol(
-            'Advance Billing %',
-            $fresh->advance_billing_pct !== null ? $fresh->advance_billing_pct . '%' : 'N/A',
-            'Retention Amount',
-            $fresh->retention_amount !== null ? 'PHP ' . number_format((float) $fresh->retention_amount, 2) : 'N/A'
-        );
+        $twoCol('Original Contract Amount', 'PHP ' . number_format((float) $fresh->original_contract_amount, 2), 'Total Cost Adjustments', 'PHP ' . number_format($totalAdj, 2));
+        $twoCol('Remaining Balance', 'PHP ' . number_format((float) ($fresh->remaining_balance ?? 0), 2), 'Advance Billing Amount', $fresh->advance_billing_amount !== null ? 'PHP ' . number_format((float) $fresh->advance_billing_amount, 2) : 'N/A');
+        $twoCol('Advance Billing %', $fresh->advance_billing_pct !== null ? $fresh->advance_billing_pct . '%' : 'N/A', 'Retention Amount', $fresh->retention_amount !== null ? 'PHP ' . number_format((float) $fresh->retention_amount, 2) : 'N/A');
         $labelValue('Retention %', $fresh->retention_pct !== null ? $fresh->retention_pct . '%' : 'N/A');
 
-        // ── Section 4: Progress ───────────────────────────────────
         $sectionHeader('Progress');
         $twoCol('As Planned', $fresh->as_planned . '%', 'Work Done', $fresh->work_done . '%');
         $slip = (float) ($fresh->slippage ?? 0);
         $slipStr = ($slip > 0 ? '+' : '') . number_format($slip, 2) . '%';
         $labelValue('Slippage', $slipStr);
 
-        // ── Section 5: Billing History ────────────────────────────
         $sectionHeader('Billing History');
         if (count($billingAmounts) > 0) {
-            // Table header
             $pdf->SetFillColor(230, 220, 210);
             $pdf->SetFont('helvetica', 'B', 8);
             $pdf->Cell(15, 6, '#', 'B', 0, 'C', true);
@@ -1391,10 +1255,7 @@ class ProjectController extends Controller
             $pdf->SetFont('helvetica', '', 8);
             foreach ($billingAmounts as $i => $amount) {
                 $even = $i % 2 === 0;
-                if ($even)
-                    $pdf->SetFillColor(250, 248, 245);
-                else
-                    $pdf->SetFillColor(255, 255, 255);
+                $pdf->SetFillColor($even ? 250 : 255, $even ? 248 : 255, $even ? 245 : 255);
                 $date = $billingDates[$i] ?? null;
                 $pdf->Cell(15, 6, (string) ($i + 1), 0, 0, 'C', true);
                 $pdf->Cell(100, 6, 'PHP ' . number_format((float) $amount, 2), 0, 0, 'L', true);
@@ -1404,7 +1265,6 @@ class ProjectController extends Controller
             $pdf->Cell(0, 6, 'No billing entries recorded.', 0, 1);
         }
 
-        // ── Section 6: Time Extensions ────────────────────────────
         $sectionHeader('Time Extensions');
         if ($teCount > 0) {
             $pdf->SetFillColor(230, 220, 210);
@@ -1419,10 +1279,7 @@ class ProjectController extends Controller
             foreach ($docs as $doc) {
                 if (str_starts_with((string) $doc, 'Time Extension')) {
                     $even = $teIndex % 2 === 0;
-                    if ($even)
-                        $pdf->SetFillColor(250, 248, 245);
-                    else
-                        $pdf->SetFillColor(255, 255, 255);
+                    $pdf->SetFillColor($even ? 250 : 255, $even ? 248 : 255, $even ? 245 : 255);
                     $cost = isset($teCosts[$teIndex]) && $teCosts[$teIndex] !== null ? 'PHP ' . number_format((float) $teCosts[$teIndex], 2) : 'N/A';
                     $date = isset($dates[$teIndex]) && $dates[$teIndex] ? Carbon::parse($dates[$teIndex])->format('M d, Y') : 'N/A';
                     $pdf->Cell(8, 6, (string) ($teIndex + 1), 0, 0, 'C', true);
@@ -1437,7 +1294,6 @@ class ProjectController extends Controller
             $pdf->Cell(0, 6, 'No time extensions recorded.', 0, 1);
         }
 
-        // ── Section 7: Variation Orders ───────────────────────────
         $sectionHeader('Variation Orders');
         $voCount = collect($docs)->filter(fn($d) => str_starts_with((string) $d, 'Variation Order'))->count();
         if ($voCount > 0) {
@@ -1453,10 +1309,7 @@ class ProjectController extends Controller
             foreach ($docs as $doc) {
                 if (str_starts_with((string) $doc, 'Variation Order')) {
                     $even = $voIndex % 2 === 0;
-                    if ($even)
-                        $pdf->SetFillColor(250, 248, 245);
-                    else
-                        $pdf->SetFillColor(255, 255, 255);
+                    $pdf->SetFillColor($even ? 250 : 255, $even ? 248 : 255, $even ? 245 : 255);
                     $cost = isset($voCosts[$voIndex]) && $voCosts[$voIndex] !== null ? 'PHP ' . number_format((float) $voCosts[$voIndex], 2) : 'N/A';
                     $date = isset($dates[$teCount + $voIndex]) && $dates[$teCount + $voIndex] ? Carbon::parse($dates[$teCount + $voIndex])->format('M d, Y') : 'N/A';
                     $pdf->Cell(8, 6, (string) ($voIndex + 1), 0, 0, 'C', true);
@@ -1471,7 +1324,6 @@ class ProjectController extends Controller
             $pdf->Cell(0, 6, 'No variation orders recorded.', 0, 1);
         }
 
-        // ── Section 8: Issuances ──────────────────────────────────
         $sectionHeader('Issuances');
         if (count($issuances) > 0) {
             foreach ($issuances as $i => $issuance) {
@@ -1482,28 +1334,11 @@ class ProjectController extends Controller
             $pdf->Cell(0, 6, 'No issuances recorded.', 0, 1);
         }
 
-        // ── Section 9: Liquidated Damages ─────────────────────────
         $sectionHeader('Liquidated Damages');
-        $twoCol(
-            'Accomplished (%)',
-            $fresh->ld_accomplished !== null ? $fresh->ld_accomplished . '%' : 'N/A',
-            'Unworked (%)',
-            $fresh->ld_unworked !== null ? $fresh->ld_unworked . '%' : 'N/A'
-        );
-        $twoCol(
-            'LD Per Day',
-            $fresh->ld_per_day !== null ? 'PHP ' . number_format((float) $fresh->ld_per_day, 2) : 'N/A',
-            'Days Overdue',
-            $fresh->ld_days_overdue !== null ? (string) $fresh->ld_days_overdue : 'N/A'
-        );
-        $twoCol(
-            'Total LD',
-            $fresh->total_ld !== null ? 'PHP ' . number_format((float) $fresh->total_ld, 2) : 'N/A',
-            '',
-            ''
-        );
+        $twoCol('Accomplished (%)', $fresh->ld_accomplished !== null ? $fresh->ld_accomplished . '%' : 'N/A', 'Unworked (%)', $fresh->ld_unworked !== null ? $fresh->ld_unworked . '%' : 'N/A');
+        $twoCol('LD Per Day', $fresh->ld_per_day !== null ? 'PHP ' . number_format((float) $fresh->ld_per_day, 2) : 'N/A', 'Days Overdue', $fresh->ld_days_overdue !== null ? (string) $fresh->ld_days_overdue : 'N/A');
+        $twoCol('Total LD', $fresh->total_ld !== null ? 'PHP ' . number_format((float) $fresh->total_ld, 2) : 'N/A', '', '');
 
-        // ── Section 10: Remarks ───────────────────────────────────
         $sectionHeader('Remarks & Recommendations');
         $remarks = trim($fresh->remarks_recommendation ?? '');
         if ($remarks !== '') {
@@ -1513,23 +1348,28 @@ class ProjectController extends Controller
             $pdf->Cell(0, 6, 'No remarks recorded.', 0, 1);
         }
 
-        // ── Stream ────────────────────────────────────────────────
         $filename = 'project-' . str_replace(['/', ' '], '-', $fresh->contract_id) . '-' . now()->format('Y-m-d') . '.pdf';
         $pdf->Output($filename, 'D');
         exit;
     }
 
+
     // ============================================================
     // SECTION 10: DELETE
     // ============================================================
 
-    /**
-     * Permanently delet    e a project record.
-     */
     public function destroy(Project $project)
     {
+        $this->authorizeProjectAccess($project);
+
+        // Only super admins can delete projects
+        if (!$this->isSuperAdmin()) {
+            abort(403, 'Only super admins can delete projects.');
+        }
+
         $project->delete();
 
-        return redirect()->route('admin.projects.index')->with('success', 'Project deleted successfully.');
+        return redirect()->route('admin.projects.index')
+            ->with('success', 'Project deleted successfully.');
     }
 }

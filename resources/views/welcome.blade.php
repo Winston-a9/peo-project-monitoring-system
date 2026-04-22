@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,12 +8,13 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
     <!-- Force Light Mode on Welcome Page -->
     <script>
-        (function() {
+        (function () {
             const html = document.documentElement;
             html.classList.remove('dark');
             html.classList.add('light');
@@ -26,7 +28,13 @@
     @endif
 
     <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
         :root {
             --orange: #E05A00;
@@ -41,7 +49,9 @@
             --gray-soft: #F5EDE4;
         }
 
-        html { scroll-behavior: smooth; }
+        html {
+            scroll-behavior: smooth;
+        }
 
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
@@ -53,7 +63,9 @@
         /* ─── HEADER ─── */
         header {
             position: fixed;
-            top: 0; left: 0; right: 0;
+            top: 0;
+            left: 0;
+            right: 0;
             z-index: 100;
             background: rgba(255, 252, 249, 0.92);
             backdrop-filter: blur(14px);
@@ -125,7 +137,10 @@
             text-decoration: none;
         }
 
-        .btn-ghost:hover { color: var(--orange); background: rgba(224,90,0,0.06); }
+        .btn-ghost:hover {
+            color: var(--orange);
+            background: rgba(224, 90, 0, 0.06);
+        }
 
         .btn-primary {
             padding: 10px 22px;
@@ -138,13 +153,13 @@
             cursor: pointer;
             text-decoration: none;
             transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
-            box-shadow: 0 2px 12px rgba(224,90,0,0.28);
+            box-shadow: 0 2px 12px rgba(224, 90, 0, 0.28);
         }
 
         .btn-primary:hover {
             background: var(--orange-dark);
             transform: translateY(-1px);
-            box-shadow: 0 4px 18px rgba(224,90,0,0.36);
+            box-shadow: 0 4px 18px rgba(224, 90, 0, 0.36);
         }
 
         .btn-dashboard {
@@ -158,10 +173,13 @@
             cursor: pointer;
             text-decoration: none;
             transition: opacity 0.2s, transform 0.15s;
-            box-shadow: 0 2px 16px rgba(224,90,0,0.30);
+            box-shadow: 0 2px 16px rgba(224, 90, 0, 0.30);
         }
 
-        .btn-dashboard:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-dashboard:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
 
         /* ─── HERO ─── */
         .hero {
@@ -209,7 +227,7 @@
             position: absolute;
             inset: 100px;
             border-radius: 50%;
-            background: radial-gradient(ellipse, rgba(224,90,0,0.06) 0%, transparent 70%);
+            background: radial-gradient(ellipse, rgba(224, 90, 0, 0.06) 0%, transparent 70%);
         }
 
         .hero-inner {
@@ -249,8 +267,17 @@
         }
 
         @keyframes pulse-dot {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(0.8); }
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.5;
+                transform: scale(0.8);
+            }
         }
 
         .hero h2 {
@@ -291,13 +318,13 @@
             background: var(--orange);
             text-decoration: none;
             transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
-            box-shadow: 0 4px 20px rgba(224,90,0,0.32);
+            box-shadow: 0 4px 20px rgba(224, 90, 0, 0.32);
         }
 
         .btn-hero-primary:hover {
             background: var(--orange-dark);
             transform: translateY(-2px);
-            box-shadow: 0 6px 28px rgba(224,90,0,0.42);
+            box-shadow: 0 6px 28px rgba(224, 90, 0, 0.42);
         }
 
         .btn-hero-outline {
@@ -313,7 +340,7 @@
         }
 
         .btn-hero-outline:hover {
-            background: rgba(224,90,0,0.08);
+            background: rgba(224, 90, 0, 0.08);
             transform: translateY(-2px);
         }
 
@@ -338,14 +365,34 @@
             opacity: 0;
         }
 
-        .stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 40px rgba(61,43,26,0.12); }
-        .stat-card:nth-child(1) { animation-delay: 0.2s; }
-        .stat-card:nth-child(2) { animation-delay: 0.35s; margin-left: 32px; }
-        .stat-card:nth-child(3) { animation-delay: 0.5s; }
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 40px rgba(61, 43, 26, 0.12);
+        }
+
+        .stat-card:nth-child(1) {
+            animation-delay: 0.2s;
+        }
+
+        .stat-card:nth-child(2) {
+            animation-delay: 0.35s;
+            margin-left: 32px;
+        }
+
+        .stat-card:nth-child(3) {
+            animation-delay: 0.5s;
+        }
 
         @keyframes float-in {
-            from { opacity: 0; transform: translateY(16px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .stat-icon {
@@ -361,8 +408,13 @@
             flex-shrink: 0;
         }
 
-        .stat-icon.green { background: linear-gradient(135deg, #2D9E6B, #42C882); }
-        .stat-icon.amber { background: linear-gradient(135deg, var(--amber), #F0A500); }
+        .stat-icon.green {
+            background: linear-gradient(135deg, #2D9E6B, #42C882);
+        }
+
+        .stat-icon.amber {
+            background: linear-gradient(135deg, var(--amber), #F0A500);
+        }
 
         .stat-num {
             font-size: 2rem;
@@ -383,7 +435,7 @@
         /* ─── DIVIDER ─── */
         .section-divider {
             height: 1px;
-            background: linear-gradient(to right, transparent, rgba(224,90,0,0.15), transparent);
+            background: linear-gradient(to right, transparent, rgba(224, 90, 0, 0.15), transparent);
             max-width: 1200px;
             margin: 0 auto;
         }
@@ -449,7 +501,9 @@
         .service-card::before {
             content: '';
             position: absolute;
-            top: 0; left: 0; right: 0;
+            top: 0;
+            left: 0;
+            right: 0;
             height: 3px;
             background: linear-gradient(90deg, var(--orange), var(--orange-light));
             transform: scaleX(0);
@@ -463,7 +517,9 @@
             border-color: rgba(224, 90, 0, 0.15);
         }
 
-        .service-card:hover::before { transform: scaleX(1); }
+        .service-card:hover::before {
+            transform: scaleX(1);
+        }
 
         .service-icon-wrap {
             width: 56px;
@@ -488,7 +544,9 @@
             transition: color 0.25s;
         }
 
-        .service-card:hover .service-icon-wrap svg { color: white; }
+        .service-card:hover .service-icon-wrap svg {
+            color: white;
+        }
 
         .service-card h4 {
             font-size: 1.15rem;
@@ -516,7 +574,7 @@
             content: '';
             position: absolute;
             inset: 0;
-            background: radial-gradient(ellipse 80% 100% at 50% 50%, rgba(224,90,0,0.15) 0%, transparent 70%);
+            background: radial-gradient(ellipse 80% 100% at 50% 50%, rgba(224, 90, 0, 0.15) 0%, transparent 70%);
         }
 
         .stats-inner {
@@ -532,10 +590,12 @@
         .stat-item {
             text-align: center;
             padding: 40px 20px;
-            border-right: 1px solid rgba(255,255,255,0.08);
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
         }
 
-        .stat-item:last-child { border-right: none; }
+        .stat-item:last-child {
+            border-right: none;
+        }
 
         .stat-big {
             font-size: 3.5rem;
@@ -548,7 +608,7 @@
 
         .stat-text {
             font-size: 0.9rem;
-            color: rgba(255,255,255,0.60);
+            color: rgba(255, 255, 255, 0.60);
             font-weight: 400;
             letter-spacing: 0.06em;
             text-transform: uppercase;
@@ -577,7 +637,7 @@
             border-radius: 20px;
             padding: 36px 32px;
             border: 1px solid rgba(224, 90, 0, 0.08);
-            box-shadow: 0 2px 16px rgba(61,43,26,0.05);
+            box-shadow: 0 2px 16px rgba(61, 43, 26, 0.05);
             display: flex;
             align-items: flex-start;
             gap: 20px;
@@ -586,7 +646,7 @@
 
         .contact-card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 8px 36px rgba(61,43,26,0.10);
+            box-shadow: 0 8px 36px rgba(61, 43, 26, 0.10);
         }
 
         .contact-icon {
@@ -646,12 +706,12 @@
         .footer-logo span {
             font-size: 1rem;
             font-weight: 700;
-            color: rgba(255,255,255,0.90);
+            color: rgba(255, 255, 255, 0.90);
         }
 
         .footer-sub {
             font-size: 0.82rem;
-            color: rgba(255,255,255,0.45);
+            color: rgba(255, 255, 255, 0.45);
             margin-bottom: 24px;
             letter-spacing: 0.06em;
             text-transform: uppercase;
@@ -659,33 +719,65 @@
 
         .footer-divider {
             height: 1px;
-            background: rgba(255,255,255,0.08);
+            background: rgba(255, 255, 255, 0.08);
             margin: 24px 0;
         }
 
         .footer-copy {
             font-size: 0.80rem;
-            color: rgba(255,255,255,0.35);
+            color: rgba(255, 255, 255, 0.35);
         }
 
         /* ─── RESPONSIVE ─── */
         @media (max-width: 900px) {
-            .hero-inner { grid-template-columns: 1fr; gap: 40px; }
-            .hero-visual { display: none; }
-            .services-grid { grid-template-columns: 1fr 1fr; }
-            .stats-inner { grid-template-columns: 1fr; }
-            .stat-item { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.08); }
-            .stat-item:last-child { border-bottom: none; }
-            .contact-grid { grid-template-columns: 1fr; }
+            .hero-inner {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+
+            .hero-visual {
+                display: none;
+            }
+
+            .services-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .stats-inner {
+                grid-template-columns: 1fr;
+            }
+
+            .stat-item {
+                border-right: none;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            }
+
+            .stat-item:last-child {
+                border-bottom: none;
+            }
+
+            .contact-grid {
+                grid-template-columns: 1fr;
+            }
         }
 
         @media (max-width: 600px) {
-            .services-grid { grid-template-columns: 1fr; }
-            .header-inner { padding: 0 1rem; }
-            .hero { padding: 90px 1rem 50px; }
+            .services-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header-inner {
+                padding: 0 1rem;
+            }
+
+            .hero {
+                padding: 90px 1rem 50px;
+            }
         }
     </style>
+
 </head>
+
 <body>
 
     <!-- HEADER -->
@@ -704,11 +796,11 @@
                     @auth
                         @php
                             $role = Auth::user()->role ?? null;
-                            $dashboardRoute = match($role) {
-                                'admin'                                                                                                          => 'admin.dashboard',
-                                'contractor'                                                                                                     => 'user.dashboard',
-                                'site_inspector', 'surveyor', 'resident_engineer','mtqa', 'engineeriv', 'engineeriii', 'provincial_engineer'           => 'reviewer.dashboard',
-                                default                                                                                                          => 'dashboard',
+                            $dashboardRoute = match ($role) {
+                                'admin' => 'admin.dashboard',
+                                'contractor' => 'user.dashboard',
+                                'site_inspector', 'surveyor', 'resident_engineer', 'mtqa', 'engineeriv', 'engineeriii', 'provincial_engineer' => 'reviewer.dashboard',
+                                default => 'dashboard',
                             };
                         @endphp
                         <a href="{{ route($dashboardRoute) }}" class="btn-dashboard">
@@ -716,9 +808,6 @@
                         </a>
                     @else
                         <a href="{{ route('login') }}" class="btn-ghost">Log in</a>
-                        @if (Route::has('register'))
-                            <a href="{{ route('register') }}" class="btn-primary">Register</a>
-                        @endif
                     @endauth
                 </nav>
             @endif
@@ -740,18 +829,19 @@
                     For Our Community
                 </h2>
                 <p class="hero-desc">
-                    The Provincial Engineering Office is committed to delivering quality engineering services and sustainable infrastructure development for the people of Bukidnon.
+                    The Provincial Engineering Office is committed to delivering quality engineering services and
+                    sustainable infrastructure development for the people of Bukidnon.
                 </p>
                 <div class="hero-cta">
                     @if (Route::has('login'))
                         @auth
                             @php
                                 $role = Auth::user()->role ?? null;
-                                $dashboardRoute = match($role) {
-                                    'admin'                                                                                                          => 'admin.dashboard',
-                                    'contractor'                                                                                                     => 'user.dashboard',
-                                    'site_inspector', 'surveyor', 'resident_engineer','mtqa', 'engineeriv', 'engineeriii', 'provincial_engineer'           => 'reviewer.dashboard',
-                                    default                                                                                                          => 'dashboard',
+                                $dashboardRoute = match ($role) {
+                                    'admin' => 'admin.dashboard',
+                                    'contractor' => 'user.dashboard',
+                                    'site_inspector', 'surveyor', 'resident_engineer', 'mtqa', 'engineeriv', 'engineeriii', 'provincial_engineer' => 'reviewer.dashboard',
+                                    default => 'dashboard',
                                 };
                             @endphp
                             <a href="{{ route($dashboardRoute) }}" class="btn-hero-primary">
@@ -806,7 +896,8 @@
         <div class="section-header">
             <span class="section-label">What We Offer</span>
             <h3 class="section-title">Our Services</h3>
-            <p class="section-sub">Comprehensive engineering solutions for infrastructure development and public works across Bukidnon.</p>
+            <p class="section-sub">Comprehensive engineering solutions for infrastructure development and public works
+                across Bukidnon.</p>
         </div>
 
         <div class="services-grid">
@@ -815,18 +906,21 @@
             <div class="service-card">
                 <div class="service-icon-wrap">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                     </svg>
                 </div>
                 <h4>Infrastructure Planning</h4>
-                <p>Strategic planning and design of roads, bridges, and public facilities for sustainable development.</p>
+                <p>Strategic planning and design of roads, bridges, and public facilities for sustainable development.
+                </p>
             </div>
 
             <!-- Card 2 -->
             <div class="service-card">
                 <div class="service-icon-wrap">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                 </div>
                 <h4>Project Management</h4>
@@ -837,7 +931,8 @@
             <div class="service-card">
                 <div class="service-icon-wrap">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
                     </svg>
                 </div>
                 <h4>Technical Assistance</h4>
@@ -848,7 +943,8 @@
             <div class="service-card">
                 <div class="service-icon-wrap">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                     </svg>
                 </div>
                 <h4>Quality Assurance</h4>
@@ -859,7 +955,8 @@
             <div class="service-card">
                 <div class="service-icon-wrap">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                     </svg>
                 </div>
                 <h4>Building Permits</h4>
@@ -870,7 +967,8 @@
             <div class="service-card">
                 <div class="service-icon-wrap">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                     </svg>
                 </div>
                 <h4>Documentation Services</h4>
@@ -904,7 +1002,8 @@
             <div class="section-header">
                 <span class="section-label">Reach Out</span>
                 <h3 class="section-title">Get in Touch</h3>
-                <p class="section-sub">Have questions or need assistance? Our team is ready to help with your engineering needs.</p>
+                <p class="section-sub">Have questions or need assistance? Our team is ready to help with your
+                    engineering needs.</p>
             </div>
             <div class="contact-grid">
                 <div class="contact-card">
@@ -947,4 +1046,5 @@
     </script>
 
 </body>
+
 </html>

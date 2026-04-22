@@ -11,9 +11,10 @@ class Project extends Model
 
     protected $fillable = [
         'remaining_balance',
-        //Overview
+        // Overview
         'contract_id',
         'in_charge',
+        'division',         
         'project_title',
         'location',
         'contractor',
@@ -25,7 +26,7 @@ class Project extends Model
         'status',
         'completed_at',
         'performance_bond_date',
-        //Performance
+        // Performance
         'as_planned',
         'work_done',
         'slippage',
@@ -38,7 +39,7 @@ class Project extends Model
         'ld_status',
         'ld_start_date',
         'ld_end_date',
-        //Extension
+        // Extension
         'time_extension',
         'extension_days',
         'cost_involved',
@@ -47,7 +48,7 @@ class Project extends Model
         'vo_days',
         'vo_cost',
         'date_requested',
-        //Billing updates
+        // Billing updates
         'advance_billing_pct',
         'advance_billing_amount',
         'retention_pct',
@@ -55,7 +56,7 @@ class Project extends Model
         'billing_amounts',
         'billing_dates',
         'total_amount_billed',
-        //Admin
+        // Admin
         'remarks_recommendation',
         'issuances',
         'documents_pressed',
@@ -80,7 +81,7 @@ class Project extends Model
             'ld_unworked'              => 'decimal:2',
             'ld_per_day'               => 'decimal:2',
             'total_ld'                 => 'decimal:2',
-            'advance_billing_pct'     => 'decimal:2',
+            'advance_billing_pct'      => 'decimal:2',
             'advance_billing_amount'   => 'decimal:2',
             'retention_pct'            => 'decimal:2',
             'retention_amount'         => 'decimal:2',
@@ -93,15 +94,13 @@ class Project extends Model
             'billing_dates'            => 'array',
             'issuances'                => 'array',
             'documents_pressed'        => 'array',
-            'extension_days'           => 'array',      
+            'extension_days'           => 'array',
             'cost_involved'            => 'array',
             'vo_days'                  => 'array',
             'vo_cost'                  => 'array',
             'date_requested'           => 'array',
             'ld_start_date'            => 'date',
             'ld_end_date'              => 'date',
-
-
         ];
     }
 
@@ -110,12 +109,12 @@ class Project extends Model
         static::updated(function (Project $project) {
             $dirty    = $project->getDirty();
 
-            // ── Auto-stamp when progress fields change ──
             if (array_key_exists('as_planned', $dirty) || array_key_exists('work_done', $dirty)) {
                 \Illuminate\Support\Facades\DB::table('projects')
                     ->where('id', $project->id)
                     ->update(['progress_updated_at' => now()]);
             }
+
             $original = collect($dirty)->mapWithKeys(fn($v, $k) => [$k => $project->getOriginal($k)])->toArray();
 
             $skip    = ['updated_at'];
@@ -125,7 +124,7 @@ class Project extends Model
                 $changes[$field] = ['from' => $original[$field] ?? null, 'to' => $newVal];
             }
 
-            if (!empty($changes)) {
+            if (! empty($changes)) {
                 ProjectLog::create([
                     'project_id' => $project->id,
                     'user_id'    => auth()->id(),

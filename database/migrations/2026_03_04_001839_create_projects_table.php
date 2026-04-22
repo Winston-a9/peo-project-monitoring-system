@@ -15,6 +15,7 @@ return new class extends Migration
 
             // Overview
             $table->string('in_charge');
+            $table->string('division');
             $table->string('project_title');
             $table->string('location');
             $table->string('contractor');

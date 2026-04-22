@@ -225,6 +225,28 @@
                                 @enderror
                             </div>
 
+                            {{-- Division --}}
+                            <div class="field-group">
+                                <label class="field-label">Division <span style="color:#ef4444;">*</span></label>
+                                <select name="division" class="field-input {{ $errors->has('division') ? 'has-error' : '' }}" required
+                                    {{ !auth()->user()->isSuperAdmin() ? 'disabled' : '' }}>
+                                    <option value="" disabled>Select a division</option>
+                                    @foreach($divisions as $div)
+                                        <option value="{{ $div }}"
+                                            {{ old('division', $project->division ?? $currentDivision) === $div ? 'selected' : '' }}>
+                                            {{ $div }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                {{-- If division admin, send value via hidden input since select is disabled --}}
+                                @if(!auth()->user()->isSuperAdmin())
+                                    <input type="hidden" name="division" value="{{ $currentDivision }}">
+                                @endif
+                                @error('division')
+                                    <p class="field-error"><i class="fas fa-exclamation-circle"></i> {{ $message }}</p>
+                                @enderror
+                            </div>
+
                             {{-- Status --}}
                             <div class="field-group">
                                 <label class="field-label">

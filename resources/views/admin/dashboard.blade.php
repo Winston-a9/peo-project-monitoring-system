@@ -27,32 +27,63 @@
 @endpush
 
     @php
-        $total     = \App\Models\Project::count();
-        $ongoing   = \App\Models\Project::where('status','ongoing')
-                        ->where(function($q){ $q->whereNull('revised_contract_expiry')->where('original_contract_expiry','>=',now())->orWhere('revised_contract_expiry','>=',now()); })
-                        ->count();
-        $completed = \App\Models\Project::where('status','completed')->count();
-        $active    = \App\Models\Project::where('status','ongoing')
-                        ->where(function($q){ $q->whereNull('revised_contract_expiry')->where('original_contract_expiry','>',now()->addDays(30))->orWhere('revised_contract_expiry','>',now()->addDays(30)); })
-                        ->count();
-        $expiring  = \App\Models\Project::where('status','ongoing')
-                        ->where(function($q){ $q->whereNull('revised_contract_expiry')->whereBetween('original_contract_expiry',[now(),now()->addDays(30)])->orWhereBetween('revised_contract_expiry',[now(),now()->addDays(30)]); })
-                        ->count();
-        $expired   = \App\Models\Project::where('status','!=','completed')
-                        ->where(function($q){ $q->whereNull('revised_contract_expiry')->where('original_contract_expiry','<',now())->orWhere('revised_contract_expiry','<',now()); })
-                        ->count();
+        // ── Division-aware base query helper ─────────────────────────
+        // Super admin (division === null) → all projects
+        // Division admin → only projects matching their division
+        $userDivision = auth()->user()->division;
+        $baseQ = fn() => \App\Models\Project::when(
+            $userDivision,
+            fn($q, $div) => $q->where('division', $div)
+        );
+
+        $total     = $baseQ()->count();
+
+        $ongoing   = $baseQ()->where('status','ongoing')
+                        ->where(function($q){
+                            $q->whereNull('revised_contract_expiry')
+                              ->where('original_contract_expiry','>=',now())
+                              ->orWhere('revised_contract_expiry','>=',now());
+                        })->count();
+
+        $completed = $baseQ()->where('status','completed')->count();
+
+        $active    = $baseQ()->where('status','ongoing')
+                        ->where(function($q){
+                            $q->whereNull('revised_contract_expiry')
+                              ->where('original_contract_expiry','>',now()->addDays(30))
+                              ->orWhere('revised_contract_expiry','>',now()->addDays(30));
+                        })->count();
+
+        $expiring  = $baseQ()->where('status','ongoing')
+                        ->where(function($q){
+                            $q->whereNull('revised_contract_expiry')
+                              ->whereBetween('original_contract_expiry',[now(),now()->addDays(30)])
+                              ->orWhereBetween('revised_contract_expiry',[now(),now()->addDays(30)]);
+                        })->count();
+
+        $expired   = $baseQ()->where('status','!=','completed')
+                        ->where(function($q){
+                            $q->whereNull('revised_contract_expiry')
+                              ->where('original_contract_expiry','<',now())
+                              ->orWhere('revised_contract_expiry','<',now());
+                        })->count();
 
         $segments = [
-            ['label'=>'Active',    'count'=>$active,     'color'=>'#06b6d4'],
+            ['label'=>'Active',    'count'=>$active,    'color'=>'#06b6d4'],
             ['label'=>'Completed', 'count'=>$completed, 'color'=>'#22c55e'],
             ['label'=>'Expired',   'count'=>$expired,   'color'=>'#ef4444'],
             ['label'=>'Expiring',  'count'=>$expiring,  'color'=>'#eab308'],
         ];
 
-        $recent         = \App\Models\Project::orderByDesc('updated_at')->limit(5)->get();
-        $avgSlippage    = \App\Models\Project::avg('slippage') ?? 0;
-        $expiringProjects = \App\Models\Project::where('status','ongoing')
-            ->where(function($q){ $q->whereNull('revised_contract_expiry')->whereBetween('original_contract_expiry',[now(),now()->addDays(30)])->orWhereBetween('revised_contract_expiry',[now(),now()->addDays(30)]); })
+        $recent         = $baseQ()->orderByDesc('updated_at')->limit(5)->get();
+        $avgSlippage    = $baseQ()->avg('slippage') ?? 0;
+
+        $expiringProjects = $baseQ()->where('status','ongoing')
+            ->where(function($q){
+                $q->whereNull('revised_contract_expiry')
+                  ->whereBetween('original_contract_expiry',[now(),now()->addDays(30)])
+                  ->orWhereBetween('revised_contract_expiry',[now(),now()->addDays(30)]);
+            })
             ->orderByRaw('COALESCE(revised_contract_expiry, original_contract_expiry) ASC')
             ->limit(5)->get();
     @endphp
