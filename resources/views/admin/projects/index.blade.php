@@ -40,7 +40,8 @@
     $allowed = ['project_title','contract_id','in_charge','contractor','location','work_done','slippage','original_contract_expiry','updated_at'];
     $sortCol = in_array($sortCol, $allowed) ? $sortCol : 'updated_at';
 
-    $q = \App\Models\Project::query();
+    $userDivision = auth()->user()->division;
+    $q = \App\Models\Project::when($userDivision, fn($q, $div) => $q->where('division', $div));
     if ($search)   $q->where(fn($x) => $x->where('project_title','like',"%$search%")->orWhere('contract_id','like',"%$search%")->orWhere('contractor','like',"%$search%")->orWhere('location','like',"%$search%"));
     if ($inCharge) $q->where('in_charge', $inCharge);
     if ($slipFilter === 'ahead')  $q->where('slippage','>',0);
@@ -74,7 +75,7 @@
 
     $projects = $q->orderBy($sortCol,$sortDir)->paginate($perPage)->withQueryString();
 
-    $base = \App\Models\Project::query();
+    $base = \App\Models\Project::when($userDivision, fn($q, $div) => $q->where('division', $div));
     if ($search)   $base->where(fn($x) => $x->where('project_title','like',"%$search%")->orWhere('contractor','like',"%$search%")->orWhere('location','like',"%$search%"));
     if ($inCharge) $base->where('in_charge',$inCharge);
     if ($slipFilter === 'ahead')  $base->where('slippage','>',0);
@@ -116,8 +117,8 @@
                     )->count(),
 ];
 
-    $allInCharge = \App\Models\Project::pluck('in_charge')->unique()->filter()->sort()->values();
-    $sortUrl = fn($col) => request()->fullUrlWithQuery(['sort'=>$col,'dir'=>($sortCol===$col && $sortDir==='asc'?'desc':'asc'),'page'=>1]);
+    $allInCharge = \App\Models\Project::when($userDivision, fn($q, $div) => $q->where('division', $div))
+    ->pluck('in_charge')->unique()->filter()->sort()->values();    $sortUrl = fn($col) => request()->fullUrlWithQuery(['sort'=>$col,'dir'=>($sortCol===$col && $sortDir==='asc'?'desc':'asc'),'page'=>1]);
     $chipUrl = fn($val) => request()->fullUrlWithQuery(['status'=>$val,'page'=>1]);
 @endphp
 

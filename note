@@ -141,7 +141,7 @@ if expired
 	LD is accesible 
 	
 extra updates:
-	implement the division based-role view only for the admin, where if the admin user has a division it will only access or view its division projects only.
+	in index.blade hide the division project that is not from the admin user's division.
 	Dashboard Notification
 	pdf report generator not finished!
 		<add> add a contract id coloumn in the all projects reports generator (add also in the table design the same in the index page)
@@ -150,6 +150,7 @@ extra updates:
 ==================================================================================================================================================================================================================================================================================================
 FIXED/added:
 <major update> added division based admin users
+		implement the division based-role view only for the admin, where if the admin user has a division it will only access or view its division projects only.
 <fix> bug: billing edit modals not working properly.
 <fix> bug: extension edit modals not working properly.
 		<major update> Reconstructed LD calculation
