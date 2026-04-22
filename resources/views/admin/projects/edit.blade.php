@@ -1838,7 +1838,7 @@
                 'edit_entry_type': type,
                 'edit_entry_index': index,
                 'edit_days': days,
-                'edit_cost': document.getElementById('edit_cost').value,
+                'edit_cost': document.getElementById('edit_cost').value.replace(/,/g, ''),
                 'edit_date_requested': document.getElementById('edit_date_requested').value,
                 'edit_reason': reason,
             };
@@ -1875,7 +1875,7 @@
                 '_token': '{{ csrf_token() }}',
                 '_method': 'PATCH',
                 'billing_index': window._billingEditIndex,
-                'billing_amount': amount,
+                'billing_amount': amount.replace(/,/g, ''),
                 'billing_date': document.getElementById('billing-edit-date').value,
             };
             Object.entries(fields).forEach(([name, value]) => {

@@ -747,7 +747,7 @@ class ProjectController extends Controller
             'edit_entry_type' => 'required|in:te,vo',
             'edit_entry_index' => 'required|integer|min:0',
             'edit_days' => 'required|integer|min:1|max:9999',
-            'edit_cost' => 'nullable|numeric',
+            'edit_cost' => 'nullable|decimal:0,4',
             'edit_date_requested' => 'nullable|date',
             'edit_reason' => 'required|string|max:1000',
         ]);
@@ -1357,12 +1357,6 @@ class ProjectController extends Controller
             'PHP ' . number_format((float) $fresh->original_contract_amount, 2),
             'Total Cost Adjustments',
             'PHP ' . number_format($totalAdj, 2)
-        );
-        $twoCol(
-            'Adjusted Contract Amount',
-            'PHP ' . number_format($adjusted, 2),
-            'Total Amount Billed',
-            'PHP ' . number_format((float) ($fresh->total_amount_billed ?? 0), 2)
         );
         $twoCol(
             'Remaining Balance',
