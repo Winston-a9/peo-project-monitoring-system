@@ -26,6 +26,9 @@ export default defineConfig({
             // Admin Reports CSS an JS
             'resources/css/admin/reports/index.css',
             'resources/js/admin/reports/index.js',
+            //Admin Users CSS and JS
+            'resources/css/admin/users/index.css',
+            'resources/js/admin/users/index.js',
             //User
             'resources/css/user/dashboard.css',
             'resources/js/user/dashboard.js',
