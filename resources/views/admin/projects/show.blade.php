@@ -736,6 +736,46 @@
                             <span class="pill p-re">Total: ₱{{ number_format($project->total_ld, 2) }}</span>
                         @endif
                     </div>
+                    
+                    @php
+                        $ldStatus = $project->ld_status ?? 'inactive';
+                        $statusConfig = [
+                            'inactive' => [
+                                'label' => 'Not Started',
+                                'icon' => 'fa-circle-pause',
+                                'bgColor' => 'rgba(156,163,175,0.08)',
+                                'borderColor' => 'rgba(156,163,175,0.2)',
+                                'iconColor' => '#9ca3af',
+                                'textColor' => '#9ca3af'
+                            ],
+                            'active' => [
+                                'label' => 'Penalty Running',
+                                'icon' => 'fa-circle-play',
+                                'bgColor' => 'rgba(220,38,38,0.06)',
+                                'borderColor' => 'rgba(220,38,38,0.2)',
+                                'iconColor' => '#dc2626',
+                                'textColor' => '#dc2626'
+                            ],
+                            'terminated' => [
+                                'label' => 'Terminated',
+                                'icon' => 'fa-circle-stop',
+                                'bgColor' => 'rgba(34,197,94,0.06)',
+                                'borderColor' => 'rgba(34,197,94,0.2)',
+                                'iconColor' => '#16a34a',
+                                'textColor' => '#16a34a'
+                            ]
+                        ];
+                        $config = $statusConfig[$ldStatus] ?? $statusConfig['inactive'];
+                    @endphp
+                    
+                    <div style="display:flex; align-items:center; gap:0.6rem; padding:0.75rem 1rem; border-radius:9px; margin-bottom:0.75rem;
+                        background:{{ $config['bgColor'] }}; border:1.5px solid {{ $config['borderColor'] }};">
+                        <i class="fas {{ $config['icon'] }}" style="color:{{ $config['iconColor'] }}; font-size:0.85rem; flex-shrink:0;"></i>
+                        <p style="margin:0; font-size:0.8rem; font-weight:600; color:{{ $config['textColor'] }};">
+                            LD Status: <span style="font-weight:700;">{{ $config['label'] }}</span>
+                        </p>
+                    </div>
+
                     <div style="display:grid;grid-template-columns:1fr 1fr;">
                         <div class="dr" style="border-right:1px solid var(--bd);">
                             <span class="dl"><i class="fas fa-percent"></i> Accomplished</span>

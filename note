@@ -122,7 +122,6 @@ edit.blade
 		move performance bond in the overview tab
 
 	performance
-		<fix> bug: termination button not working
 	extensions
 	billing
 	admin
@@ -148,6 +147,7 @@ extra updates:
 
 ==================================================================================================================================================================================================================================================================================================
 FIXED/added:
+<fix> bug: termination button not working
 <major update> added division based admin users
 		separated the css and js files of index.blade
 		in index.blade hide the division project that is not from the admin user's division.
