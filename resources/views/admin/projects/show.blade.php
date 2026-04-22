@@ -264,6 +264,10 @@
                         <span class="dv">{{ $project->in_charge }}</span>
                     </div>
                     <div class="dr">
+                        <span class="dl"><i class="fas fa-sitemap"></i> Division</span>
+                        <span class="dv">{{ $project->division }}</span>
+                    </div>
+                    <div class="dr">
                         <span class="dl"><i class="fas fa-map-marker-alt"></i> Location</span>
                         <span class="dv" style="text-align:right;max-width:60%;">{{ $project->location }}</span>
                     </div>
