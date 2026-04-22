@@ -2,18 +2,18 @@
     <x-slot name="header">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-                <p style="font-size:0.68rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#9a6030; margin-bottom:0.3rem;">
+                <p style="font-size:0.68rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#9a6030; margin-bottom:0.3rem; animation:slideInRight 0.5s ease both;">
                     Administration
                 </p>
-                <h2 style="font-family:'Syne',sans-serif; font-weight:800; font-size:1.75rem; letter-spacing:-0.03em; color:var(--text-primary); display:flex; align-items:center; gap:0.65rem; line-height:1.1;">
-                    <span style="background:linear-gradient(135deg,#f97316,#ea580c); width:36px; height:36px; border-radius:10px; display:inline-flex; align-items:center; justify-content:center; box-shadow:0 4px 12px rgba(249,115,22,0.4); flex-shrink:0;">
+                <h2 style="font-family:'Syne',sans-serif; font-weight:800; font-size:1.75rem; letter-spacing:-0.03em; color:var(--text-primary); display:flex; align-items:center; gap:0.65rem; line-height:1.1; animation:slideInRight 0.5s ease 0.1s both;">
+                    <span style="background:linear-gradient(135deg,#f97316,#ea580c); width:36px; height:36px; border-radius:10px; display:inline-flex; align-items:center; justify-content:center; box-shadow:0 4px 12px rgba(249,115,22,0.4); flex-shrink:0; animation: rotateSlow 3s ease-in-out infinite;">
                         <i class="fas fa-chart-pie" style="color:white; font-size:0.8rem;"></i>
                     </span>
                     Admin Dashboard
                 </h2>
             </div>
-            <div style="display:flex; align-items:center; gap:0.65rem;">
-                <div style="display:flex; align-items:center; gap:0.65rem; background:white; border:1px solid rgba(249,115,22,0.15); border-radius:10px; padding:0.5rem 0.9rem;">
+            <div style="display:flex; align-items:center; gap:0.65rem; animation:slideInRight 0.5s ease 0.2s both;">
+                <div style="display:flex; align-items:center; gap:0.65rem; background:white; border:1px solid rgba(249,115,22,0.15); border-radius:10px; padding:0.5rem 0.9rem; transition:all 0.3s ease;" onmouseover="this.style.borderColor='rgba(249,115,22,0.35)'; this.style.boxShadow='0 4px 12px rgba(249,115,22,0.1)';" onmouseout="this.style.borderColor='rgba(249,115,22,0.15)'; this.style.boxShadow='none';">
                     <div style="width:8px; height:8px; background:#22c55e; border-radius:50%; animation:pulse-dot 2s infinite; flex-shrink:0;"></div>
                     <span style="font-size:0.8rem; font-weight:600; color:#6b4f35; font-family:'Instrument Sans',sans-serif;">
                         {{ now()->format('l, F j, Y') }}
@@ -67,20 +67,20 @@
                 ['Completed',      $completed, 'fa-check-circle', '#22c55e', 'rgba(34,197,94,0.1)',    route('admin.projects.index',['status'=>'completed'])],
                 ['Expiring Soon',  $expiring,  'fa-clock',        '#eab308', 'rgba(234,179,8,0.1)',    route('admin.projects.index',['status'=>'expiring'])],
             ] as [$label,$val,$icon,$color,$bg,$link])
-            <a href="{{ $link }}" class="stat-card">
+            <a href="{{ $link }}" class="stat-card" style="cursor:pointer; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);">
                 <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:0.5rem;">
                     <div>
                         <p style="font-size:0.63rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink-muted); margin-bottom:0.6rem;">{{ $label }}</p>
-                        <p class="stat-count">{{ $val }}</p>
+                        <p class="stat-count" style="position:relative; z-index:2;">{{ $val }}</p>
                     </div>
-                    <div style="width:38px; height:38px; background:{{ $bg }}; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-                        <i class="fas {{ $icon }}" style="color:{{ $color }}; font-size:1rem;"></i>
+                    <div style="width:38px; height:38px; background:{{ $bg }}; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all 0.3s ease;" onmouseover="this.style.transform='scale(1.1) rotate(5deg)'; this.style.boxShadow='0 8px 20px {{ $color }}40';" onmouseout="this.style.transform='scale(1) rotate(0deg)'; this.style.boxShadow='none';">
+                        <i class="fas {{ $icon }}" style="color:{{ $color }}; font-size:1rem; transition:transform 0.3s ease;"></i>
                     </div>
                 </div>
                 <div class="stat-bar">
                     <div class="stat-bar-fill" style="background:{{ $color }}; width:{{ $total > 0 ? round(($val/$total)*100) : 0 }}%;"></div>
                 </div>
-                <p style="font-size:0.68rem; color:#9ca3af; margin-top:0.5rem;">{{ $total > 0 ? round(($val/$total)*100) : 0 }}% of total</p>
+                <p style="font-size:0.68rem; color:#9ca3af; margin-top:0.5rem; animation:slideInRight 0.4s ease both;">{{ $total > 0 ? round(($val/$total)*100) : 0 }}% of total</p>
             </a>
             @endforeach
         </div>
@@ -104,8 +104,8 @@
                             $offset += $pct;
                         }
                     @endphp
-                    <div style="position:relative; width:140px; height:140px;">
-                        <svg width="140" height="140" viewBox="0 0 140 140">
+                    <div style="position:relative; width:140px; height:140px; filter:drop-shadow(0 2px 8px rgba(249,115,22,0.08));">
+                        <svg width="140" height="140" viewBox="0 0 140 140" style="filter:drop-shadow(0 0 0 rgba(0,0,0,0));">
                             <circle cx="70" cy="70" r="{{ $r }}" fill="none" stroke="rgba(249,115,22,0.07)" stroke-width="16"/>
                             @if($total > 0)
                                 @foreach($donutSegs as $seg)
@@ -115,7 +115,8 @@
                                     stroke="{{ $seg['color'] }}" stroke-width="16"
                                     stroke-dasharray="{{ $seg['dash'] }} {{ $seg['gap'] }}"
                                     stroke-dashoffset="{{ -$seg['offset'] + $circ/4 }}"
-                                    data-label="{{ $seg['label'] }}" data-count="{{ $seg['count'] }}" data-pct="{{ $seg['pct'] }}">
+                                    data-label="{{ $seg['label'] }}" data-count="{{ $seg['count'] }}" data-pct="{{ $seg['pct'] }}"
+                                    style="cursor: pointer; transition: all 0.3s ease; filter: drop-shadow(0 0 0 {{ $seg['color'] }});">
                                     <title>{{ $seg['label'] }}: {{ $seg['count'] }} ({{ $seg['pct'] }}%)</title>
                                 </circle>
                                 @endif
@@ -124,7 +125,7 @@
                                 <circle cx="70" cy="70" r="{{ $r }}" fill="none" stroke="rgba(249,115,22,0.08)" stroke-width="16"/>
                             @endif
                         </svg>
-                        <div id="donut-center" style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; pointer-events:none; transition:all 0.15s;">
+                        <div id="donut-center" style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; pointer-events:none; transition:all 0.25s cubic-bezier(0.16, 1, 0.3, 1); text-shadow: 0 2px 4px rgba(0,0,0,0.04);">
                             <span style="font-family:'Syne',sans-serif; font-size:1.8rem; font-weight:800; color:var(--ink); line-height:1;">{{ $total }}</span>
                             <span style="font-size:0.65rem; color:#9ca3af; font-weight:600; text-transform:uppercase; letter-spacing:0.05em;">Total</span>
                         </div>
@@ -155,12 +156,12 @@
                 <div class="card-pad" style="display:flex; flex-direction:column; gap:1.5rem;">
 
                     {{-- Slippage card --}}
-                    <div style="background:{{ $avgSlippage >= 0 ? 'rgba(34,197,94,0.05)' : 'rgba(239,68,68,0.05)' }}; border:1px solid {{ $avgSlippage >= 0 ? 'rgba(34,197,94,0.18)' : 'rgba(239,68,68,0.18)' }}; border-radius:12px; padding:1rem; text-align:center;">
+                    <div style="background:{{ $avgSlippage >= 0 ? 'rgba(34,197,94,0.05)' : 'rgba(239,68,68,0.05)' }}; border:1px solid {{ $avgSlippage >= 0 ? 'rgba(34,197,94,0.18)' : 'rgba(239,68,68,0.18)' }}; border-radius:12px; padding:1rem; text-align:center; transition:all 0.3s ease; cursor:default;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px {{ $avgSlippage >= 0 ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)' }}';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
                         <p style="font-size:0.63rem; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:{{ $avgSlippage >= 0 ? '#16a34a' : '#dc2626' }}; margin-bottom:0.4rem;">Avg. Slippage</p>
-                        <p style="font-family:'Syne',sans-serif; font-size:2rem; font-weight:800; color:{{ $avgSlippage >= 0 ? '#16a34a' : '#dc2626' }}; line-height:1;">
+                        <p style="font-family:'Syne',sans-serif; font-size:2rem; font-weight:800; color:{{ $avgSlippage >= 0 ? '#16a34a' : '#dc2626' }}; line-height:1; animation:counterUp 0.6s ease-out both;">
                             {{ $avgSlippage >= 0 ? '+' : '' }}{{ round($avgSlippage,1) }}<span style="font-size:0.9rem;">%</span>
                         </p>
-                        <p style="font-size:0.72rem; font-weight:600; margin-top:0.35rem; color:{{ $avgSlippage >= 0 ? '#16a34a' : '#dc2626' }};">
+                        <p style="font-size:0.72rem; font-weight:600; margin-top:0.35rem; color:{{ $avgSlippage >= 0 ? '#16a34a' : '#dc2626' }}; transition:transform 0.2s ease;" onmouseover="this.style.transform='translateX(2px)';" onmouseout="this.style.transform='translateX(0)';">
                             <i class="fas {{ $avgSlippage >= 0 ? 'fa-arrow-up' : 'fa-arrow-down' }}" style="font-size:0.58rem;"></i>
                             {{ $avgSlippage >= 0 ? 'Ahead of schedule' : 'Behind schedule' }}
                         </p>
@@ -168,16 +169,16 @@
 
                     @if($expired > 0)
                     <a href="{{ route('admin.projects.index', ['status'=>'expired']) }}"
-                       style="display:flex; align-items:center; gap:0.75rem; padding:0.75rem 1rem; background:rgba(239,68,68,0.04); border:1px solid rgba(239,68,68,0.16); border-radius:10px; text-decoration:none; transition:background 0.15s;"
-                       onmouseover="this.style.background='rgba(239,68,68,0.09)'" onmouseout="this.style.background='rgba(239,68,68,0.04)'">
-                        <div style="width:32px; height:32px; background:rgba(239,68,68,0.1); border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                       style="display:flex; align-items:center; gap:0.75rem; padding:0.75rem 1rem; background:rgba(239,68,68,0.04); border:1px solid rgba(239,68,68,0.16); border-radius:10px; text-decoration:none; transition:all 0.25s cubic-bezier(0.16, 1, 0.3, 1); cursor:pointer;"
+                       onmouseover="this.style.background='rgba(239,68,68,0.12)'; this.style.borderColor='rgba(239,68,68,0.35)'; this.style.transform='translateX(2px)';" onmouseout="this.style.background='rgba(239,68,68,0.04)'; this.style.borderColor='rgba(239,68,68,0.16)'; this.style.transform='translateX(0)';">
+                        <div style="width:32px; height:32px; background:rgba(239,68,68,0.1); border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:transform 0.3s ease;" onmouseover="this.style.transform='scale(1.1) rotate(-5deg)';" onmouseout="this.style.transform='scale(1) rotate(0)';">
                             <i class="fas fa-exclamation-triangle" style="color:#dc2626; font-size:0.78rem;"></i>
                         </div>
                         <div>
                             <p style="font-size:0.78rem; font-weight:700; color:#dc2626;">{{ $expired }} Expired {{ Str::plural('Project',$expired) }}</p>
                             <p style="font-size:0.68rem; color:#ef4444; margin-top:1px;">Click to review</p>
                         </div>
-                        <i class="fas fa-chevron-right" style="color:#dc2626; font-size:0.58rem; margin-left:auto;"></i>
+                        <i class="fas fa-chevron-right" style="color:#dc2626; font-size:0.58rem; margin-left:auto; transition:transform 0.3s ease;"></i>
                     </a>
                     @endif
                 </div>
@@ -189,7 +190,7 @@
                     <i class="fas fa-bolt" style="color:var(--orange-500); font-size:0.82rem;"></i>
                     <span class="card-header-title">Quick Access</span>
                 </div>
-                <div>
+                <div style="overflow:hidden;">
                     @foreach([
                         [route('admin.projects.index'),                         'fa-folder-open',  'rgba(249,115,22,0.1)', '#f97316', 'All Projects',   'Browse & manage'],
                         [route('admin.projects.index',['status'=>'ongoing']),   'fa-spinner',      'rgba(59,130,246,0.1)', '#3b82f6', 'Ongoing',         $ongoing.' active'],
@@ -197,15 +198,15 @@
                         [route('admin.projects.create'),                        'fa-plus-circle',  'rgba(34,197,94,0.1)',  '#22c55e', 'New Project',     'Create entry'],
                         [route('admin.reports.index'),                          'fa-file-pdf',     'rgba(139,92,246,0.1)', '#8b5cf6', 'Generate Report', 'Export data'],
                     ] as [$url,$icon,$bg,$color,$title,$sub])
-                    <a href="{{ $url }}" class="quick-link">
-                        <div style="width:30px; height:30px; border-radius:8px; background:{{ $bg }}; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-                            <i class="fas {{ $icon }}" style="color:{{ $color }}; font-size:0.75rem;"></i>
+                    <a href="{{ $url }}" class="quick-link" style="transition:all 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+                        <div style="width:30px; height:30px; border-radius:8px; background:{{ $bg }}; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all 0.3s ease;">
+                            <i class="fas {{ $icon }}" style="color:{{ $color }}; font-size:0.75rem; transition:transform 0.3s ease;"></i>
                         </div>
                         <div style="flex:1; min-width:0;">
-                            <p style="font-size:0.84rem; font-weight:700; color:var(--ink);">{{ $title }}</p>
+                            <p style="font-size:0.84rem; font-weight:700; color:var(--ink); transition:color 0.2s ease;">{{ $title }}</p>
                             <p style="font-size:0.7rem; color:#9ca3af; margin-top:1px;">{{ $sub }}</p>
                         </div>
-                        <i class="fas fa-chevron-right" style="color:rgba(249,115,22,0.3); font-size:0.58rem; flex-shrink:0;"></i>
+                        <i class="fas fa-chevron-right" style="color:rgba(249,115,22,0.3); font-size:0.58rem; flex-shrink:0; transition:all 0.3s ease;"></i>
                     </a>
                     @endforeach
                 </div>
@@ -222,7 +223,7 @@
                         <i class="fas fa-history" style="color:var(--orange-500); font-size:0.82rem;"></i>
                         <span class="card-header-title">Recently Updated</span>
                     </div>
-                    <a href="{{ route('admin.projects.index') }}" style="font-size:0.72rem; font-weight:600; color:var(--orange-600); text-decoration:none;">View all →</a>
+                    <a href="{{ route('admin.projects.index') }}" style="font-size:0.72rem; font-weight:600; color:var(--orange-600); text-decoration:none; transition:all 0.2s ease;" onmouseover="this.style.transform='translateX(2px)';" onmouseout="this.style.transform='translateX(0)';">View all →</a>
                 </div>
                 @forelse($recent as $project)
                 @php
@@ -234,10 +235,10 @@
                     $icons = ['completed'=>'fa-check-circle','expired'=>'fa-times-circle','expiring'=>'fa-clock','ongoing'=>'fa-spinner'];
                     $colors= ['completed'=>'#22c55e','expired'=>'#dc2626','expiring'=>'#ca8a04','ongoing'=>'#3b82f6'];
                 @endphp
-                <a href="{{ route('admin.projects.show', $project) }}" class="recent-row">
+                <a href="{{ route('admin.projects.show', $project) }}" class="recent-row" style="animation:slideInRight 0.4s ease-out both;">
                     <div style="display:flex; align-items:center; gap:0.75rem; min-width:0; flex:1;">
-                        <div style="width:36px; height:36px; border-radius:9px; background:rgba(249,115,22,0.07); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-                            <i class="fas {{ $icons[$sk] }}" style="color:{{ $colors[$sk] }}; font-size:0.85rem;"></i>
+                        <div style="width:36px; height:36px; border-radius:9px; background:rgba(249,115,22,0.07); display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all 0.3s ease;" onmouseover="this.style.transform='scale(1.12) rotate(10deg)'; this.style.background='rgba(249,115,22,0.15)';" onmouseout="this.style.transform='scale(1) rotate(0)'; this.style.background='rgba(249,115,22,0.07)';">
+                            <i class="fas {{ $icons[$sk] }}" style="color:{{ $colors[$sk] }}; font-size:0.85rem; transition:transform 0.3s ease;"></i>
                         </div>
                         <div style="min-width:0;">
                             <p style="font-size:0.84rem; font-weight:700; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px;">{{ $project->project_title }}</p>
@@ -245,8 +246,8 @@
                         </div>
                     </div>
                     <div style="display:flex; align-items:center; gap:0.5rem; flex-shrink:0;">
-                        @if($sl > 0)<span style="font-size:0.69rem; font-weight:700; color:#16a34a;">+{{ $sl }}%</span>
-                        @elseif($sl < 0)<span style="font-size:0.69rem; font-weight:700; color:#dc2626;">{{ $sl }}%</span>
+                        @if($sl > 0)<span style="font-size:0.69rem; font-weight:700; color:#16a34a; animation:slideInRight 0.4s ease-out both;">+{{ $sl }}%</span>
+                        @elseif($sl < 0)<span style="font-size:0.69rem; font-weight:700; color:#dc2626; animation:slideInRight 0.4s ease-out both;">{{ $sl }}%</span>
                         @endif
                         <span class="badge badge-{{ $sk }}">{{ ucfirst($sk) }}</span>
                     </div>
@@ -266,11 +267,11 @@
                         <i class="fas fa-clock" style="color:#eab308; font-size:0.82rem;"></i>
                         <span class="card-header-title">Expiring Soon</span>
                         @if($expiring > 0)
-                        <span style="background:rgba(234,179,8,0.1); color:#b45309; border:1px solid rgba(234,179,8,0.22); padding:1px 8px; border-radius:99px; font-size:0.67rem; font-weight:700;">{{ $expiring }}</span>
+                        <span style="background:rgba(234,179,8,0.1); color:#b45309; border:1px solid rgba(234,179,8,0.22); padding:1px 8px; border-radius:99px; font-size:0.67rem; font-weight:700; animation:scaleIn 0.4s ease-out both;">{{ $expiring }}</span>
                         @endif
                     </div>
                     @if($expiring > 0)
-                    <a href="{{ route('admin.projects.index', ['status'=>'expiring']) }}" style="font-size:0.72rem; font-weight:600; color:var(--orange-600); text-decoration:none;">View all →</a>
+                    <a href="{{ route('admin.projects.index', ['status'=>'expiring']) }}" style="font-size:0.72rem; font-weight:600; color:var(--orange-600); text-decoration:none; transition:all 0.2s ease;" onmouseover="this.style.transform='translateX(2px)';" onmouseout="this.style.transform='translateX(0)';">View all →</a>
                     @endif
                 </div>
                 @forelse($expiringProjects as $project)
@@ -280,10 +281,10 @@
                     $urgColor = $dLeft <= 7 ? '#dc2626' : ($dLeft <= 14 ? '#b45309' : '#ca8a04');
                     $urgBg    = $dLeft <= 7 ? 'rgba(239,68,68,0.07)' : 'rgba(234,179,8,0.07)';
                 @endphp
-                <a href="{{ route('admin.projects.show', $project) }}" class="recent-row">
+                <a href="{{ route('admin.projects.show', $project) }}" class="recent-row" style="animation:slideInRight 0.4s ease-out both;">
                     <div style="display:flex; align-items:center; gap:0.75rem; min-width:0; flex:1;">
-                        <div style="width:36px; height:36px; border-radius:9px; background:{{ $urgBg }}; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-                            <i class="fas fa-calendar-times" style="color:{{ $urgColor }}; font-size:0.82rem;"></i>
+                        <div style="width:36px; height:36px; border-radius:9px; background:{{ $urgBg }}; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all 0.3s ease;" onmouseover="this.style.transform='scale(1.12) rotate(-10deg)'; this.style.background='{{ str_replace('0.07', '0.15', $urgBg) }}';" onmouseout="this.style.transform='scale(1) rotate(0)'; this.style.background='{{ $urgBg }}';">
+                            <i class="fas fa-calendar-times" style="color:{{ $urgColor }}; font-size:0.82rem; transition:transform 0.3s ease;"></i>
                         </div>
                         <div style="min-width:0;">
                             <p style="font-size:0.84rem; font-weight:700; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px;">{{ $project->project_title }}</p>
@@ -291,7 +292,7 @@
                         </div>
                     </div>
                     <div style="text-align:right; flex-shrink:0;">
-                        <p style="font-family:'Syne',sans-serif; font-size:1.1rem; font-weight:800; color:{{ $urgColor }}; line-height:1;">{{ $dLeft }}</p>
+                        <p style="font-family:'Syne',sans-serif; font-size:1.1rem; font-weight:800; color:{{ $urgColor }}; line-height:1; animation:counterUp 0.6s ease-out both;">{{ $dLeft }}</p>
                         <p style="font-size:0.62rem; color:{{ $urgColor }}; font-weight:600; margin-top:1px;">days left</p>
                     </div>
                 </a>
