@@ -105,7 +105,7 @@ add a billing information table tab
 
 
 
-i am developing a project monitoring system, help me with my problems and additions of the system. act like a senior developer. DONT MAKE MISTAKES
+i am developing a project monitoring system, help me with my problems and additions of the system. act like a senior developer.let me code, just help me DONT MAKE MISTAKES
 
 
 
@@ -149,6 +149,7 @@ extra updates:
 ==================================================================================================================================================================================================================================================================================================
 FIXED/added:
 <major update> added division based admin users
+		separated the css and js files of index.blade
 		in index.blade hide the division project that is not from the admin user's division.
 		implement the division based-role view only for the admin, where if the admin user has a division it will only access or view its division projects only.
 <fix> bug: billing edit modals not working properly.

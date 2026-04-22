@@ -521,12 +521,7 @@
                     <div class="section-body">
 
                         <input type="hidden" name="ld_action" id="ld_action_input" value="">
-
-                        {{--
-                        CHUNK 1: The "Start" button.
-                        WHY a separate div: JS hides this entire chunk as one unit.
-                        We don't want to toggle individual elements — we toggle chunks.
-                        --}}
+                        
                         <div id="ld-chunk-start">
                             <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.75rem;
                         padding:0.85rem 1rem; border-radius:10px;

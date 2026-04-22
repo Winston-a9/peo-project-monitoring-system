@@ -560,20 +560,30 @@ class ProjectController extends Controller
         $data['ld_start_date'] = $ldStartDate ?: null;
         $data['ld_end_date'] = $ldEndDate ?: null;
 
-        if (!$ldStartDate) {
-            $data['ld_status'] = 'inactive';
-        } else {
-            $start = \Carbon\Carbon::parse($ldStartDate)->startOfDay();
+        // ── LD Termination override ───────────────────────────────
+        $ldAction = $request->input('ld_action');
 
-            if ($today->lt($start)) {
+        if ($ldAction === 'terminate' && in_array($fresh->ld_status, ['active'])) {
+            $data['ld_status'] = 'terminated';
+            $data['ld_end_date'] = $ldEndDate ?: now()->toDateString();
+            $data['ld_start_date'] = $ldStartDate ?: $fresh->ld_start_date?->toDateString();
+        } else {
+            // ── Step 8: ld_status derivation ─────────────────────
+            if (!$ldStartDate) {
                 $data['ld_status'] = 'inactive';
-            } elseif ($workDone >= 100) {
-                $data['ld_status'] = 'completed';
-                $data['ld_end_date'] = $ldEndDate ?: $today->toDateString();
-            } elseif ($ldEndDate && $today->gte(\Carbon\Carbon::parse($ldEndDate)->startOfDay())) {
-                $data['ld_status'] = 'terminated';
             } else {
-                $data['ld_status'] = 'active';
+                $start = \Carbon\Carbon::parse($ldStartDate)->startOfDay();
+
+                if ($today->lt($start)) {
+                    $data['ld_status'] = 'inactive';
+                } elseif ($workDone >= 100) {
+                    $data['ld_status'] = 'completed';
+                    $data['ld_end_date'] = $ldEndDate ?: $today->toDateString();
+                } elseif ($ldEndDate && $today->gte(\Carbon\Carbon::parse($ldEndDate)->startOfDay())) {
+                    $data['ld_status'] = 'terminated';
+                } else {
+                    $data['ld_status'] = 'active';
+                }
             }
         }
 
