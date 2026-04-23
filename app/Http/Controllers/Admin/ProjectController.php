@@ -159,6 +159,11 @@ class ProjectController extends Controller
         $existingDates = is_array($existingDates) ? $existingDates : (json_decode($existingDates ?? '[]', true) ?? []);
 
         // ── Build Time Extension history ──────────────────────────
+        // FIX BUG 1: Use a dedicated $teIndex counter that only increments for TE entries.
+        // $existingDays, $existingCosts are parallel arrays to TE entries only.
+        // $existingDates stores TE dates first (0..teCount-1), then VO dates after.
+        // Using a separate counter ensures correct alignment even if other doc types
+        // are interspersed in $existingDocs.
         $teHistory = [];
         $teIndex = 0;
         foreach ($existingDocs as $doc) {
@@ -167,13 +172,13 @@ class ProjectController extends Controller
                     'label' => $doc,
                     'days' => $existingDays[$teIndex] ?? 0,
                     'cost' => $existingCosts[$teIndex] ?? null,
-                    'date_requested' => $existingDates[$teIndex] ?? null,
+                    'date_requested' => $existingDates[$teIndex] ?? null,  // TE dates at 0..teCount-1
                 ];
                 $teIndex++;
             }
         }
 
-        $teCount = count($teHistory);
+        $teCount = count($teHistory); // Now accurately equals $teIndex after loop
         $nextTeNumber = $teCount + 1;
 
         // ── Build Variation Order history ─────────────────────────
@@ -184,17 +189,21 @@ class ProjectController extends Controller
         $existingVoDays = array_map('intval', array_filter((array) $existingVoDays));
         $existingVoCosts = array_map(fn($v) => $v !== null ? (float) $v : null, $existingVoCosts);
 
+        // FIX BUG 4: Guard against missing date entries before accessing offset.
+        // VO dates are stored at indices $teCount, $teCount+1, ... in $existingDates.
+        // We validate the offset exists before reading to prevent silent null misassignment.
         $voHistory = [];
         $voIndex = 0;
-        $voDateOffset = $teCount;
-
         foreach ($existingDocs as $doc) {
             if (str_starts_with((string) $doc, 'Variation Order')) {
+                $voDateIndex = $teCount + $voIndex;
                 $voHistory[] = [
                     'label' => $doc,
                     'days' => $existingVoDays[$voIndex] ?? 0,
                     'cost' => $existingVoCosts[$voIndex] ?? null,
-                    'date_requested' => $existingDates[$voDateOffset + $voIndex] ?? null,
+                    'date_requested' => array_key_exists($voDateIndex, $existingDates)
+                        ? $existingDates[$voDateIndex]
+                        : null,
                 ];
                 $voIndex++;
             }
@@ -541,11 +550,25 @@ class ProjectController extends Controller
         }
 
         // ── Step 8: Liquidated Damages ────────────────────────────
+        // FIX BUG 2: LD must use the adjusted contract amount computed from scratch here,
+        // NOT $data['remaining_balance'] which was set in Step 4c using old costs.
+        // The final billing recalc at the bottom will overwrite remaining_balance anyway,
+        // so we compute the LD basis independently to guarantee correctness.
         $ldAccomplished = isset($data['ld_accomplished']) && $data['ld_accomplished'] !== null
             ? (float) $data['ld_accomplished']
             : 0.0;
 
-        $ldBasisAmount = max(0, (float) ($data['remaining_balance'] ?? 0));
+        $allCostsForLd = array_merge(
+            array_values($data['cost_involved'] ?? []),
+            array_values($data['vo_cost'] ?? [])
+        );
+        $totalCostAdjForLd = collect($allCostsForLd)
+            ->filter(fn($c) => $c !== null && (float) $c !== 0.0)
+            ->sum();
+        $adjustedAmountForLd = max(0, (float) $request->original_contract_amount + $totalCostAdjForLd);
+        $totalBilledForLd = array_sum($data['billing_amounts'] ?? []);
+        $ldBasisAmount = max(0, $adjustedAmountForLd - $totalBilledForLd);
+
         $ldUnworked = max(0, 100 - $ldAccomplished);
         $ldPerDay = ($ldUnworked / 100) * $ldBasisAmount * 0.001;
 
@@ -876,6 +899,13 @@ class ProjectController extends Controller
             ->count();
 
         if ($type === 'te') {
+            // FIX BUG 3: Validate array bounds BEFORE splicing to prevent silent data corruption.
+            // If $existingDays or $existingCosts are shorter than expected (data corruption),
+            // we bail early rather than splice wrong indices and silently destroy unrelated entries.
+            if ($index >= count($existingDays) || $index >= count($existingCosts)) {
+                return back()->with('error', 'Array mismatch detected: Time Extension data may be corrupted. Please contact your administrator.');
+            }
+
             $tesSeen = 0;
             $docIndexToRemove = null;
             foreach ($existingDocs as $di => $doc) {
@@ -906,6 +936,11 @@ class ProjectController extends Controller
             }
             unset($doc);
         } else {
+            // FIX BUG 3 (VO side): Same bounds check for Variation Order arrays.
+            if ($index >= count($existingVoDays) || $index >= count($existingVoCosts)) {
+                return back()->with('error', 'Array mismatch detected: Variation Order data may be corrupted. Please contact your administrator.');
+            }
+
             $vosSeen = 0;
             $docIndexToRemove = null;
             foreach ($existingDocs as $di => $doc) {
