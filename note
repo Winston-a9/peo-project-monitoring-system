@@ -95,7 +95,7 @@ add a billing information table tab
 
 
 
-
+Maintenance, Construction, Water Works, Material Testing and Quality Control (MTQA), Motorpool
 
 
 
@@ -122,6 +122,7 @@ edit.blade
 		move performance bond in the overview tab
 
 	performance
+	LDA DEBUGGING
 	extensions
 	billing
 	admin
