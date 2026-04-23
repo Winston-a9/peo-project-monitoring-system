@@ -146,6 +146,6 @@ class Project extends Model
 
     public function logs()
     {
-        return $this->hasMany(ProjectLog::class)->latest();
+        return $this->hasMany(\App\Models\ProjectLog::class);
     }
 }

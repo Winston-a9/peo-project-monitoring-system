@@ -144,26 +144,12 @@ class ProjectController extends Controller
         $currentDivision = $this->currentDivision();
 
         // ── Normalize stored JSON arrays ──────────────────────────
-        $existingDocs = $fresh->documents_pressed ?? [];
-        $existingDays = $fresh->extension_days ?? [];
-        $existingCosts = $fresh->cost_involved ?? [];
+        $existingDocs  = $this->normalizeArray($fresh->documents_pressed);
+        $existingDays  = $this->normalizeArray($fresh->extension_days,  'int');
+        $existingCosts = $this->normalizeArray($fresh->cost_involved,   'float');
 
-        $existingDocs = is_array($existingDocs) ? $existingDocs : (json_decode($existingDocs ?? '[]', true) ?? []);
-        $existingDays = is_array($existingDays) ? $existingDays : (json_decode($existingDays ?? '[]', true) ?? []);
-        $existingCosts = is_array($existingCosts) ? $existingCosts : (json_decode($existingCosts ?? '[]', true) ?? []);
+        $existingDates = $this->normalizeArray($fresh->date_requested);
 
-        $existingDays = array_map('intval', $existingDays);
-        $existingCosts = array_map(fn($v) => $v !== null ? (float) $v : null, $existingCosts);
-
-        $existingDates = $fresh->date_requested ?? [];
-        $existingDates = is_array($existingDates) ? $existingDates : (json_decode($existingDates ?? '[]', true) ?? []);
-
-        // ── Build Time Extension history ──────────────────────────
-        // FIX BUG 1: Use a dedicated $teIndex counter that only increments for TE entries.
-        // $existingDays, $existingCosts are parallel arrays to TE entries only.
-        // $existingDates stores TE dates first (0..teCount-1), then VO dates after.
-        // Using a separate counter ensures correct alignment even if other doc types
-        // are interspersed in $existingDocs.
         $teHistory = [];
         $teIndex = 0;
         foreach ($existingDocs as $doc) {
@@ -224,24 +210,30 @@ class ProjectController extends Controller
         $teReasonMap = [];
         $voReasonMap = [];
 
-        preg_match_all(
+        $teMatches = [];
+        if (preg_match_all(
             '/(?:\[.*?\]\s*)?(?:●\s*\d{1,2}:\d{2}\s+(?:AM|PM)(?:\s+•\s*[^
 ]+)?\n)?\s*(Time Extension\s+\d+|Extension\s+#\d+)\s+(?:added|edited|updated|deleted)\s*\n(?:Justification|Reason):\s*(.+?)(?=\n\n|\z)/si',
             $remarksText,
             $teMatches,
             PREG_SET_ORDER
-        );
+        ) === false) {
+            $teMatches = [];
+        }
         foreach ($teMatches as $match) {
             $teReasonMap[trim($match[1])] = trim($match[2]);
         }
 
-        preg_match_all(
+        $voMatches = [];
+        if (preg_match_all(
             '/(?:\[.*?\]\s*)?(?:●\s*\d{1,2}:\d{2}\s+(?:AM|PM)(?:\s+•\s*[^
 ]+)?\n)?\s*(Variation Order\s+\d+|Variation\s+#\d+)\s+(?:added|edited|updated|deleted)\s*\n(?:Justification|Reason):\s*(.+?)(?=\n\n|\z)/si',
             $remarksText,
             $voMatches,
             PREG_SET_ORDER
-        );
+        ) === false) {
+            $voMatches = [];
+        }
         foreach ($voMatches as $match) {
             $voReasonMap[trim($match[1])] = trim($match[2]);
         }
@@ -317,13 +309,25 @@ class ProjectController extends Controller
             'new_vo_reason' => 'nullable|string|max:1000',
             'new_so_reason' => 'nullable|string|max:1000',
             'ld_start_date' => 'nullable|date',
-            'ld_end_date' => 'nullable|date|after_or_equal:ld_start_date',
+            'ld_end_date' => 'nullable|date|after_or_equal:ld_start_date|before_or_equal:' . now()->addYears(10)->format('Y-m-d'),
+            'new_billing_amount' => 'nullable|numeric|min:0|max:999999999',
+            'new_billing_date'   => 'nullable|date',
         ]);
 
         // Division admins cannot reassign a project to a different division
         $newDivision = $request->division;
         if (!$this->isSuperAdmin() && $newDivision !== $this->currentDivision()) {
             abort(403, 'You cannot reassign a project to a different division.');
+        }
+
+        // ── Guard: start must be before expiry ───────────────────
+        $startDate = Carbon::parse($request->date_started);
+        $expiryDate = Carbon::parse($request->original_contract_expiry);
+
+        if ($startDate->gte($expiryDate)) {
+            return back()
+                ->withInput()
+                ->withErrors(['date_started' => 'Start date must be before the original contract expiry date.']);
         }
 
         // ── Step 1: Basic scalar fields ───────────────────────────
@@ -396,10 +400,12 @@ class ProjectController extends Controller
         // ── Step 3c: Billing summary fields ──────────────────────
         $data['total_amount_billed'] = array_sum($data['billing_amounts']);
 
-        $allCurrentCosts = array_merge(array_values($existingCosts), array_values($existingVoCosts));
-        $totalCostAdj = collect($allCurrentCosts)->filter(fn($c) => $c !== null && (float) $c !== 0.0)->sum();
-        $adjustedContractAmount = max(0, (float) $fresh->original_contract_amount + $totalCostAdj);
-        $data['remaining_balance'] = $adjustedContractAmount - $data['total_amount_billed'];
+        $data['remaining_balance'] = $this->calculateBillingBalance(
+            (float) $fresh->original_contract_amount,
+            $existingCosts,
+            $existingVoCosts,
+            $data['total_amount_billed']
+        );
 
         // ── Step 4: Append new Time Extension ────────────────────
         $newTEDays = (int) $request->input('new_te_days', 0);
@@ -459,13 +465,12 @@ class ProjectController extends Controller
         // ── Step 4c: Recalculate billing summary ──────────────────
         $data['total_amount_billed'] = array_sum($data['billing_amounts']);
 
-        $allCurrentCosts = array_merge(array_values($existingCosts), array_values($existingVoCosts));
-        $totalCostAdj = collect($allCurrentCosts)
-            ->filter(fn($c) => $c !== null && (float) $c !== 0.0)
-            ->sum();
-
-        $adjustedContractAmount = max(0, (float) $request->original_contract_amount + $totalCostAdj);
-        $data['remaining_balance'] = $adjustedContractAmount - $data['total_amount_billed'];
+        $data['remaining_balance'] = $this->calculateBillingBalance(
+            (float) $request->original_contract_amount,
+            $existingCosts,
+            $existingVoCosts,
+            $data['total_amount_billed']
+        );
 
         // ── Step 5: Handle Suspension Order ──────────────────────
         $newSODays = (int) $request->input('new_so_days', 0);
@@ -510,8 +515,15 @@ class ProjectController extends Controller
 
         $existingTEInDB = (int) array_sum(array_map('intval', $fresh->extension_days ?? []));
         $existingVOInDB = (int) array_sum(array_map('intval', array_filter((array) ($fresh->vo_days ?? []))));
-        $originalContractDays = (int) Carbon::parse($fresh->date_started)->diffInDays(Carbon::parse($fresh->original_contract_expiry)) + 1;
-        $baseContractDays = max(1, (int) ($fresh->contract_days ?? $originalContractDays) - $existingTEInDB - $existingVOInDB);
+
+        // Always derive base from actual dates — never trust stored contract_days as source of truth
+        $originalContractDays = (int) Carbon::parse($fresh->date_started)
+            ->diffInDays(Carbon::parse($fresh->original_contract_expiry)) + 1;
+
+        // base = original days, we re-add TE/VO ourselves below
+        $baseContractDays = max(1, $originalContractDays);
+
+        $data['contract_days'] = $baseContractDays + $totalTEDays + $totalVODays;
 
         $data['contract_days'] = $baseContractDays + $totalTEDays + $totalVODays;
 
@@ -640,7 +652,7 @@ class ProjectController extends Controller
             $data['completed_at'] = null;
             $effectiveExpiry = $data['revised_contract_expiry'] ?? $data['original_contract_expiry'] ?? null;
             if ($effectiveExpiry) {
-                $daysLeft = now()->startOfDay()->diffInDays(Carbon::parse($effectiveExpiry)->startOfDay(), false);
+                $daysLeft = $today->diffInDays(Carbon::parse($effectiveExpiry)->startOfDay(), false);
                 $data['status'] = $daysLeft < 0 ? 'expired' : ($daysLeft <= 30 ? 'expiring' : 'ongoing');
             } else {
                 $data['status'] = 'ongoing';
@@ -652,22 +664,19 @@ class ProjectController extends Controller
             $data['completed_at'] = null;
             $effectiveExpiry = $data['revised_contract_expiry'] ?? $data['original_contract_expiry'] ?? null;
             if ($effectiveExpiry) {
-                $daysLeft = now()->startOfDay()->diffInDays(Carbon::parse($effectiveExpiry)->startOfDay(), false);
+                $daysLeft = $today->diffInDays(Carbon::parse($effectiveExpiry)->startOfDay(), false);
                 $data['status'] = $daysLeft < 0 ? 'expired' : ($daysLeft <= 30 ? 'expiring' : 'ongoing');
             }
         }
 
         // ── Final billing summary ─────────────────────────────────
-        $allCostsAfterEdit = array_merge(
-            array_values($data['cost_involved'] ?? []),
-            array_values($data['vo_cost'] ?? [])
-        );
-        $costAdj = collect($allCostsAfterEdit)
-            ->filter(fn($c) => $c !== null && (float) $c != 0)
-            ->sum();
-
         $data['total_amount_billed'] = array_sum($data['billing_amounts']);
-        $data['remaining_balance'] = (float) $request->original_contract_amount + $costAdj - $data['total_amount_billed'];
+        $data['remaining_balance'] = $this->calculateBillingBalance(
+            (float) $request->original_contract_amount,
+            $data['cost_involved'] ?? [],
+            $data['vo_cost'] ?? [],
+            $data['total_amount_billed']
+        );
 
         $project->update($data);
 
@@ -770,8 +779,11 @@ class ProjectController extends Controller
                 return back()->with('error', 'Time Extension entry not found.');
             }
 
+            if (!isset($extensionDays[$index])) {
+                return back()->with('error', 'Time Extension entry not found.');
+            }
             $extensionDays[$index] = $days;
-            $costInvolved[$index] = ($cost !== null && $cost !== '') ? (float) $cost : null;
+            $costInvolved[$index]  = ($cost !== null && $cost !== '') ? (float) $cost : null;
             $dateRequested[$index] = $date ?: null;
 
             $data['extension_days'] = array_values($extensionDays);
@@ -785,7 +797,10 @@ class ProjectController extends Controller
                 return back()->with('error', 'Variation Order entry not found.');
             }
 
-            $voDays[$index] = $days;
+           if (!isset($voDays[$index])) {
+                return back()->with('error', 'Variation Order entry not found.');
+            }
+            $voDays[$index]  = $days;
             $voCosts[$index] = ($cost !== null && $cost !== '') ? (float) $cost : null;
             $dateRequested[$teCount + $index] = $date ?: null;
 
@@ -851,6 +866,31 @@ class ProjectController extends Controller
             : $label;
 
         return "● {$time} • {$date}\n  {$shortLabel} {$cleanAction}\n  Justification: {$cleanReason}";
+    }
+
+    private function normalizeArray(mixed $value, string $type = 'string'): array
+    {
+        $arr = is_array($value) ? $value : (json_decode($value ?? '[]', true) ?? []);
+
+        return match ($type) {
+            'int'   => array_map('intval', $arr),
+            'float' => array_map(fn($v) => $v !== null ? (float) $v : null, $arr),
+            default => $arr,
+        };
+    }
+
+    private function calculateBillingBalance(
+        float $originalAmount,
+        array $teCosts,
+        array $voCosts,
+        float $totalBilled
+    ): float {
+        $allCosts = array_merge(array_values($teCosts), array_values($voCosts));
+        $totalAdj = collect($allCosts)
+            ->filter(fn($c) => $c !== null && (float) $c !== 0.0)
+            ->sum();
+
+        return max(0, $originalAmount + $totalAdj) - $totalBilled;
     }
 
     private function splitRemarks(string $raw): array
