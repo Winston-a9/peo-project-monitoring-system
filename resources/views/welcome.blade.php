@@ -849,9 +849,6 @@
                             </a>
                         @else
                             <a href="{{ route('login') }}" class="btn-hero-primary">Get Started</a>
-                            @if (Route::has('register'))
-                                <a href="{{ route('register') }}" class="btn-hero-outline">Request Access</a>
-                            @endif
                         @endauth
                     @endif
                 </div>

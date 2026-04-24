@@ -30,6 +30,10 @@ class ProjectController extends Controller
     private const PAGINATION_SIZES = [10, 25, 50];
     private const EXPIRY_WARNING_DAYS = 30;
     private const LD_RATE_MULTIPLIER = 0.001;
+    private const MAX_BILLING_AMOUNT = 999_999_999;
+    private const MAX_TE_VO_DAYS = 9999;
+    private const MAX_EDIT_REASON_LENGTH = 1000;
+    private const REMARKS_MAX_LENGTH = 50_000;
 
     // ============================================================
     // SECTION 1: LISTING & DISPLAY
@@ -295,29 +299,29 @@ class ProjectController extends Controller
             'original_contract_amount' => 'required|numeric|min:0',
             'as_planned' => 'required|numeric|min:0|max:100',
             'work_done' => 'required|numeric|min:0|max:100',
-            'remarks_recommendation' => 'nullable|string|max:50000',
+            'remarks_recommendation' => 'nullable|string|max:' . self::REMARKS_MAX_LENGTH,
             'completed_at' => 'nullable|date',
             'issuances' => 'nullable|array',
             'issuances.*' => 'nullable|string|in:1st Notice of Negative Slippage,2nd Notice of Negative Slippage,3rd Notice of Negative Slippage,Liquidated Damages,Notice to Terminate,Notice of Expiry,Performance Bond',
-            'new_te_days' => 'nullable|integer|min:1|max:9999',
+            'new_te_days' => 'nullable|integer|min:1|max:' . self::MAX_TE_VO_DAYS,
             'new_te_cost' => 'nullable|numeric',
             'new_te_date' => 'nullable|date',
-            'new_vo_days' => 'nullable|integer|min:1|max:9999',
+            'new_vo_days' => 'nullable|integer|min:1|max:' . self::MAX_TE_VO_DAYS,
             'new_vo_cost' => 'nullable|numeric',
             'new_vo_date' => 'nullable|date',
-            'new_so_days' => 'nullable|integer|min:1|max:9999',
+            'new_so_days' => 'nullable|integer|min:1|max:' . self::MAX_TE_VO_DAYS,
             'ld_accomplished' => 'nullable|numeric|min:0|max:100',
             'ld_days_overdue' => 'nullable|integer|min:0',
             'performance_bond_date' => 'nullable|date',
             'advance_billing_pct' => 'nullable|numeric|min:0|max:100',
             'retention_pct' => 'nullable|numeric|min:0|max:100',
-            'edit_reason' => 'nullable|string|max:1000',
-            'new_te_reason' => 'nullable|string|max:1000',
-            'new_vo_reason' => 'nullable|string|max:1000',
-            'new_so_reason' => 'nullable|string|max:1000',
+            'edit_reason' => 'nullable|string|max:' . self::MAX_EDIT_REASON_LENGTH,
+            'new_te_reason' => 'nullable|string|max:' . self::MAX_EDIT_REASON_LENGTH,
+            'new_vo_reason' => 'nullable|string|max:' . self::MAX_EDIT_REASON_LENGTH,
+            'new_so_reason' => 'nullable|string|max:' . self::MAX_EDIT_REASON_LENGTH,
             'ld_start_date' => 'nullable|date',
             'ld_end_date' => 'nullable|date|after_or_equal:ld_start_date|before_or_equal:' . now(config('app.timezone'))->addYears(10)->format('Y-m-d'),
-            'new_billing_amount' => 'nullable|numeric|min:0|max:999999999',
+            'new_billing_amount' => 'nullable|numeric|min:0|max:' . self::MAX_BILLING_AMOUNT,
             'new_billing_date'   => 'nullable|date',
         ]);
 
@@ -680,7 +684,7 @@ class ProjectController extends Controller
 
         $request->validate([
             'billing_index' => 'required|integer|min:0|max:999',
-            'billing_amount' => 'required|numeric|min:0|max:999999999',
+            'billing_amount' => 'required|numeric|min:0|max:' . self::MAX_BILLING_AMOUNT,
             'billing_date' => 'nullable|date',
         ]);
 
@@ -733,10 +737,10 @@ class ProjectController extends Controller
         $request->validate([
             'edit_entry_type' => 'required|in:te,vo',
             'edit_entry_index' => 'required|integer|min:0',
-            'edit_days' => 'required|integer|min:1|max:9999',
+            'edit_days' => 'required|integer|min:1|max:' . self::MAX_TE_VO_DAYS,
             'edit_cost' => 'nullable|decimal:0,4',
             'edit_date_requested' => 'nullable|date',
-            'edit_reason' => 'required|string|max:1000',
+            'edit_reason' => 'required|string|max:' . self::MAX_EDIT_REASON_LENGTH,
         ]);
 
         $fresh = $project->fresh();
@@ -806,11 +810,12 @@ class ProjectController extends Controller
             : null;
 
         // Recompute contract_days
-        $previousTEDays = (int) array_sum(array_map('intval', $fresh->extension_days ?? []));
-        $previousVODays = (int) array_sum(array_map('intval', array_filter((array) ($fresh->vo_days ?? []))));
-        $originalContractDays = (int) ($fresh->contract_days ?? 0) - $previousTEDays - $previousVODays;
+        $originalContractDays = (int) Carbon::parse($fresh->date_started, config('app.timezone'))
+            ->diffInDays(Carbon::parse($fresh->original_contract_expiry, config('app.timezone'))) + 1;
+
         $currentTEDays = (int) array_sum(array_map('intval', $data['extension_days'] ?? $fresh->extension_days ?? []));
         $currentVODays = (int) array_sum(array_map('intval', $data['vo_days'] ?? $fresh->vo_days ?? []));
+
         $data['contract_days'] = $originalContractDays + $currentTEDays + $currentVODays;
 
         // Resolve label
@@ -904,7 +909,7 @@ class ProjectController extends Controller
         $request->validate([
             'entry_type' => 'required|in:te,vo',
             'entry_index' => 'required|integer|min:0',
-            'delete_reason' => 'required|string|max:1000',
+            'delete_reason' => 'required|string|max:' . self::MAX_EDIT_REASON_LENGTH,
         ]);
 
         $fresh = $project->fresh();
@@ -1025,9 +1030,9 @@ class ProjectController extends Controller
             ? Carbon::parse($fresh->original_contract_expiry, config('app.timezone'))->addDays($total)->toDateString()
             : null;
 
-        $previousTEDays = (int) array_sum(array_map('intval', $fresh->extension_days ?? []));
-        $previousVODays = (int) array_sum(array_map('intval', array_filter((array) ($fresh->vo_days ?? []))));
-        $originalContractDays = (int) ($fresh->contract_days ?? 0) - $previousTEDays - $previousVODays;
+        $originalContractDays = (int) Carbon::parse($fresh->date_started, config('app.timezone'))
+            ->diffInDays(Carbon::parse($fresh->original_contract_expiry, config('app.timezone'))) + 1;
+
         $data['contract_days'] = $originalContractDays + $totalTE + $totalVO;
 
         $existing = trim($fresh->remarks_recommendation ?? '');
