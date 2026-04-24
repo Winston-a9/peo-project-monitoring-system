@@ -29,7 +29,6 @@
                     @if(file_exists($logoPath))
                         <img src="{{ asset('assets/app_logo.PNG') }}" alt="PEO Logo">
                     @else
-                        <i class="fas fa-building-columns" style="color:var(--orange-400);font-size:18px;"></i>
                     @endif
                 </div>
             </div>
