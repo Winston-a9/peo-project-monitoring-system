@@ -112,7 +112,7 @@ class Project extends Model
             if (array_key_exists('as_planned', $dirty) || array_key_exists('work_done', $dirty)) {
                 \Illuminate\Support\Facades\DB::table('projects')
                     ->where('id', $project->id)
-                    ->update(['progress_updated_at' => now()]);
+                    ->update(['progress_updated_at' => now(config('app.timezone'))]);
             }
 
             $original = collect($dirty)->mapWithKeys(fn($v, $k) => [$k => $project->getOriginal($k)])->toArray();
@@ -144,7 +144,7 @@ class Project extends Model
         });
     }
 
-    public function logs()
+    public function logs(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(\App\Models\ProjectLog::class);
     }

@@ -8,6 +8,8 @@ use App\Models\ProjectLog;
 use App\Traits\DivisionScope;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
 use App\Services\ProjectReportPdf;
 use Illuminate\Support\Facades\Schema;
 
@@ -24,6 +26,11 @@ class ProjectController extends Controller
         'Fifth District Engineering Office',
     ];
 
+    // Magic constants for improved code clarity
+    private const PAGINATION_SIZES = [10, 25, 50];
+    private const EXPIRY_WARNING_DAYS = 30;
+    private const LD_RATE_MULTIPLIER = 0.001;
+
     // ============================================================
     // SECTION 1: LISTING & DISPLAY
     // ============================================================
@@ -31,9 +38,9 @@ class ProjectController extends Controller
     /**
      * List projects — division admins only see their own division.
      */
-    public function index()
+    public function index(): View
     {
-        $perPage = in_array((int) request('per_page', 10), [10, 25, 50])
+        $perPage = in_array((int) request('per_page', 10), self::PAGINATION_SIZES)
             ? (int) request('per_page', 10)
             : 10;
 
@@ -47,7 +54,7 @@ class ProjectController extends Controller
     /**
      * Show a single project — enforce division access.
      */
-    public function show(Project $project)
+    public function show(Project $project): View
     {
         $this->authorizeProjectAccess($project);
 
@@ -62,7 +69,7 @@ class ProjectController extends Controller
     // SECTION 2: CREATE
     // ============================================================
 
-    public function create()
+    public function create(): View
     {
         $divisions = self::DIVISIONS;
         $currentDivision = $this->currentDivision(); // null for super admin
@@ -74,7 +81,7 @@ class ProjectController extends Controller
      * Validate and store a new project.
      * Division admins can only create projects for their own division.
      */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         $request->validate([
             'in_charge' => 'required|string|max:255',
@@ -117,10 +124,10 @@ class ProjectController extends Controller
         ]);
 
         // Auto-derive status from expiry
-        $expiry = Carbon::parse($data['original_contract_expiry']);
-        $daysLeft = now()->startOfDay()->diffInDays($expiry->startOfDay(), false);
+        $expiry = Carbon::parse($data['original_contract_expiry'], config('app.timezone'))->startOfDay();
+        $daysLeft = now(config('app.timezone'))->startOfDay()->diffInDays($expiry, false);
 
-        $data['status'] = $daysLeft < 0 ? 'expired' : ($daysLeft <= 30 ? 'expiring' : 'ongoing');
+        $data['status'] = $daysLeft < 0 ? 'expired' : ($daysLeft <= self::EXPIRY_WARNING_DAYS ? 'expiring' : 'ongoing');
         $data['completed_at'] = null;
 
         Project::create($data);
@@ -134,7 +141,7 @@ class ProjectController extends Controller
     // SECTION 3: EDIT — FORM PREPARATION
     // ============================================================
 
-    public function edit(Project $project)
+    public function edit(Project $project): View
     {
         $this->authorizeProjectAccess($project);
 
@@ -270,7 +277,7 @@ class ProjectController extends Controller
     // SECTION 4: UPDATE — MAIN PROJECT SAVE
     // ============================================================
 
-    public function update(Request $request, Project $project)
+    public function update(Request $request, Project $project): RedirectResponse
     {
         $this->authorizeProjectAccess($project);
 
@@ -288,7 +295,7 @@ class ProjectController extends Controller
             'original_contract_amount' => 'required|numeric|min:0',
             'as_planned' => 'required|numeric|min:0|max:100',
             'work_done' => 'required|numeric|min:0|max:100',
-            'remarks_recommendation' => 'nullable|string',
+            'remarks_recommendation' => 'nullable|string|max:50000',
             'completed_at' => 'nullable|date',
             'issuances' => 'nullable|array',
             'issuances.*' => 'nullable|string|in:1st Notice of Negative Slippage,2nd Notice of Negative Slippage,3rd Notice of Negative Slippage,Liquidated Damages,Notice to Terminate,Notice of Expiry,Performance Bond',
@@ -309,7 +316,7 @@ class ProjectController extends Controller
             'new_vo_reason' => 'nullable|string|max:1000',
             'new_so_reason' => 'nullable|string|max:1000',
             'ld_start_date' => 'nullable|date',
-            'ld_end_date' => 'nullable|date|after_or_equal:ld_start_date|before_or_equal:' . now()->addYears(10)->format('Y-m-d'),
+            'ld_end_date' => 'nullable|date|after_or_equal:ld_start_date|before_or_equal:' . now(config('app.timezone'))->addYears(10)->format('Y-m-d'),
             'new_billing_amount' => 'nullable|numeric|min:0|max:999999999',
             'new_billing_date'   => 'nullable|date',
         ]);
@@ -321,8 +328,8 @@ class ProjectController extends Controller
         }
 
         // ── Guard: start must be before expiry ───────────────────
-        $startDate = Carbon::parse($request->date_started);
-        $expiryDate = Carbon::parse($request->original_contract_expiry);
+        $startDate = Carbon::parse($request->date_started, config('app.timezone'));
+        $expiryDate = Carbon::parse($request->original_contract_expiry, config('app.timezone'));
 
         if ($startDate->gte($expiryDate)) {
             return back()
@@ -368,23 +375,21 @@ class ProjectController extends Controller
         // ── Step 3: Carry forward existing arrays from DB ─────────
         $fresh = $project->fresh();
 
-        $existingDocs = is_array($fresh->documents_pressed) ? $fresh->documents_pressed : [];
-        $existingDays = is_array($fresh->extension_days) ? array_map('intval', $fresh->extension_days) : [];
-        $existingCosts = is_array($fresh->cost_involved) ? array_map(fn($v) => $v !== null ? (float) $v : null, $fresh->cost_involved) : [];
+        $existingDocs  = $this->normalizeArray($fresh->documents_pressed);
+        $existingDays  = $this->normalizeArray($fresh->extension_days, 'int');
+        $existingCosts = $this->normalizeArray($fresh->cost_involved, 'float');
         $existingSuspDay = (int) ($fresh->suspension_days ?? 0);
-        $existingVoDays = is_array($fresh->vo_days) ? array_map('intval', array_filter((array) $fresh->vo_days)) : [];
-        $existingVoCosts = is_array($fresh->vo_cost) ? array_map(fn($v) => $v !== null ? (float) $v : null, $fresh->vo_cost) : [];
-        $existingDates = is_array($fresh->date_requested) ? $fresh->date_requested : [];
+        $existingVoDays  = $this->normalizeArray($fresh->vo_days, 'int');
+        $existingVoCosts = $this->normalizeArray($fresh->vo_cost, 'float');
+        $existingDates   = $this->normalizeArray($fresh->date_requested);
 
         $currentTECount = collect($existingDocs)
             ->filter(fn($d) => str_starts_with((string) $d, 'Time Extension'))
             ->count();
 
         // ── Step 3b: Carry forward & append billing ───────────────
-        $existingBillingAmounts = is_array($fresh->billing_amounts)
-            ? array_map('floatval', $fresh->billing_amounts) : [];
-        $existingBillingDates = is_array($fresh->billing_dates)
-            ? $fresh->billing_dates : [];
+        $existingBillingAmounts = $this->normalizeArray($fresh->billing_amounts, 'float');
+        $existingBillingDates   = $this->normalizeArray($fresh->billing_dates);
 
         $newBillingAmount = $request->input('new_billing_amount');
         $newBillingDate = $request->input('new_billing_date');
@@ -396,16 +401,6 @@ class ProjectController extends Controller
 
         $data['billing_amounts'] = array_values($existingBillingAmounts);
         $data['billing_dates'] = array_values($existingBillingDates);
-
-        // ── Step 3c: Billing summary fields ──────────────────────
-        $data['total_amount_billed'] = array_sum($data['billing_amounts']);
-
-        $data['remaining_balance'] = $this->calculateBillingBalance(
-            (float) $fresh->original_contract_amount,
-            $existingCosts,
-            $existingVoCosts,
-            $data['total_amount_billed']
-        );
 
         // ── Step 4: Append new Time Extension ────────────────────
         $newTEDays = (int) $request->input('new_te_days', 0);
@@ -462,16 +457,6 @@ class ProjectController extends Controller
             ? null
             : array_values(array_map(fn($d) => ($d !== '' ? $d : null), $existingDates));
 
-        // ── Step 4c: Recalculate billing summary ──────────────────
-        $data['total_amount_billed'] = array_sum($data['billing_amounts']);
-
-        $data['remaining_balance'] = $this->calculateBillingBalance(
-            (float) $request->original_contract_amount,
-            $existingCosts,
-            $existingVoCosts,
-            $data['total_amount_billed']
-        );
-
         // ── Step 5: Handle Suspension Order ──────────────────────
         $newSODays = (int) $request->input('new_so_days', 0);
         $newSOReason = trim($request->input('new_so_reason', ''));
@@ -510,15 +495,15 @@ class ProjectController extends Controller
         $totalTEDays = (int) array_sum($data['extension_days']);
         $totalVODays = (int) array_sum(array_map('intval', array_filter((array) ($data['vo_days'] ?? []))));
         $totalSODays = (int) ($data['suspension_days'] ?? 0);
-        $baseExpiry = Carbon::parse($request->original_contract_expiry);
+        $baseExpiry = Carbon::parse($request->original_contract_expiry, config('app.timezone'));
         $totalExtDays = $totalTEDays + $totalVODays;
 
         $existingTEInDB = (int) array_sum(array_map('intval', $fresh->extension_days ?? []));
         $existingVOInDB = (int) array_sum(array_map('intval', array_filter((array) ($fresh->vo_days ?? []))));
 
         // Always derive base from actual dates — never trust stored contract_days as source of truth
-        $originalContractDays = (int) Carbon::parse($fresh->date_started)
-            ->diffInDays(Carbon::parse($fresh->original_contract_expiry)) + 1;
+        $originalContractDays = (int) Carbon::parse($fresh->date_started, config('app.timezone'))
+            ->diffInDays(Carbon::parse($fresh->original_contract_expiry, config('app.timezone'))) + 1;
 
         // base = original days, we re-add TE/VO ourselves below
         $baseContractDays = max(1, $originalContractDays);
@@ -582,7 +567,7 @@ class ProjectController extends Controller
         $ldBasisAmount = max(0, $adjustedAmountForLd - $totalBilledForLd);
 
         $ldUnworked = max(0, 100 - $ldAccomplished);
-        $ldPerDay = ($ldUnworked / 100) * $ldBasisAmount * 0.001;
+        $ldPerDay = ($ldUnworked / 100) * $ldBasisAmount * self::LD_RATE_MULTIPLIER;
 
         $data['ld_per_day'] = $ldPerDay > 0 ? round($ldPerDay, 2) : null;
         $data['ld_unworked'] = $ldPerDay > 0 ? round($ldUnworked, 2) : null;
@@ -590,7 +575,7 @@ class ProjectController extends Controller
         $ldStartDate = $request->input('ld_start_date');
         $ldEndDate = $request->input('ld_end_date');
         $workDone = (float) $request->input('work_done', 0);
-        $today = now()->startOfDay();
+        $today = now(config('app.timezone'))->startOfDay();
 
         $data['ld_start_date'] = $ldStartDate ?: null;
         $data['ld_end_date'] = $ldEndDate ?: null;
@@ -600,21 +585,21 @@ class ProjectController extends Controller
 
         if ($ldAction === 'terminate' && in_array($fresh->ld_status, ['active'])) {
             $data['ld_status'] = 'terminated';
-            $data['ld_end_date'] = $ldEndDate ?: now()->toDateString();
+            $data['ld_end_date'] = $ldEndDate ?: now(config('app.timezone'))->toDateString();
             $data['ld_start_date'] = $ldStartDate ?: $fresh->ld_start_date?->toDateString();
         } else {
             // ── Step 8: ld_status derivation ─────────────────────
             if (!$ldStartDate) {
                 $data['ld_status'] = 'inactive';
             } else {
-                $start = \Carbon\Carbon::parse($ldStartDate)->startOfDay();
+                $start = \Carbon\Carbon::parse($ldStartDate, config('app.timezone'))->startOfDay();
 
                 if ($today->lt($start)) {
                     $data['ld_status'] = 'inactive';
                 } elseif ($workDone >= 100) {
                     $data['ld_status'] = 'completed';
                     $data['ld_end_date'] = $ldEndDate ?: $today->toDateString();
-                } elseif ($ldEndDate && $today->gte(\Carbon\Carbon::parse($ldEndDate)->startOfDay())) {
+                } elseif ($ldEndDate && $today->gte(\Carbon\Carbon::parse($ldEndDate, config('app.timezone'))->startOfDay())) {
                     $data['ld_status'] = 'terminated';
                 } else {
                     $data['ld_status'] = 'active';
@@ -627,9 +612,9 @@ class ProjectController extends Controller
             in_array($data['ld_status'], ['active', 'terminated', 'completed'])
             && !empty($data['ld_start_date'])
         ) {
-            $start = \Carbon\Carbon::parse($data['ld_start_date'])->startOfDay();
+            $start = \Carbon\Carbon::parse($data['ld_start_date'], config('app.timezone'))->startOfDay();
             $end = !empty($data['ld_end_date'])
-                ? \Carbon\Carbon::parse($data['ld_end_date'])->startOfDay()
+                ? \Carbon\Carbon::parse($data['ld_end_date'], config('app.timezone'))->startOfDay()
                 : $today;
             $daysOverdue = (int) max(0, $start->diffInDays($end, false));
         }
@@ -652,8 +637,8 @@ class ProjectController extends Controller
             $data['completed_at'] = null;
             $effectiveExpiry = $data['revised_contract_expiry'] ?? $data['original_contract_expiry'] ?? null;
             if ($effectiveExpiry) {
-                $daysLeft = $today->diffInDays(Carbon::parse($effectiveExpiry)->startOfDay(), false);
-                $data['status'] = $daysLeft < 0 ? 'expired' : ($daysLeft <= 30 ? 'expiring' : 'ongoing');
+                $daysLeft = $today->diffInDays(Carbon::parse($effectiveExpiry, config('app.timezone'))->startOfDay(), false);
+                $data['status'] = $daysLeft < 0 ? 'expired' : ($daysLeft <= self::EXPIRY_WARNING_DAYS ? 'expiring' : 'ongoing');
             } else {
                 $data['status'] = 'ongoing';
             }
@@ -664,8 +649,8 @@ class ProjectController extends Controller
             $data['completed_at'] = null;
             $effectiveExpiry = $data['revised_contract_expiry'] ?? $data['original_contract_expiry'] ?? null;
             if ($effectiveExpiry) {
-                $daysLeft = $today->diffInDays(Carbon::parse($effectiveExpiry)->startOfDay(), false);
-                $data['status'] = $daysLeft < 0 ? 'expired' : ($daysLeft <= 30 ? 'expiring' : 'ongoing');
+                $daysLeft = $today->diffInDays(Carbon::parse($effectiveExpiry, config('app.timezone'))->startOfDay(), false);
+                $data['status'] = $daysLeft < 0 ? 'expired' : ($daysLeft <= self::EXPIRY_WARNING_DAYS ? 'expiring' : 'ongoing');
             }
         }
 
@@ -689,13 +674,13 @@ class ProjectController extends Controller
     // SECTION 5: BILLING
     // ============================================================
 
-    public function updateBilling(Request $request, Project $project)
+    public function updateBilling(Request $request, Project $project): RedirectResponse
     {
         $this->authorizeProjectAccess($project);
 
         $request->validate([
-            'billing_index' => 'required|integer|min:0',
-            'billing_amount' => 'required|numeric|min:0',
+            'billing_index' => 'required|integer|min:0|max:999',
+            'billing_amount' => 'required|numeric|min:0|max:999999999',
             'billing_date' => 'nullable|date',
         ]);
 
@@ -704,8 +689,8 @@ class ProjectController extends Controller
         $amount = (float) $request->input('billing_amount');
         $date = $request->input('billing_date');
 
-        $billingAmounts = is_array($fresh->billing_amounts) ? array_map('floatval', $fresh->billing_amounts) : [];
-        $billingDates = is_array($fresh->billing_dates) ? $fresh->billing_dates : [];
+        $billingAmounts = $this->normalizeArray($fresh->billing_amounts, 'float');
+        $billingDates = $this->normalizeArray($fresh->billing_dates);
 
         if (!isset($billingAmounts[$index])) {
             return back()->with('error', 'Billing entry not found.');
@@ -741,7 +726,7 @@ class ProjectController extends Controller
     // SECTION 6: TIME EXTENSION / VARIATION ORDER — INLINE EDIT & DELETE
     // ============================================================
 
-    public function updateEntry(Request $request, Project $project)
+    public function updateEntry(Request $request, Project $project): RedirectResponse
     {
         $this->authorizeProjectAccess($project);
 
@@ -762,8 +747,8 @@ class ProjectController extends Controller
         $date = $request->input('edit_date_requested');
         $reason = trim($request->input('edit_reason'));
 
-        $existingDocs = is_array($fresh->documents_pressed) ? $fresh->documents_pressed : [];
-        $dateRequested = is_array($fresh->date_requested) ? $fresh->date_requested : [];
+        $existingDocs = $this->normalizeArray($fresh->documents_pressed);
+        $dateRequested = $this->normalizeArray($fresh->date_requested);
 
         $teCount = collect($existingDocs)
             ->filter(fn($d) => str_starts_with((string) $d, 'Time Extension'))
@@ -772,8 +757,8 @@ class ProjectController extends Controller
         $data = [];
 
         if ($type === 'te') {
-            $extensionDays = is_array($fresh->extension_days) ? array_map('intval', $fresh->extension_days) : [];
-            $costInvolved = is_array($fresh->cost_involved) ? $fresh->cost_involved : [];
+            $extensionDays = $this->normalizeArray($fresh->extension_days, 'int');
+            $costInvolved = $this->normalizeArray($fresh->cost_involved, 'float');
 
             if (!isset($extensionDays[$index])) {
                 return back()->with('error', 'Time Extension entry not found.');
@@ -790,8 +775,8 @@ class ProjectController extends Controller
             $data['cost_involved'] = array_values($costInvolved);
             $data['date_requested'] = array_values($dateRequested);
         } else {
-            $voDays = is_array($fresh->vo_days) ? array_map('intval', array_filter((array) $fresh->vo_days)) : [];
-            $voCosts = is_array($fresh->vo_cost) ? $fresh->vo_cost : [];
+            $voDays = $this->normalizeArray($fresh->vo_days, 'int');
+            $voCosts = $this->normalizeArray($fresh->vo_cost, 'float');
 
             if (!isset($voDays[$index])) {
                 return back()->with('error', 'Variation Order entry not found.');
@@ -817,7 +802,7 @@ class ProjectController extends Controller
         $total = $allExtDays + $allVODays + ($hasSO ? $sodays : 0);
 
         $data['revised_contract_expiry'] = $total > 0
-            ? Carbon::parse($fresh->original_contract_expiry)->addDays($total)->toDateString()
+            ? Carbon::parse($fresh->original_contract_expiry, config('app.timezone'))->addDays($total)->toDateString()
             : null;
 
         // Recompute contract_days
@@ -856,7 +841,7 @@ class ProjectController extends Controller
 
     private function formatEntryRemark(string $label, string $action, string $reason): string
     {
-        $timestamp = now();
+        $timestamp = now(config('app.timezone'));
         $time = $timestamp->format('h:i A');
         $date = $timestamp->format('F d, Y');
         $cleanAction = $action === 'edited' ? 'updated' : $action;
@@ -912,7 +897,7 @@ class ProjectController extends Controller
         ];
     }
 
-    public function destroyEntry(Request $request, Project $project)
+    public function destroyEntry(Request $request, Project $project): RedirectResponse
     {
         $this->authorizeProjectAccess($project);
 
@@ -927,12 +912,12 @@ class ProjectController extends Controller
         $index = (int) $request->input('entry_index');
         $reason = trim($request->input('delete_reason'));
 
-        $existingDocs = is_array($fresh->documents_pressed) ? $fresh->documents_pressed : [];
-        $existingDays = is_array($fresh->extension_days) ? array_map('intval', $fresh->extension_days) : [];
-        $existingCosts = is_array($fresh->cost_involved) ? $fresh->cost_involved : [];
-        $existingDates = is_array($fresh->date_requested) ? $fresh->date_requested : [];
-        $existingVoDays = is_array($fresh->vo_days) ? array_map('intval', array_filter((array) $fresh->vo_days)) : [];
-        $existingVoCosts = is_array($fresh->vo_cost) ? $fresh->vo_cost : [];
+        $existingDocs  = $this->normalizeArray($fresh->documents_pressed);
+        $existingDays  = $this->normalizeArray($fresh->extension_days, 'int');
+        $existingCosts = $this->normalizeArray($fresh->cost_involved, 'float');
+        $existingDates = $this->normalizeArray($fresh->date_requested);
+        $existingVoDays  = $this->normalizeArray($fresh->vo_days, 'int');
+        $existingVoCosts = $this->normalizeArray($fresh->vo_cost, 'float');
 
         $teCount = collect($existingDocs)
             ->filter(fn($d) => str_starts_with((string) $d, 'Time Extension'))
@@ -1037,7 +1022,7 @@ class ProjectController extends Controller
         $total = $totalTE + $totalVO + ($hasSO ? $totalSO : 0);
 
         $data['revised_contract_expiry'] = $total > 0
-            ? Carbon::parse($fresh->original_contract_expiry)->addDays($total)->toDateString()
+            ? Carbon::parse($fresh->original_contract_expiry, config('app.timezone'))->addDays($total)->toDateString()
             : null;
 
         $previousTEDays = (int) array_sum(array_map('intval', $fresh->extension_days ?? []));
@@ -1061,18 +1046,18 @@ class ProjectController extends Controller
     // SECTION 7: STATUS MANAGEMENT
     // ============================================================
 
-    public function reactivate(Project $project)
+    public function reactivate(Project $project): RedirectResponse
     {
         $this->authorizeProjectAccess($project);
 
         $effectiveExpiry = $project->revised_contract_expiry ?? $project->original_contract_expiry;
 
-        $daysLeft = now()->startOfDay()->diffInDays(
-            Carbon::parse($effectiveExpiry)->startOfDay(),
+        $daysLeft = now(config('app.timezone'))->startOfDay()->diffInDays(
+            Carbon::parse($effectiveExpiry, config('app.timezone'))->startOfDay(),
             false
         );
 
-        $status = $daysLeft < 0 ? 'expired' : ($daysLeft <= 30 ? 'expiring' : 'ongoing');
+        $status = $daysLeft < 0 ? 'expired' : ($daysLeft <= self::EXPIRY_WARNING_DAYS ? 'expiring' : 'ongoing');
 
         $project->update([
             'status' => $status,
@@ -1089,7 +1074,7 @@ class ProjectController extends Controller
     // SECTION 8: REPORTS & PDF GENERATION
     // ============================================================
 
-    public function reports()
+    public function reports(): View
     {
         $projects = $this->divisionQuery()->orderBy('date_started', 'desc')->get();
         $total = $projects->count();
@@ -1100,10 +1085,15 @@ class ProjectController extends Controller
         return view('admin.reports.index', compact('projects', 'total', 'ongoing', 'completed', 'expired'));
     }
 
-    public function generateReport()
+    public function generateReport(): \Symfony\Component\HttpFoundation\StreamedResponse
     {
-        $clean = fn(string $s) => iconv('UTF-8', 'windows-1252//TRANSLIT//IGNORE', $s) ?: $s;
-
+        $clean = function (string $s): string {
+            if (!extension_loaded('iconv')) {
+                return preg_replace('/[^\x20-\x7E]/', '?', $s);
+            }
+            $result = iconv('UTF-8', 'windows-1252//TRANSLIT//IGNORE', $s);
+            return ($result !== false && $result !== '') ? $result : preg_replace('/[^\x20-\x7E]/', '?', $s);
+        };
         // Start from division-scoped base
         $query = $this->divisionQuery();
 
@@ -1121,27 +1111,30 @@ class ProjectController extends Controller
         }
 
         $status = request('status', 'all');
+        $expiryThreshold = now(config('app.timezone'))->addDays(self::EXPIRY_WARNING_DAYS);
+        $today = now(config('app.timezone'));
+
         if ($status === 'completed') {
             $query->where('status', 'completed');
         } elseif ($status === 'active') {
-            $query->where('status', 'ongoing')->where(function ($q) {
-                $q->whereNull('revised_contract_expiry')->where('original_contract_expiry', '>', now()->addDays(30))
-                    ->orWhere('revised_contract_expiry', '>', now()->addDays(30));
+            $query->where('status', 'ongoing')->where(function ($q) use ($expiryThreshold) {
+                $q->whereNull('revised_contract_expiry')->where('original_contract_expiry', '>', $expiryThreshold)
+                    ->orWhere('revised_contract_expiry', '>', $expiryThreshold);
             });
         } elseif ($status === 'expiring') {
-            $query->where('status', '!=', 'completed')->where(function ($q) {
-                $q->whereNull('revised_contract_expiry')->whereBetween('original_contract_expiry', [now(), now()->addDays(30)])
-                    ->orWhereBetween('revised_contract_expiry', [now(), now()->addDays(30)]);
+            $query->where('status', '!=', 'completed')->where(function ($q) use ($today, $expiryThreshold) {
+                $q->whereNull('revised_contract_expiry')->whereBetween('original_contract_expiry', [$today, $expiryThreshold])
+                    ->orWhereBetween('revised_contract_expiry', [$today, $expiryThreshold]);
             });
         } elseif ($status === 'expired') {
-            $query->where('status', '!=', 'completed')->where(function ($q) {
-                $q->whereNull('revised_contract_expiry')->where('original_contract_expiry', '<', now())
-                    ->orWhere('revised_contract_expiry', '<', now());
+            $query->where('status', '!=', 'completed')->where(function ($q) use ($today) {
+                $q->whereNull('revised_contract_expiry')->where('original_contract_expiry', '<', $today)
+                    ->orWhere('revised_contract_expiry', '<', $today);
             });
         } elseif ($status === 'ongoing') {
-            $query->where('status', 'ongoing')->where(function ($q) {
-                $q->whereNull('revised_contract_expiry')->where('original_contract_expiry', '>=', now())
-                    ->orWhere('revised_contract_expiry', '>=', now());
+            $query->where('status', 'ongoing')->where(function ($q) use ($today) {
+                $q->whereNull('revised_contract_expiry')->where('original_contract_expiry', '>=', $today)
+                    ->orWhere('revised_contract_expiry', '>=', $today);
             });
         }
 
@@ -1169,7 +1162,7 @@ class ProjectController extends Controller
         $pdf = new ProjectReportPdf('L', 'mm', 'A4');
         $pdf->SetAutoPageBreak(false);
         $pdf->SetMargins(10, 10, 10);
-        $pdf->setGeneratedAt(now()->format('F d, Y  h:i A'));
+        $pdf->setGeneratedAt(now(config('app.timezone'))->format('F d, Y  h:i A'));
         $pdf->setFilterLabel($filterLabel);
         $pdf->AddPage();
 
@@ -1231,9 +1224,10 @@ class ProjectController extends Controller
             );
         }
 
-        $filename = 'projects-report-' . now()->format('Y-m-d') . '.pdf';
-        $pdf->Output('D', $filename);
-        exit;
+        $filename = 'projects-report-' . now(config('app.timezone'))->format('Y-m-d') . '.pdf';
+        return response()->streamDownload(function () use ($pdf, $filename) {
+            $pdf->Output($filename, 'D');
+        }, $filename, ['Content-Type' => 'application/pdf']);
     }
 
 
@@ -1241,26 +1235,32 @@ class ProjectController extends Controller
     // SECTION 9: SINGLE PROJECT PDF
     // ============================================================
 
-    public function exportPdf(Project $project)
+    public function exportPdf(Project $project): \Symfony\Component\HttpFoundation\StreamedResponse
     {
         $this->authorizeProjectAccess($project);
 
-        $clean = fn(string $s) => iconv('UTF-8', 'windows-1252//TRANSLIT//IGNORE', $s) ?: $s;
+        $clean = function (string $s): string {
+    if (!extension_loaded('iconv')) {
+        return preg_replace('/[^\x20-\x7E]/', '?', $s);
+    }
+    $result = iconv('UTF-8', 'windows-1252//TRANSLIT//IGNORE', $s);
+    return ($result !== false && $result !== '') ? $result : preg_replace('/[^\x20-\x7E]/', '?', $s);
+};
         $fresh = $project->fresh();
 
-        $docs = is_array($fresh->documents_pressed) ? $fresh->documents_pressed : [];
-        $teDays = is_array($fresh->extension_days) ? array_map('intval', $fresh->extension_days) : [];
-        $teCosts = is_array($fresh->cost_involved) ? $fresh->cost_involved : [];
-        $dates = is_array($fresh->date_requested) ? $fresh->date_requested : [];
-        $voDays = is_array($fresh->vo_days) ? array_map('intval', array_filter((array) $fresh->vo_days)) : [];
-        $voCosts = is_array($fresh->vo_cost) ? $fresh->vo_cost : [];
-        $issuances = is_array($fresh->issuances) ? $fresh->issuances : [];
-        $billingAmounts = is_array($fresh->billing_amounts) ? $fresh->billing_amounts : [];
-        $billingDates = is_array($fresh->billing_dates) ? $fresh->billing_dates : [];
+        $docs = $this->normalizeArray($fresh->documents_pressed);
+        $teDays = $this->normalizeArray($fresh->extension_days, 'int');
+        $teCosts = $this->normalizeArray($fresh->cost_involved, 'float');
+        $dates = $this->normalizeArray($fresh->date_requested);
+        $voDays = $this->normalizeArray($fresh->vo_days, 'int');
+        $voCosts = $this->normalizeArray($fresh->vo_cost, 'float');
+        $issuances = $this->normalizeArray($fresh->issuances);
+        $billingAmounts = $this->normalizeArray($fresh->billing_amounts, 'float');
+        $billingDates = $this->normalizeArray($fresh->billing_dates);
 
         $allCosts = array_merge(
-            is_array($fresh->cost_involved) ? $fresh->cost_involved : [],
-            is_array($fresh->vo_cost) ? $fresh->vo_cost : []
+            $this->normalizeArray($fresh->cost_involved, 'float'),
+            $this->normalizeArray($fresh->vo_cost, 'float')
         );
         $totalAdj = collect($allCosts)->filter(fn($c) => $c !== null && (float) $c != 0)->sum();
         $adjusted = max(0, (float) $fresh->original_contract_amount + $totalAdj);
@@ -1270,7 +1270,7 @@ class ProjectController extends Controller
         $pdf = new ProjectReportPdf('P', 'mm', 'A4');
         $pdf->SetMargins(15, 15, 15);
         $pdf->SetAutoPageBreak(true, 20);
-        $pdf->setGeneratedAt(now()->format('F d, Y  h:i A'));
+        $pdf->setGeneratedAt(now(config('app.timezone'))->format('F d, Y  h:i A'));
         $pdf->suppressAutoHeader(true);
         $pdf->AddPage();
         $pdf->SetFont('Helvetica', '', 9);
@@ -1344,7 +1344,7 @@ class ProjectController extends Controller
                 $date = $billingDates[$i] ?? null;
                 $pdf->Cell(15, 6, (string) ($i + 1), 0, 0, 'C', true);
                 $pdf->Cell(100, 6, 'PHP ' . number_format((float) $amount, 2), 0, 0, 'L', true);
-                $pdf->Cell(0, 6, $date ? Carbon::parse($date)->format('M d, Y') : 'N/A', 0, 1, 'L', true);
+                $pdf->Cell(0, 6, $date ? Carbon::parse($date, config('app.timezone'))->format('M d, Y') : 'N/A', 0, 1, 'L', true);
             }
         } else {
             $pdf->Cell(0, 6, 'No billing entries recorded.', 0, 1);
@@ -1366,7 +1366,7 @@ class ProjectController extends Controller
                     $even = $teIndex % 2 === 0;
                     $pdf->SetFillColor($even ? 250 : 255, $even ? 248 : 255, $even ? 245 : 255);
                     $cost = isset($teCosts[$teIndex]) && $teCosts[$teIndex] !== null ? 'PHP ' . number_format((float) $teCosts[$teIndex], 2) : 'N/A';
-                    $date = isset($dates[$teIndex]) && $dates[$teIndex] ? Carbon::parse($dates[$teIndex])->format('M d, Y') : 'N/A';
+                    $date = isset($dates[$teIndex]) && $dates[$teIndex] ? Carbon::parse($dates[$teIndex], config('app.timezone'))->format('M d, Y') : 'N/A';
                     $pdf->Cell(8, 6, (string) ($teIndex + 1), 0, 0, 'C', true);
                     $pdf->Cell(55, 6, $clean($doc), 0, 0, 'L', true);
                     $pdf->Cell(20, 6, (string) ($teDays[$teIndex] ?? 0), 0, 0, 'C', true);
@@ -1396,7 +1396,7 @@ class ProjectController extends Controller
                     $even = $voIndex % 2 === 0;
                     $pdf->SetFillColor($even ? 250 : 255, $even ? 248 : 255, $even ? 245 : 255);
                     $cost = isset($voCosts[$voIndex]) && $voCosts[$voIndex] !== null ? 'PHP ' . number_format((float) $voCosts[$voIndex], 2) : 'N/A';
-                    $date = isset($dates[$teCount + $voIndex]) && $dates[$teCount + $voIndex] ? Carbon::parse($dates[$teCount + $voIndex])->format('M d, Y') : 'N/A';
+                    $date = isset($dates[$teCount + $voIndex]) && $dates[$teCount + $voIndex] ? Carbon::parse($dates[$teCount + $voIndex], config('app.timezone'))->format('M d, Y') : 'N/A';
                     $pdf->Cell(8, 6, (string) ($voIndex + 1), 0, 0, 'C', true);
                     $pdf->Cell(55, 6, $clean($doc), 0, 0, 'L', true);
                     $pdf->Cell(20, 6, (string) ($voDays[$voIndex] ?? 0), 0, 0, 'C', true);
@@ -1433,9 +1433,10 @@ class ProjectController extends Controller
             $pdf->Cell(0, 6, 'No remarks recorded.', 0, 1);
         }
 
-        $filename = 'project-' . str_replace(['/', ' '], '-', $fresh->contract_id) . '-' . now()->format('Y-m-d') . '.pdf';
-        $pdf->Output($filename, 'D');
-        exit;
+        $filename = 'project-' . str_replace(['/', ' '], '-', $fresh->contract_id) . '-' . now(config('app.timezone'))->format('Y-m-d') . '.pdf';
+        return response()->streamDownload(function () use ($pdf, $filename) {
+            $pdf->Output($filename, 'D');
+        }, $filename, ['Content-Type' => 'application/pdf']);
     }
 
 
@@ -1443,7 +1444,7 @@ class ProjectController extends Controller
     // SECTION 10: DELETE
     // ============================================================
 
-    public function destroy(Project $project)
+    public function destroy(Project $project): RedirectResponse
     {
         $this->authorizeProjectAccess($project);
 
