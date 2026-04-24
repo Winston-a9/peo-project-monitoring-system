@@ -1,468 +1,692 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Sign In — {{ config('app.name', 'PEO Monitor') }}</title>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sign In — {{ config('app.name', 'PEO Monitor') }}</title>
 
-        <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700|syne:700,800" rel="stylesheet" />
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-        @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
-            @vite(['resources/css/app.css', 'resources/js/app.js'])
-        @endif
+    @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @endif
 
-        <style>
-            :root {
-                --orange-50:  #fff7ed;
-                --orange-100: #ffedd5;
-                --orange-400: #fb923c;
-                --orange-500: #f97316;
-                --orange-600: #ea580c;
-                --orange-700: #c2410c;
-                --ink:        #1a0f00;
-                --ink-muted:  #6b4f35;
-                --surface:    #fffaf5;
-                --border:     rgba(249,115,22,0.18);
-                --radius:     14px;
-            }
+    <style>
+        /* ── RESET & BASE ── */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-            *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --orange-900: #7c2d12;
+            --orange-800: #9a3412;
+            --orange-600: #ea580c;
+            --orange-500: #f97316;
+            --orange-400: #fb923c;
+            --orange-300: #fdba74;
+            --orange-100: #ffedd5;
+            --orange-50:  #fff7ed;
+            --amber-400:  #fbbf24;
+            --amber-300:  #fcd34d;
 
-            body {
-                font-family: 'Instrument Sans', sans-serif;
-                background-color: var(--surface);
-                color: var(--ink);
-                min-height: 100vh;
-                display: flex;
-                overflow: hidden;
-            }
+            --dark-950: #0a0a0a;
+            --dark-900: #111111;
+            --dark-800: #1a1a1a;
+            --dark-700: #242424;
+            --dark-600: #2e2e2e;
+            --dark-400: #525252;
+            --dark-300: #737373;
+            --dark-200: #a3a3a3;
+            --dark-100: #d4d4d4;
 
-            /* ── NOISE ── */
-            body::before {
-                content: '';
-                position: fixed; inset: 0;
-                background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
-                background-size: 200px;
-                pointer-events: none; z-index: 0;
-            }
+            --glass-bg:     rgba(255,255,255,0.04);
+            --glass-border: rgba(255,255,255,0.08);
 
-            /* ── LEFT PANEL ── */
-            .panel-left {
-                position: relative;
-                width: 45%;
-                background: var(--orange-500);
-                display: flex;
-                flex-direction: column;
-                justify-content: space-between;
-                padding: 3rem;
-                overflow: hidden;
-                flex-shrink: 0;
-            }
+            --font-display: 'Syne', sans-serif;
+            --font-body:    'DM Sans', sans-serif;
+            --ease-spring:  cubic-bezier(0.34, 1.56, 0.64, 1);
+            --ease-smooth:  cubic-bezier(0.23, 1, 0.32, 1);
+        }
 
-            .panel-left::before {
-                content: '';
-                position: absolute;
-                top: -120px; right: -120px;
-                width: 400px; height: 400px;
-                border-radius: 50%;
-                background: rgba(255,255,255,0.1);
-            }
+        html { scroll-behavior: smooth; }
 
-            .panel-left::after {
-                content: '';
-                position: absolute;
-                bottom: -80px; left: -80px;
-                width: 300px; height: 300px;
-                border-radius: 50%;
-                background: rgba(255,255,255,0.07);
-            }
+        body {
+            font-family: var(--font-body);
+            background: var(--dark-950);
+            color: #fff;
+            min-height: 100vh;
+            overflow: hidden;
+            display: flex;
+            -webkit-font-smoothing: antialiased;
+        }
 
-            .panel-logo {
-                display: flex;
-                align-items: center;
-                gap: 0.75rem;
-                font-family: 'Syne', sans-serif;
-                font-weight: 800;
-                font-size: 1.3rem;
-                color: white;
-                letter-spacing: -0.02em;
-                position: relative; z-index: 1;
-            }
+        /* ── NOISE OVERLAY ── */
+        body::before {
+            content: '';
+            position: fixed; inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+            pointer-events: none; z-index: 9999; opacity: 0.4;
+        }
 
-            .panel-logo-icon {
-                width: 38px; height: 38px;
-                background: rgba(255,255,255,0.2);
-                border-radius: 10px;
-                display: flex; align-items: center; justify-content: center;
-                font-size: 1.1rem;
-                backdrop-filter: blur(6px);
-                border: 1px solid rgba(255,255,255,0.25);
-            }
+        /* ──────────────────────────────────────────
+           LEFT PANEL — brand / art side
+        ────────────────────────────────────────── */
+        .panel-left {
+            position: relative;
+            width: 48%;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 3rem;
+            overflow: hidden;
+        }
 
-            .panel-content {
-                position: relative; z-index: 1;
-            }
+        /* Same layered bg as hero section */
+        .panel-left-bg {
+            position: absolute; inset: 0;
+            background: radial-gradient(ellipse 80% 60% at 65% 30%, rgba(234,88,12,0.22) 0%, transparent 60%),
+                        radial-gradient(ellipse 50% 40% at 15% 80%, rgba(251,146,60,0.12) 0%, transparent 50%),
+                        linear-gradient(170deg, var(--dark-950) 0%, #0f0a06 50%, #0a0a0a 100%);
+        }
 
-            .panel-content h2 {
-                font-family: 'Syne', sans-serif;
-                font-size: clamp(1.8rem, 3vw, 2.6rem);
-                font-weight: 800;
-                color: white;
-                line-height: 1.1;
-                letter-spacing: -0.03em;
-                margin-bottom: 1.25rem;
-            }
+        /* Grid pattern matching hero-grid */
+        .panel-left-grid {
+            position: absolute; inset: 0;
+            background-image:
+                linear-gradient(rgba(249,115,22,0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(249,115,22,0.05) 1px, transparent 1px);
+            background-size: 50px 50px;
+            mask-image: radial-gradient(ellipse 70% 70% at 60% 40%, black, transparent);
+        }
 
-            .panel-content p {
-                color: rgba(255,255,255,0.8);
-                font-size: 0.95rem;
-                line-height: 1.75;
-                max-width: 300px;
-            }
+        /* Glow orbs matching hero-orb-1 / 2 */
+        .panel-left-orb1 {
+            position: absolute; top: 10%; right: 5%;
+            width: 420px; height: 420px;
+            background: radial-gradient(circle, rgba(234,88,12,0.18) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: breathe 8s ease-in-out infinite;
+        }
+        .panel-left-orb2 {
+            position: absolute; bottom: 5%; left: -5%;
+            width: 280px; height: 280px;
+            background: radial-gradient(circle, rgba(251,146,60,0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: breathe 11s ease-in-out infinite reverse;
+        }
 
-            .panel-features {
-                position: relative; z-index: 1;
-                display: flex;
-                flex-direction: column;
-                gap: 0.75rem;
-            }
+        /* Diagonal accent line */
+        .panel-left-accent {
+            position: absolute; top: 0; right: 20%;
+            width: 1px; height: 100%;
+            background: linear-gradient(180deg, transparent 0%, rgba(249,115,22,0.12) 30%, rgba(249,115,22,0.06) 70%, transparent 100%);
+        }
 
-            .panel-feature {
-                display: flex;
-                align-items: center;
-                gap: 0.75rem;
-                color: rgba(255,255,255,0.9);
-                font-size: 0.875rem;
-                font-weight: 500;
-            }
+        @keyframes breathe {
+            0%,100% { transform: scale(1); opacity: 1; }
+            50%      { transform: scale(1.15); opacity: 0.7; }
+        }
 
-            .panel-feature-dot {
-                width: 28px; height: 28px;
-                background: rgba(255,255,255,0.15);
-                border-radius: 8px;
-                display: flex; align-items: center; justify-content: center;
-                font-size: 0.8rem;
-                flex-shrink: 0;
-                border: 1px solid rgba(255,255,255,0.2);
-            }
+        /* Brand logo — same structure as navbar-brand */
+        .brand-logo {
+            position: relative; z-index: 2;
+            display: flex; align-items: center; gap: 0.875rem;
+            text-decoration: none; color: inherit;
+        }
 
-            /* ── RIGHT PANEL ── */
-            .panel-right {
-                flex: 1;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                padding: 3rem 2rem;
-                position: relative; z-index: 1;
-                overflow-y: auto;
-            }
+        .brand-logo-ring-wrap {
+            width: 44px; height: 44px; position: relative; flex-shrink: 0;
+        }
 
-            .form-box {
-                width: 100%;
-                max-width: 420px;
-                animation: fadeUp 0.6s ease both;
-            }
+        .brand-logo-ring {
+            position: absolute; inset: -3px;
+            border-radius: 13px;
+            background: conic-gradient(from 0deg, var(--orange-500), var(--amber-400), var(--orange-500));
+            animation: spin-slow 6s linear infinite;
+            opacity: 0.7;
+        }
 
-            .form-heading {
-                margin-bottom: 2rem;
-            }
+        @keyframes spin-slow { to { transform: rotate(360deg); } }
 
-            .form-heading h1 {
-                font-family: 'Syne', sans-serif;
-                font-size: 1.8rem;
-                font-weight: 800;
-                color: var(--ink);
-                letter-spacing: -0.03em;
-                margin-bottom: 0.4rem;
-            }
+        .brand-logo-inner {
+            position: relative; width: 100%; height: 100%;
+            border-radius: 11px; background: var(--dark-900);
+            display: flex; align-items: center; justify-content: center; overflow: hidden;
+        }
+        .brand-logo-inner img { width: 100%; height: 100%; object-fit: contain; border-radius: 11px; }
 
-            .form-heading p {
-                color: var(--ink-muted);
-                font-size: 0.9rem;
-            }
+        .brand-text-group { line-height: 1; }
 
-            /* Session Status */
-            .alert-success {
-                padding: 0.875rem 1rem;
-                background: #f0fdf4;
-                border: 1px solid #bbf7d0;
-                color: #166534;
-                border-radius: 10px;
-                font-size: 0.875rem;
-                display: flex;
-                align-items: center;
-                gap: 0.6rem;
-                margin-bottom: 1.5rem;
-            }
+        .brand-org {
+            font-family: var(--font-display);
+            font-size: 13px; font-weight: 700;
+            color: var(--orange-400); letter-spacing: 0.3px;
+        }
 
-            /* Form */
-            .form-group {
-                margin-bottom: 1.25rem;
-            }
+        .brand-sub {
+            font-size: 10.5px; color: var(--dark-200);
+            margin-top: 3px; letter-spacing: 0.4px;
+        }
 
-            label {
-                display: block;
-                font-size: 0.8rem;
-                font-weight: 600;
-                color: var(--ink);
-                letter-spacing: 0.03em;
-                text-transform: uppercase;
-                margin-bottom: 0.5rem;
-            }
+        /* Hero content area */
+        .panel-hero {
+            position: relative; z-index: 2;
+        }
 
-            .input-wrap {
-                position: relative;
-            }
+        .panel-eyebrow {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            margin-bottom: 1.75rem;
+            opacity: 0; transform: translateY(16px);
+            animation: fade-up 0.7s var(--ease-smooth) 0.15s forwards;
+        }
 
-            .input-icon {
-                position: absolute;
-                left: 1rem;
-                top: 50%;
-                transform: translateY(-50%);
-                color: var(--ink-muted);
-                font-size: 0.85rem;
-                pointer-events: none;
-            }
+        .eyebrow-badge {
+            display: flex; align-items: center; gap: 0.5rem;
+            padding: 0.4rem 1rem;
+            background: rgba(249,115,22,0.08);
+            border: 1px solid rgba(249,115,22,0.2);
+            border-radius: 100px;
+            font-size: 11px; font-weight: 600; letter-spacing: 0.5px;
+            text-transform: uppercase; color: var(--orange-400);
+        }
 
-            input[type="email"],
-            input[type="password"] {
-                width: 100%;
-                padding: 0.8rem 1rem 0.8rem 2.6rem;
-                border: 1.5px solid rgba(26,15,0,0.12);
-                border-radius: 10px;
-                font-size: 0.9rem;
-                font-family: 'Instrument Sans', sans-serif;
-                color: var(--ink);
-                background: white;
-                transition: border-color 0.2s, box-shadow 0.2s;
-                outline: none;
-            }
+        .eyebrow-pulse {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: #4ade80;
+            box-shadow: 0 0 0 0 rgba(74,222,128,0.5);
+            animation: ring-pulse 2.5s ease-in-out infinite;
+        }
 
-            input[type="email"]:focus,
-            input[type="password"]:focus {
-                border-color: var(--orange-500);
-                box-shadow: 0 0 0 3px rgba(249,115,22,0.12);
-            }
+        @keyframes ring-pulse {
+            0%  { box-shadow: 0 0 0 0   rgba(74,222,128,0.6); }
+            70% { box-shadow: 0 0 0 8px rgba(74,222,128,0);   }
+            100%{ box-shadow: 0 0 0 0   rgba(74,222,128,0);   }
+        }
 
-            input.error {
-                border-color: #ef4444;
-            }
+        .panel-h1 {
+            font-family: var(--font-display);
+            font-size: clamp(2.8rem, 4.5vw, 4.2rem);
+            font-weight: 800; line-height: 1.05; letter-spacing: -2px;
+            margin-bottom: 1.5rem;
+            opacity: 0; transform: translateY(20px);
+            animation: fade-up 0.8s var(--ease-smooth) 0.25s forwards;
+        }
 
-            .field-error {
-                color: #ef4444;
-                font-size: 0.8rem;
-                margin-top: 0.4rem;
-                display: flex;
-                align-items: center;
-                gap: 0.3rem;
-            }
+        .h1-white { display: block; color: #fff; }
 
-            /* Remember + Forgot */
-            .form-row {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                margin-bottom: 1.5rem;
-            }
+        .h1-gradient {
+            background: linear-gradient(90deg, var(--orange-500) 0%, var(--amber-400) 50%, var(--orange-400) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
 
-            .remember-wrap {
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-            }
+        .panel-lead {
+            font-size: 0.975rem; color: var(--dark-200);
+            line-height: 1.85; max-width: 400px;
+            font-weight: 300;
+            opacity: 0; transform: translateY(16px);
+            animation: fade-up 0.8s var(--ease-smooth) 0.4s forwards;
+        }
 
-            input[type="checkbox"] {
-                width: 15px; height: 15px;
-                accent-color: var(--orange-500);
-                cursor: pointer;
-            }
+        .panel-lead strong { color: var(--dark-100); font-weight: 500; }
 
-            .remember-wrap label {
-                font-size: 0.85rem;
-                font-weight: 400;
-                text-transform: none;
-                letter-spacing: 0;
-                color: var(--ink-muted);
-                cursor: pointer;
-                margin-bottom: 0;
-            }
+        @keyframes fade-up { to { opacity: 1; transform: translateY(0); } }
 
-            .forgot-link {
-                font-size: 0.85rem;
-                font-weight: 600;
-                color: var(--orange-600);
-                text-decoration: none;
-                transition: color 0.2s;
-            }
+        /* Feature bullets — matching preview-point style */
+        .panel-features {
+            position: relative; z-index: 2;
+            display: flex; flex-direction: column; gap: 0.75rem;
+            opacity: 0; transform: translateY(16px);
+            animation: fade-up 0.8s var(--ease-smooth) 0.55s forwards;
+        }
 
-            .forgot-link:hover { color: var(--orange-700); }
+        .panel-feature {
+            display: flex; align-items: center; gap: 0.875rem;
+            padding: 0.9rem 1.1rem;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
 
-            /* Submit */
-            .btn-submit {
-                width: 100%;
-                padding: 0.875rem;
-                background: var(--orange-500);
-                color: white;
-                font-family: 'Instrument Sans', sans-serif;
-                font-size: 0.975rem;
-                font-weight: 600;
-                border: none;
-                border-radius: 10px;
-                cursor: pointer;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 0.6rem;
-                box-shadow: 0 4px 18px rgba(249,115,22,0.4), inset 0 1px 0 rgba(255,255,255,0.2);
-                transition: all 0.25s;
-                letter-spacing: 0.01em;
-            }
+        .panel-feature:hover {
+            border-color: rgba(249,115,22,0.18);
+            background: rgba(249,115,22,0.05);
+        }
 
-            .btn-submit:hover {
-                background: var(--orange-600);
-                transform: translateY(-1px);
-                box-shadow: 0 6px 24px rgba(249,115,22,0.5);
-            }
+        .panel-feature-icon {
+            width: 32px; height: 32px; flex-shrink: 0;
+            background: rgba(249,115,22,0.1);
+            border: 1px solid rgba(249,115,22,0.15);
+            border-radius: 9px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px; color: var(--orange-400);
+        }
 
-            .btn-submit:active { transform: translateY(0); }
+        .panel-feature-text { font-size: 13px; color: var(--dark-100); font-weight: 400; }
 
-            /* Register link */
-            .register-row {
-                text-align: center;
-                margin-top: 1.5rem;
-                padding-top: 1.5rem;
-                border-top: 1px solid rgba(26,15,0,0.08);
-                font-size: 0.875rem;
-                color: var(--ink-muted);
-            }
+        /* ──────────────────────────────────────────
+           RIGHT PANEL — form side
+        ────────────────────────────────────────── */
+        .panel-right {
+            flex: 1;
+            position: relative;
+            display: flex; align-items: center; justify-content: center;
+            padding: 3rem 2rem;
+            overflow-y: auto;
+        }
 
-            .register-row a {
-                color: var(--orange-600);
-                font-weight: 600;
-                text-decoration: none;
-                transition: color 0.2s;
-            }
+        /* Subtle border separator */
+        .panel-right::before {
+            content: '';
+            position: absolute; top: 10%; left: 0;
+            width: 1px; height: 80%;
+            background: linear-gradient(180deg, transparent, rgba(249,115,22,0.15), transparent);
+        }
 
-            .register-row a:hover { color: var(--orange-700); }
+        /* Faint glow echoing hero-orb */
+        .panel-right-glow {
+            position: absolute; top: 30%; right: 10%;
+            width: 300px; height: 300px;
+            background: radial-gradient(circle, rgba(249,115,22,0.06) 0%, transparent 70%);
+            pointer-events: none;
+        }
 
-            /* Animation */
-            @keyframes fadeUp {
-                from { opacity: 0; transform: translateY(20px); }
-                to   { opacity: 1; transform: translateY(0); }
-            }
+        /* ── FORM BOX — styled like KPI panel ── */
+        .form-box {
+            position: relative; z-index: 1;
+            width: 100%; max-width: 440px;
+            opacity: 0; transform: translateY(30px) scale(0.97);
+            animation: fade-up 0.9s var(--ease-smooth) 0.3s forwards;
+        }
 
-            /* Responsive */
-            @media (max-width: 768px) {
-                .panel-left { display: none; }
-                .panel-right { padding: 2rem 1.5rem; }
-            }
-        </style>
-    </head>
-    <body>
+        /* Top accent bar like kpi-top-bar */
+        .form-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(32px) saturate(150%);
+            border: 1px solid rgba(249,115,22,0.15);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 24px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);
+        }
 
-        <!-- Left decorative panel -->
-        <div class="panel-left">
-            <div class="panel-logo">
-                <div class="panel-logo-icon">📊</div>
-                PEO Monitor
+        .form-top-bar {
+            height: 3px;
+            background: linear-gradient(90deg, var(--orange-600), var(--amber-400), var(--orange-500));
+        }
+
+        .form-body { padding: 2.25rem 2rem; }
+
+        /* Heading */
+        .form-heading { margin-bottom: 2rem; }
+
+        .form-heading h1 {
+            font-family: var(--font-display);
+            font-size: 1.7rem; font-weight: 800;
+            letter-spacing: -0.04em; color: #fff;
+            margin-bottom: 0.375rem;
+        }
+
+        .form-heading p {
+            font-size: 13px; color: var(--dark-300); font-weight: 300;
+        }
+
+        /* Live badge, matching kpi-live-dot */
+        .form-live-badge {
+            display: flex; align-items: center; gap: 0.45rem;
+            font-size: 11px; font-weight: 600; color: #4ade80;
+            padding: 0.3rem 0.75rem;
+            background: rgba(74,222,128,0.08);
+            border: 1px solid rgba(74,222,128,0.15);
+            border-radius: 100px;
+            width: fit-content;
+            margin-bottom: 1.75rem;
+        }
+
+        .live-dot {
+            width: 6px; height: 6px; border-radius: 50%; background: #4ade80;
+            animation: ring-pulse 2s ease-in-out infinite;
+        }
+
+        /* Alert */
+        .alert-success {
+            display: flex; align-items: center; gap: 0.6rem;
+            padding: 0.875rem 1rem;
+            background: rgba(74,222,128,0.06);
+            border: 1px solid rgba(74,222,128,0.15);
+            color: #4ade80;
+            border-radius: 12px;
+            font-size: 13px;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Form groups */
+        .form-group { margin-bottom: 1.25rem; }
+
+        .form-label {
+            display: block;
+            font-size: 11px; font-weight: 600;
+            letter-spacing: 1px; text-transform: uppercase;
+            color: var(--dark-200);
+            margin-bottom: 0.55rem;
+        }
+
+        .input-wrap { position: relative; }
+
+        .input-icon {
+            position: absolute; left: 1rem; top: 50%; transform: translateY(-50%);
+            font-size: 13px; color: var(--dark-400); pointer-events: none;
+            transition: color 0.2s;
+        }
+
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            padding: 0.8rem 1rem 0.8rem 2.75rem;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            font-family: var(--font-body);
+            font-size: 14px; color: #fff;
+            outline: none;
+            transition: border-color 0.25s, box-shadow 0.25s, background 0.25s;
+        }
+
+        input[type="email"]::placeholder,
+        input[type="password"]::placeholder { color: var(--dark-400); }
+
+        input[type="email"]:hover,
+        input[type="password"]:hover {
+            border-color: rgba(255,255,255,0.14);
+            background: rgba(255,255,255,0.06);
+        }
+
+        input[type="email"]:focus,
+        input[type="password"]:focus {
+            border-color: rgba(249,115,22,0.45);
+            background: rgba(249,115,22,0.04);
+            box-shadow: 0 0 0 4px rgba(249,115,22,0.1);
+        }
+
+        input[type="email"]:focus ~ .input-icon,
+        input[type="password"]:focus ~ .input-icon { color: var(--orange-400); }
+
+        /* Flip icon to be after input for the ~ selector trick — use JS instead */
+        .input-wrap:focus-within .input-icon { color: var(--orange-400); }
+
+        input.is-error { border-color: rgba(248,113,113,0.45) !important; }
+        input.is-error:focus { box-shadow: 0 0 0 4px rgba(248,113,113,0.1) !important; }
+
+        .field-error {
+            display: flex; align-items: center; gap: 0.35rem;
+            font-size: 12px; color: #f87171;
+            margin-top: 0.45rem;
+        }
+
+        /* Divider row — remember + forgot */
+        .form-row {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 1.75rem;
+        }
+
+        .remember-wrap { display: flex; align-items: center; gap: 0.5rem; }
+
+        input[type="checkbox"] {
+            width: 15px; height: 15px;
+            accent-color: var(--orange-500); cursor: pointer;
+        }
+
+        .remember-label {
+            font-size: 13px; color: var(--dark-300);
+            font-weight: 400; cursor: pointer;
+        }
+
+        .forgot-link {
+            font-size: 13px; font-weight: 600;
+            color: var(--orange-400); text-decoration: none;
+            transition: color 0.2s;
+        }
+        .forgot-link:hover { color: var(--orange-300); }
+
+        /* Submit button — matching btn-cta-primary */
+        .btn-submit {
+            width: 100%;
+            display: flex; align-items: center; justify-content: center; gap: 0.7rem;
+            padding: 0.95rem;
+            font-family: var(--font-body);
+            font-size: 14px; font-weight: 600; color: #fff;
+            background: linear-gradient(135deg, var(--orange-600) 0%, var(--orange-500) 100%);
+            border: 1px solid var(--orange-500);
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 24px rgba(249,115,22,0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+            transition: all 0.35s var(--ease-spring);
+            position: relative; overflow: hidden;
+        }
+
+        .btn-submit::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.1) 100%);
+            opacity: 0; transition: opacity 0.3s;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px) scale(1.01);
+            box-shadow: 0 8px 40px rgba(249,115,22,0.45), inset 0 1px 0 rgba(255,255,255,0.15);
+        }
+
+        .btn-submit:hover::before { opacity: 1; }
+        .btn-submit:active { transform: translateY(0) scale(1); }
+
+        /* Register row */
+        .register-row {
+            text-align: center;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(255,255,255,0.06);
+            font-size: 13px; color: var(--dark-400);
+        }
+
+        .register-row a {
+            color: var(--orange-400); font-weight: 600;
+            text-decoration: none; transition: color 0.2s;
+        }
+        .register-row a:hover { color: var(--orange-300); }
+
+        /* Timestamp footer — matching kpi-footer-row */
+        .form-footer {
+            display: flex; align-items: center; justify-content: center;
+            gap: 0.4rem;
+            margin-top: 2rem;
+            font-size: 11px; color: var(--dark-400);
+        }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 900px) {
+            .panel-left { display: none; }
+            .panel-right { padding: 2rem 1.25rem; }
+            .panel-right::before { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ══════════════ LEFT PANEL — brand & hero ══════════════ -->
+    <div class="panel-left">
+        <div class="panel-left-bg"></div>
+        <div class="panel-left-grid"></div>
+        <div class="panel-left-orb1"></div>
+        <div class="panel-left-orb2"></div>
+        <div class="panel-left-accent"></div>
+
+        <!-- Brand — mirrors navbar-brand -->
+        <a class="brand-logo" href="/">
+            <div class="brand-logo-ring-wrap">
+                <div class="brand-logo-inner">
+                    @php $logoPath = public_path('assets/app_logo.PNG'); @endphp
+                    @if(file_exists($logoPath))
+                        <img src="{{ asset('assets/app_logo.PNG') }}" alt="PEO Logo">
+                    @else
+                        <i class="fas fa-building-columns" style="color:var(--orange-400);font-size:18px;"></i>
+                    @endif
+                </div>
+            </div>
+            <div class="brand-text-group">
+                <div class="brand-org">Provincial Engineering Office</div>
+                <div class="brand-sub">Bukidnon · Project Monitoring System</div>
+            </div>
+        </a>
+
+        <!-- Hero headline — mirrors hero-content -->
+        <div class="panel-hero">
+            <div class="panel-eyebrow">
+                <div class="eyebrow-badge">
+                    <div class="eyebrow-pulse"></div>
+                    Secure Access Portal
+                </div>
             </div>
 
-            <div class="panel-content">
-                <h2>Project<br>Document<br>Control</h2>
-                <p>Track every submittal, transmittal, and project record from a single, secure dashboard built for engineering teams.</p>
-            </div>
+            <h1 class="panel-h1">
+                <span class="h1-white">Project</span>
+                <span class="h1-white"><span class="h1-gradient">Document</span></span>
+                <span class="h1-white">Command</span>
+            </h1>
 
-            <div class="panel-features">
-                <div class="panel-feature">
-                    <div class="panel-feature-dot"><i class="fas fa-shield-alt"></i></div>
-                    Enterprise-grade security
-                </div>
-                <div class="panel-feature">
-                    <div class="panel-feature-dot"><i class="fas fa-bolt"></i></div>
-                    Real-time status tracking
-                </div>
-                <div class="panel-feature">
-                    <div class="panel-feature-dot"><i class="fas fa-users"></i></div>
-                    Multi-team collaboration
-                </div>
-            </div>
+            <p class="panel-lead">
+                Centralized monitoring for <strong>infrastructure contracts</strong>, time extensions, liquidated damages, and billing across all Bukidnon engineering districts.
+            </p>
         </div>
 
-        <!-- Right form panel -->
-        <div class="panel-right">
-            <div class="form-box">
+        <!-- Feature bullets — mirrors preview-points -->
+        <div class="panel-features">
+            <div class="panel-feature">
+                <div class="panel-feature-icon"><i class="fas fa-shield-halved"></i></div>
+                <span class="panel-feature-text">Enterprise-grade security & role-based access</span>
+            </div>
+            <div class="panel-feature">
+                <div class="panel-feature-icon"><i class="fas fa-bolt"></i></div>
+                <span class="panel-feature-text">Real-time contract & deadline tracking</span>
+            </div>
+            <div class="panel-feature">
+                <div class="panel-feature-icon"><i class="fas fa-users"></i></div>
+                <span class="panel-feature-text">Multi-district collaboration platform</span>
+            </div>
+        </div>
+    </div>
 
-                <div class="form-heading">
-                    <h1>Welcome back</h1>
-                    <p>Sign in to your PEO Monitor account</p>
-                </div>
+    <!-- ══════════════ RIGHT PANEL — login form ══════════════ -->
+    <div class="panel-right">
+        <div class="panel-right-glow"></div>
 
-                @if (session('status'))
-                    <div class="alert-success">
-                        <i class="fas fa-check-circle"></i>
-                        <span>{{ session('status') }}</span>
-                    </div>
-                @endif
+        <div class="form-box">
 
-                <form method="POST" action="{{ route('login') }}">
-                    @csrf
+            <!-- Card — mirrors kpi-panel -->
+            <div class="form-card">
+                <div class="form-top-bar"></div>
+                <div class="form-body">
 
-                    <div class="form-group">
-                        <label for="email">Email Address</label>
-                        <div class="input-wrap">
-                            <i class="fas fa-envelope input-icon"></i>
-                            <input id="email" type="email" name="email"
-                                value="{{ old('email') }}"
-                                class="{{ $errors->has('email') ? 'error' : '' }}"
-                                required autofocus autocomplete="username"
-                                placeholder="you@example.com" />
-                        </div>
-                        @error('email')
-                            <p class="field-error"><i class="fas fa-exclamation-circle"></i> {{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div class="form-group">
-                        <label for="password">Password</label>
-                        <div class="input-wrap">
-                            <i class="fas fa-lock input-icon"></i>
-                            <input id="password" type="password" name="password"
-                                class="{{ $errors->has('password') ? 'error' : '' }}"
-                                required autocomplete="current-password"
-                                placeholder="••••••••" />
-                        </div>
-                        @error('password')
-                            <p class="field-error"><i class="fas fa-exclamation-circle"></i> {{ $message }}</p>
-                        @enderror
+                    <div class="form-heading">
+                        <h1>Welcome back</h1>
+                        <p>Sign in to your PEO Monitor account</p>
                     </div>
 
-                    <div class="form-row">
-                        <div class="remember-wrap">
-                            <input id="remember_me" type="checkbox" name="remember">
-                            <label for="remember_me">Remember me</label>
-                        </div>
-                        @if (Route::has('password.request'))
-                            <a href="{{ route('password.request') }}" class="forgot-link">Forgot password?</a>
-                        @endif
+                    <!-- Live badge — mirrors kpi-live-dot -->
+                    <div class="form-live-badge">
+                        <div class="live-dot"></div>
+                        System Online · {{ now()->format('M d, Y') }}
                     </div>
 
-                    <button type="submit" class="btn-submit">
-                        <i class="fas fa-sign-in-alt"></i>
-                        Sign In
-                    </button>
-
-                    @if (Route::has('register'))
-                        <div class="register-row">
-                            Don't have an account?
-                            <a href="{{ route('register') }}">Request access</a>
+                    @if (session('status'))
+                        <div class="alert-success">
+                            <i class="fas fa-check-circle"></i>
+                            <span>{{ session('status') }}</span>
                         </div>
                     @endif
-                </form>
 
+                    <form method="POST" action="{{ route('login') }}">
+                        @csrf
+
+                        <!-- Email -->
+                        <div class="form-group">
+                            <label class="form-label" for="email">Email Address</label>
+                            <div class="input-wrap">
+                                <i class="fas fa-envelope input-icon"></i>
+                                <input
+                                    id="email" type="email" name="email"
+                                    value="{{ old('email') }}"
+                                    class="{{ $errors->has('email') ? 'is-error' : '' }}"
+                                    required autofocus autocomplete="username"
+                                    placeholder="you@peo.gov.ph"
+                                />
+                            </div>
+                            @error('email')
+                                <p class="field-error">
+                                    <i class="fas fa-exclamation-circle"></i> {{ $message }}
+                                </p>
+                            @enderror
+                        </div>
+
+                        <!-- Password -->
+                        <div class="form-group">
+                            <label class="form-label" for="password">Password</label>
+                            <div class="input-wrap">
+                                <i class="fas fa-lock input-icon"></i>
+                                <input
+                                    id="password" type="password" name="password"
+                                    class="{{ $errors->has('password') ? 'is-error' : '' }}"
+                                    required autocomplete="current-password"
+                                    placeholder="••••••••"
+                                />
+                            </div>
+                            @error('password')
+                                <p class="field-error">
+                                    <i class="fas fa-exclamation-circle"></i> {{ $message }}
+                                </p>
+                            @enderror
+                        </div>
+
+                        <!-- Remember + Forgot -->
+                        <div class="form-row">
+                            <div class="remember-wrap">
+                                <input id="remember_me" type="checkbox" name="remember">
+                                <label class="remember-label" for="remember_me">Remember me</label>
+                            </div>
+                            @if (Route::has('password.request'))
+                                <a href="{{ route('password.request') }}" class="forgot-link">
+                                    Forgot password?
+                                </a>
+                            @endif
+                        </div>
+
+                        <!-- Submit -->
+                        <button type="submit" class="btn-submit">
+                            <i class="fas fa-arrow-right-to-bracket"></i>
+                            Sign In to System
+                        </button>
+
+                        @if (Route::has('register'))
+                            <div class="register-row">
+                                Don't have an account?
+                                <a href="{{ route('register') }}">Request access</a>
+                            </div>
+                        @endif
+                    </form>
+
+                </div>
             </div>
-        </div>
 
-    </body>
+            <!-- Footer timestamp — mirrors kpi-timestamp -->
+            <div class="form-footer">
+                <i class="fas fa-circle-dot" style="color:#4ade80;font-size:8px;"></i>
+                &copy; {{ now()->year }} Provincial Engineering Office — Bukidnon
+            </div>
+
+        </div>
+    </div>
+
+</body>
 </html>

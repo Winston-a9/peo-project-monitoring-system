@@ -24,7 +24,6 @@
     <div class="navbar-inner">
         <a class="navbar-brand" href="/">
             <div class="navbar-logo">
-                <div class="navbar-logo-ring"></div>
                 <div class="navbar-logo-inner">
                     @php $logoPath = public_path('assets/app_logo.PNG'); @endphp
                     @if(file_exists($logoPath))
@@ -57,11 +56,8 @@
                 </a>
             @else
                 @if (Route::has('login'))
-                    <a href="{{ route('login') }}" class="btn-nav-ghost">
-                        <i class="fas fa-sign-in-alt"></i> Sign In
-                    </a>
                     <a href="{{ route('login') }}" class="btn-nav-primary">
-                        <i class="fas fa-arrow-right-to-bracket"></i> Access System
+                        <i class="fas fa-arrow-right-to-bracket"></i> Log In
                     </a>
                 @endif
             @endauth
