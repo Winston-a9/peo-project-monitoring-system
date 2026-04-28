@@ -1646,6 +1646,83 @@ body::before {
     color: var(--dark-200);
 }
 
+/* ─── INLINE STYLE EXTRACTIONS ────────────────────────────────── */
+.text-orange-400 {
+    color: var(--orange-400);
+}
+
+.text-green-400 {
+    color: #4ade80;
+}
+
+.text-amber-400 {
+    color: var(--amber-400);
+}
+
+.icon-8px {
+    font-size: 8px;
+}
+
+.icon-9px {
+    font-size: 9px;
+}
+
+.icon-10px {
+    font-size: 10px;
+}
+
+.icon-11px {
+    font-size: 11px;
+}
+
+.mt-narrow {
+    margin-top: 0.875rem;
+}
+
+.flex-center-gap-4 {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.flex-center-gap-5 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.justify-center {
+    justify-content: center;
+}
+
+.w-72pct {
+    width: 72%;
+}
+
+.w-88pct {
+    width: 88%;
+}
+
+.w-45pct {
+    width: 45%;
+}
+
+.bg-amber-400 {
+    background: var(--amber-400);
+}
+
+.bg-red-f87171 {
+    background: #f87171;
+}
+
+.footer-timestamp {
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 11px;
+    color: var(--dark-400);
+}
+
 /* ─── SCROLL ANIMATION CLASSES ─────────────────────────────────── */
 .reveal {
     opacity: 0;

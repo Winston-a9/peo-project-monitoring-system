@@ -86,18 +86,16 @@
 
     .sb-logo-icon {
         width: 36px; height: 36px;
-        background: var(--orange-500);
         border-radius: 10px;
         display: flex; align-items: center; justify-content: center;
-        font-size: 0.95rem;
-        box-shadow: 0 2px 12px rgba(249,115,22,0.4);
         flex-shrink: 0;
-        transition: box-shadow 0.2s;
+        overflow: hidden;
     }
 
-    #sidebar:hover .sb-logo-icon,
-    #sidebar.pinned .sb-logo-icon {
-        box-shadow: 0 4px 18px rgba(249,115,22,0.5);
+    .sb-logo-icon img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
     }
 
     .sb-logo-text {
@@ -531,7 +529,7 @@
     <div class="sb-logo">
         <a href="{{ Auth::user()->role === 'admin' ? route('admin.dashboard') : route('user.dashboard') }}">
             <div class="sb-logo-icon">
-                <i class="fas fa-project-diagram" style="color:white;"></i>
+                <img src="{{ asset('assets/app_logo.png') }}" alt="PEO Monitor Logo">
             </div>
             <div class="sb-logo-text">
                 <span class="sb-logo-title">PEO Monitor</span>

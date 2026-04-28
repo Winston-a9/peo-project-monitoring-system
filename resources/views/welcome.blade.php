@@ -167,14 +167,14 @@
                         <div class="kpi-stat-num" data-count="{{ $sTotal }}">{{ $sTotal }}</div>
                         <div class="kpi-stat-label">Total Projects</div>
                         <div class="kpi-badge badge-green">
-                            <i class="fas fa-arrow-up" style="font-size:8px;"></i> All districts
+                            <i class="fas fa-arrow-up icon-8px"></i> All districts
                         </div>
                     </div>
                     <div class="kpi-stat-card">
                         <div class="kpi-stat-num" data-count="{{ $sOngoing }}">{{ $sOngoing }}</div>
                         <div class="kpi-stat-label">Active / Ongoing</div>
                         <div class="kpi-badge badge-green">
-                            <i class="fas fa-circle-dot" style="font-size:8px;"></i> In progress
+                            <i class="fas fa-circle-dot icon-8px"></i> In progress
                         </div>
                     </div>
                     <div class="kpi-stat-card">
@@ -182,9 +182,9 @@
                         <div class="kpi-stat-label">Expired Contracts</div>
                         <div class="kpi-badge {{ $sExpired > 0 ? 'badge-red' : 'badge-green' }}">
                             @if($sExpired > 0)
-                                <i class="fas fa-triangle-exclamation" style="font-size:8px;"></i> Needs review
+                                <i class="fas fa-triangle-exclamation icon-8px"></i> Needs review
                             @else
-                                <i class="fas fa-check" style="font-size:8px;"></i> All clear
+                                <i class="fas fa-check icon-8px"></i> All clear
                             @endif
                         </div>
                     </div>
@@ -193,9 +193,9 @@
                         <div class="kpi-stat-label">Expiring (30 days)</div>
                         <div class="kpi-badge {{ $sExpiring > 0 ? 'badge-amber' : 'badge-green' }}">
                             @if($sExpiring > 0)
-                                <i class="fas fa-clock" style="font-size:8px;"></i> Attention needed
+                                <i class="fas fa-clock icon-8px"></i> Attention needed
                             @else
-                                <i class="fas fa-check" style="font-size:8px;"></i> Clear
+                                <i class="fas fa-check icon-8px"></i> Clear
                             @endif
                         </div>
                     </div>
@@ -213,7 +213,7 @@
 
                 <div class="kpi-footer-row">
                     <span class="kpi-timestamp">
-                        <i class="fas fa-circle-dot" style="color:#4ade80;font-size:8px;margin-right:4px;"></i>
+                        <i class="fas fa-circle-dot text-green-400 icon-8px" style="margin-right:4px;"></i>
                         Updated {{ now()->format('M d · h:i A') }}
                     </span>
                     <div class="kpi-refresh-btn" onclick="this.querySelector('i').style.transform='rotate(360deg)';this.querySelector('i').style.transition='0.5s';">
@@ -308,7 +308,7 @@
                 <h2 class="section-h2 reveal reveal-delay-1">
                     Everything You Need<br>In One Platform
                 </h2>
-                <p class="section-lead reveal reveal-delay-2" style="margin-top:0.875rem;">
+                <p class="section-lead reveal reveal-delay-2 mt-narrow">
                     From contract intake to project closeout, the PEO system provides a single source of truth for all infrastructure project data.
                 </p>
 
@@ -370,15 +370,15 @@
                     <div class="mock-main">
                         <div class="mock-stats-row">
                             <div class="mock-stat">
-                                <div class="mock-stat-n" style="color:var(--orange-400);">{{ $sTotal }}</div>
+                                <div class="mock-stat-n text-orange-400">{{ $sTotal }}</div>
                                 <div class="mock-stat-l">Total</div>
                             </div>
                             <div class="mock-stat">
-                                <div class="mock-stat-n" style="color:#4ade80;">{{ $sOngoing }}</div>
+                                <div class="mock-stat-n text-green-400">{{ $sOngoing }}</div>
                                 <div class="mock-stat-l">Active</div>
                             </div>
                             <div class="mock-stat">
-                                <div class="mock-stat-n" style="color:var(--amber-400);">{{ $sCompleted }}</div>
+                                <div class="mock-stat-n text-amber-400">{{ $sCompleted }}</div>
                                 <div class="mock-stat-l">Done</div>
                             </div>
                         </div>
@@ -401,17 +401,17 @@
                             <div class="mock-row">
                                 <span class="mock-row-text">Road Widening – D1</span>
                                 <span class="mock-row-badge active">Active</span>
-                                <div class="mock-mini-bar-wrap"><div class="mock-mini-bar" style="width:72%;"></div></div>
+                                <div class="mock-mini-bar-wrap"><div class="mock-mini-bar w-72pct"></div></div>
                             </div>
                             <div class="mock-row">
                                 <span class="mock-row-text">Bridge Construction – D3</span>
                                 <span class="mock-row-badge expiring">Expiring</span>
-                                <div class="mock-mini-bar-wrap"><div class="mock-mini-bar" style="width:88%;background:var(--amber-400);"></div></div>
+                                <div class="mock-mini-bar-wrap"><div class="mock-mini-bar w-88pct bg-amber-400"></div></div>
                             </div>
                             <div class="mock-row">
                                 <span class="mock-row-text">Flood Control – D2</span>
                                 <span class="mock-row-badge expired">Expired</span>
-                                <div class="mock-mini-bar-wrap"><div class="mock-mini-bar" style="width:45%;background:#f87171;"></div></div>
+                                <div class="mock-mini-bar-wrap"><div class="mock-mini-bar w-45pct bg-red-f87171"></div></div>
                             </div>
                         </div>
                     </div>
@@ -427,7 +427,7 @@
     <div class="cta-glow"></div>
     <div class="cta-inner">
         <div class="cta-box">
-            <div class="section-tag reveal" style="justify-content:center;">Get Started</div>
+            <div class="section-tag reveal justify-center">Get Started</div>
             <h2 class="reveal reveal-delay-1">
                 Ready to Modernize<br><span class="h1-gradient">Project Oversight?</span>
             </h2>
@@ -482,11 +482,11 @@
                 <div class="footer-col-title">Navigation</div>
                 <div class="footer-links-list">
                     <a href="/" class="footer-link"><i class="fas fa-chevron-right" style="font-size:9px;"></i> Home</a>
-                    <a href="#features" class="footer-link"><i class="fas fa-chevron-right" style="font-size:9px;"></i> Features</a>
-                    <a href="#overview" class="footer-link"><i class="fas fa-chevron-right" style="font-size:9px;"></i> System Overview</a>
+                    <a href="#features" class="footer-link"><i class="fas fa-chevron-right icon-9px"></i> Features</a>
+                    <a href="#overview" class="footer-link"><i class="fas fa-chevron-right icon-9px"></i> System Overview</a>
                     @auth
                     <a href="{{ route(Auth::user()->role === 'admin' ? 'admin.dashboard' : 'user.dashboard') }}" class="footer-link">
-                        <i class="fas fa-chevron-right" style="font-size:9px;"></i> Dashboard
+                        <i class="fas fa-chevron-right icon-9px"></i> Dashboard
                     </a>
                     @endauth
                 </div>
@@ -495,10 +495,10 @@
             <div>
                 <div class="footer-col-title">Support</div>
                 <div class="footer-links-list">
-                    <a href="mailto:support@peo.gov.ph" class="footer-link"><i class="fas fa-chevron-right" style="font-size:9px;"></i> Technical Support</a>
-                    <a href="mailto:info@peo.gov.ph"    class="footer-link"><i class="fas fa-chevron-right" style="font-size:9px;"></i> General Inquiries</a>
-                    <a href="#"                          class="footer-link"><i class="fas fa-chevron-right" style="font-size:9px;"></i> Documentation</a>
-                    <a href="#"                          class="footer-link"><i class="fas fa-chevron-right" style="font-size:9px;"></i> Accessibility</a>
+                    <a href="mailto:support@peo.gov.ph" class="footer-link"><i class="fas fa-chevron-right icon-9px"></i> Technical Support</a>
+                    <a href="mailto:info@peo.gov.ph"    class="footer-link"><i class="fas fa-chevron-right icon-9px"></i> General Inquiries</a>
+                    <a href="#"                          class="footer-link"><i class="fas fa-chevron-right icon-9px"></i> Documentation</a>
+                    <a href="#"                          class="footer-link"><i class="fas fa-chevron-right icon-9px"></i> Accessibility</a>
                 </div>
             </div>
 
@@ -515,18 +515,18 @@
                     <div class="footer-status-items">
                         <div class="footer-status-item">
                             <span>API Services</span>
-                            <span style="display:flex;align-items:center;gap:.4rem;"><div class="footer-status-item-dot"></div><span style="color:#4ade80;font-size:10px;">Online</span></span>
+                            <span class="flex-center-gap-4"><div class="footer-status-item-dot"></div><span class="text-green-400 icon-10px">Online</span></span>
                         </div>
                         <div class="footer-status-item">
                             <span>Database</span>
-                            <span style="display:flex;align-items:center;gap:.4rem;"><div class="footer-status-item-dot"></div><span style="color:#4ade80;font-size:10px;">Online</span></span>
+                            <span class="flex-center-gap-4"><div class="footer-status-item-dot"></div><span class="text-green-400 icon-10px">Online</span></span>
                         </div>
                         <div class="footer-status-item">
                             <span>Auth System</span>
-                            <span style="display:flex;align-items:center;gap:.4rem;"><div class="footer-status-item-dot"></div><span style="color:#4ade80;font-size:10px;">Online</span></span>
+                            <span class="flex-center-gap-4"><div class="footer-status-item-dot"></div><span class="text-green-400 icon-10px">Online</span></span>
                         </div>
                     </div>
-                    <div style="margin-top:1rem;padding-top:0.75rem;border-top:1px solid rgba(255,255,255,0.05);font-size:11px;color:var(--dark-400);">
+                    <div class="footer-timestamp">
                         Last checked: {{ now()->format('M d, Y · h:i A') }}
                     </div>
                 </div>
