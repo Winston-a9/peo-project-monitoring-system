@@ -57,9 +57,9 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
     Route::resource('projects', ProjectController::class);
 
-    Route::get('/projects/{project}/export-pdf', [ProjectController::class, 'exportPdf'])->name('projects.export-pdf');
+    Route::middleware('throttle:export')->get('/projects/{project}/export-pdf', [ProjectController::class, 'exportPdf'])->name('projects.export-pdf');
     Route::get('/reports', [ProjectController::class, 'reports'])->name('reports.index');
-    Route::get('/reports/generate', [ProjectController::class, 'generateReport'])->name('reports.generate');
+    Route::middleware('throttle:export')->get('/reports/generate', [ProjectController::class, 'generateReport'])->name('reports.generate');
 
     // ── User management (super admin only — enforced in controller) ──
     Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
@@ -75,11 +75,11 @@ Route::middleware(['auth', 'role:user'])->prefix('user')->name('user.')->group(f
     })->name('dashboard');
 
     Route::get('/projects', [UserProjectController::class, 'index'])->name('projects.index');
-    Route::get('/projects/{project}/export-pdf', [UserProjectController::class, 'exportPdf'])->name('projects.export-pdf');
+    Route::middleware('throttle:export')->get('/projects/{project}/export-pdf', [UserProjectController::class, 'exportPdf'])->name('projects.export-pdf');
     Route::get('/projects/{project}', [UserProjectController::class, 'show'])->name('projects.show');
 
     Route::get('/reports', [UserProjectController::class, 'reports'])->name('reports.index');
-    Route::get('/reports/generate', [UserProjectController::class, 'generateReport'])->name('reports.generate');
+    Route::middleware('throttle:export')->get('/reports/generate', [UserProjectController::class, 'generateReport'])->name('reports.generate');
 });
 
 require __DIR__ . '/auth.php';
