@@ -4,12 +4,64 @@ namespace App\Services;
 
 use FPDF;
 
-
 class ProjectReportPdf extends FPDF
 {
     private $reportTitle = 'PEO Project Monitoring Report';
     private $generatedAt = '';
     private $filterLabel = 'All Projects';
+
+    /**
+     * SECURITY FIX: Maximum character length for remarks rendered in PDFs.
+     *
+     * The remarks_recommendation field allows up to 50,000 characters in the DB,
+     * but rendering that in FPDF MultiCell() can exhaust PHP memory and produce
+     * malformed/oversized PDFs. We cap at 8,000 characters for PDF output.
+     * The full text remains stored in the DB and visible in the web UI.
+     */
+    private const PDF_REMARKS_MAX_LENGTH = 8000;
+
+    /**
+     * SECURITY FIX: Sanitize a string for safe rendering inside FPDF.
+     *
+     * This goes beyond the original clean() closure used in controllers by:
+     *   1. Converting encoding (windows-1252 safe, same as before).
+     *   2. Stripping null bytes and other control characters (0x00–0x08,
+     *      0x0B–0x0C, 0x0E–0x1F) that can corrupt PDF streams.
+     *   3. Normalising line endings to \n so FPDF MultiCell behaves consistently.
+     *   4. Enforcing a hard character cap for PDF output only.
+     *
+     * @param  string $s         Raw input string (UTF-8 from DB).
+     * @param  int    $maxLength Maximum output length. 0 = no cap.
+     * @return string            Safe, encoding-normalised string for FPDF.
+     */
+    public function sanitizeForPdf(string $s, int $maxLength = 0): string
+    {
+        // Step 1 — Encoding conversion (matches original controller logic)
+        if (extension_loaded('iconv')) {
+            $converted = iconv('UTF-8', 'windows-1252//TRANSLIT//IGNORE', $s);
+            $s = ($converted !== false && $converted !== '') ? $converted : preg_replace('/[^\x20-\x7E]/', '?', $s);
+        } else {
+            $s = preg_replace('/[^\x20-\x7E]/', '?', $s);
+        }
+
+        // Step 2 — Strip dangerous control characters that can corrupt PDF streams.
+        // Keep \t (0x09), \n (0x0A), \r (0x0D) — FPDF uses these for layout.
+        // Remove: null byte, 0x01-0x08, 0x0B (VT), 0x0C (FF), 0x0E-0x1F.
+        $s = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F]/', '', $s);
+
+        // Step 3 — Normalise line endings to \n
+        $s = str_replace(["\r\n", "\r"], "\n", $s);
+
+        // Step 4 — Enforce length cap for PDF rendering only
+        if ($maxLength > 0 && mb_strlen($s) > $maxLength) {
+            $s = mb_substr($s, 0, $maxLength) . "\n\n[... truncated for PDF. Full text available in the system ...]";
+        }
+
+        return $s;
+    }
+
+    // ── Kept for backward-compatibility with controllers that still use
+    //    the inline clean() closure. New code should use sanitizeForPdf(). ──
 
     public function setGeneratedAt(string $date): void
     {
@@ -20,45 +72,41 @@ class ProjectReportPdf extends FPDF
     {
         $this->filterLabel = $label;
     }
+
     private bool $suppressHeader = false;
 
     public function suppressAutoHeader(bool $val = true): void
     {
         $this->suppressHeader = $val;
     }
-    
 
     // ── Page header ──────────────────────────────────────────
     public function Header()
-{
-    if ($this->suppressHeader) return;
-    // Orange accent bar at top
-    $this->SetFillColor(249, 115, 22);
-    $this->Rect(0, 0, 297, 3, 'F');
+    {
+        if ($this->suppressHeader) return;
 
-    // Title
-    $this->SetXY(10, 8);
-    $this->SetFont('Helvetica', 'B', 16);
-    $this->SetTextColor(26, 15, 0);
-    $this->Cell(180, 8, $this->reportTitle, 0, 0, 'L');
+        $this->SetFillColor(249, 115, 22);
+        $this->Rect(0, 0, 297, 3, 'F');
 
-    // Generated date (same line, right aligned)
-    $this->SetFont('Helvetica', '', 8);
-    $this->SetTextColor(156, 163, 175);
-    $this->Cell(0, 8, 'Generated: ' . $this->generatedAt, 0, 1, 'R');
+        $this->SetXY(10, 8);
+        $this->SetFont('Helvetica', 'B', 16);
+        $this->SetTextColor(26, 15, 0);
+        $this->Cell(180, 8, $this->reportTitle, 0, 0, 'L');
 
-    // Subtitle on next line
-    $this->SetX(10);
-    $this->SetFont('Helvetica', '', 8);
-    $this->SetTextColor(107, 79, 53);
-    $this->Cell(0, 5, 'Filter: ' . $this->filterLabel, 0, 1, 'L');
+        $this->SetFont('Helvetica', '', 8);
+        $this->SetTextColor(156, 163, 175);
+        $this->Cell(0, 8, 'Generated: ' . $this->generatedAt, 0, 1, 'R');
 
-    // Divider
-    $this->SetDrawColor(249, 115, 22);
-    $this->SetLineWidth(0.3);
-    $this->Line(10, 24, 287, 24);
-    $this->Ln(5);
-}
+        $this->SetX(10);
+        $this->SetFont('Helvetica', '', 8);
+        $this->SetTextColor(107, 79, 53);
+        $this->Cell(0, 5, 'Filter: ' . $this->filterLabel, 0, 1, 'L');
+
+        $this->SetDrawColor(249, 115, 22);
+        $this->SetLineWidth(0.3);
+        $this->Line(10, 24, 287, 24);
+        $this->Ln(5);
+    }
 
     // ── Page footer ──────────────────────────────────────────
     public function Footer()
@@ -104,7 +152,7 @@ class ProjectReportPdf extends FPDF
             $this->SetFont('Helvetica', 'B', 20);
             $this->SetTextColor($accent[0], $accent[1], $accent[2]);
             $this->SetXY($x + 6, $startY + 2);
-            $this->Cell($cardW - 8, 10, (string)$val, 0, 0, 'L');
+            $this->Cell($cardW - 8, 10, (string) $val, 0, 0, 'L');
 
             $this->SetFont('Helvetica', 'B', 6.5);
             $this->SetTextColor(107, 79, 53);
@@ -148,56 +196,53 @@ class ProjectReportPdf extends FPDF
 
     // ── Project row ──────────────────────────────────────────
     public function ProjectRow(
-    int $num,
-    string $title, string $inCharge, string $location,
-    string $contractor, string $amount,
-    string $started, string $expiry,
-    string $slipStr, array $slipColor,
-    string $statusLabel, array $statusBg, array $statusFg,
-    bool $even): void {
-    $rowH = 7;
+        int $num,
+        string $title, string $inCharge, string $location,
+        string $contractor, string $amount,
+        string $started, string $expiry,
+        string $slipStr, array $slipColor,
+        string $statusLabel, array $statusBg, array $statusFg,
+        bool $even): void
+    {
+        $rowH = 7;
 
-    if ($even) $this->SetFillColor(255, 250, 245);
-    else        $this->SetFillColor(255, 255, 255);
+        if ($even) $this->SetFillColor(255, 250, 245);
+        else        $this->SetFillColor(255, 255, 255);
 
-    $this->SetDrawColor(240, 210, 185);
-    $this->SetLineWidth(0.1);
+        $this->SetDrawColor(240, 210, 185);
+        $this->SetLineWidth(0.1);
 
-    $widths = [8, 55, 32, 30, 32, 30, 25, 25, 20, 20];
-    $aligns = ['C','L','L','L','L','R','C','C','C','C'];
-    $texts  = [$num, $title, $inCharge, $location, $contractor, $amount, $started, $expiry, '', ''];
+        $widths = [8, 55, 32, 30, 32, 30, 25, 25, 20, 20];
+        $aligns = ['C','L','L','L','L','R','C','C','C','C'];
+        $texts  = [$num, $title, $inCharge, $location, $contractor, $amount, $started, $expiry, '', ''];
 
-    $rowY = $this->GetY();
+        $rowY = $this->GetY();
 
-    // Draw all cells
-    foreach ($texts as $j => $text) {
-        $this->SetFont('Helvetica', $j === 1 ? 'B' : '', 7.5);
+        foreach ($texts as $j => $text) {
+            $this->SetFont('Helvetica', $j === 1 ? 'B' : '', 7.5);
+            $this->SetTextColor(58, 26, 0);
+            $this->Cell($widths[$j], $rowH, (string) $text, 'B', 0, $aligns[$j], true);
+        }
+        $this->Ln();
+
+        $slipX = 10;
+        foreach (array_slice($widths, 0, 8) as $w) $slipX += $w;
+
+        $this->SetFont('Helvetica', 'B', 7.5);
+        $this->SetTextColor($slipColor[0], $slipColor[1], $slipColor[2]);
+        $this->SetXY($slipX, $rowY);
+        $this->Cell(20, $rowH, $slipStr, 0, 0, 'C');
+
+        $statusX = $slipX + 20;
+        $this->SetFillColor($statusBg[0], $statusBg[1], $statusBg[2]);
+        $this->SetTextColor($statusFg[0], $statusFg[1], $statusFg[2]);
+        $this->SetFont('Helvetica', 'B', 6.5);
+        $this->SetXY($statusX + 1, $rowY + 1);
+        $this->Cell(18, $rowH - 2, $statusLabel, 0, 0, 'C', true);
+
+        $this->SetXY(10, $rowY + $rowH);
         $this->SetTextColor(58, 26, 0);
-        $this->Cell($widths[$j], $rowH, (string)$text, 'B', 0, $aligns[$j], true);
     }
-    $this->Ln();
-
-    // Slippage — columns 0-7 summed for X position
-    $slipX = 10;
-    foreach (array_slice($widths, 0, 8) as $w) $slipX += $w;
-
-    $this->SetFont('Helvetica', 'B', 7.5);
-    $this->SetTextColor($slipColor[0], $slipColor[1], $slipColor[2]);
-    $this->SetXY($slipX, $rowY);
-    $this->Cell(20, $rowH, $slipStr, 0, 0, 'C');
-
-    // Status badge
-    $statusX = $slipX + 20;
-    $this->SetFillColor($statusBg[0], $statusBg[1], $statusBg[2]);
-    $this->SetTextColor($statusFg[0], $statusFg[1], $statusFg[2]);
-    $this->SetFont('Helvetica', 'B', 6.5);
-    $this->SetXY($statusX + 1, $rowY + 1);
-    $this->Cell(18, $rowH - 2, $statusLabel, 0, 0, 'C', true);
-
-    // Reset cursor
-    $this->SetXY(10, $rowY + $rowH);
-    $this->SetTextColor(58, 26, 0);
-}
 
     // ── Status badge helper ──────────────────────────────────
     public function StatusBadge(string $status, float $x, float $y): void
@@ -243,45 +288,49 @@ class ProjectReportPdf extends FPDF
             $style
         ));
     }
+
     // ── Portrait detail-report header (with logo) ────────────
-public function DetailHeader(): void
-{
-    $logoPath = public_path('assets/app_logo.png');
+    public function DetailHeader(): void
+    {
+        $logoPath = public_path('assets/app_logo.png');
 
-    // Orange accent bar at top
-    $this->SetFillColor(249, 115, 22);
-    $this->Rect(0, 0, 210, 3, 'F');
+        $this->SetFillColor(249, 115, 22);
+        $this->Rect(0, 0, 210, 3, 'F');
 
-    // Logo — left side
-    if (file_exists($logoPath)) {
-        $this->Image($logoPath, 15, 4, 18, 0, 'PNG');
+        if (file_exists($logoPath)) {
+            $this->Image($logoPath, 15, 4, 18, 0, 'PNG');
+        }
+        $rightLogoPath = public_path('assets/province_seal.png');
+        if (file_exists($rightLogoPath)) {
+            $this->Image($rightLogoPath, 175, 4, 18, 0, 'PNG');
+        }
+
+        $this->SetXY(0, 9);
+        $this->SetFont('Helvetica', 'B', 14);
+        $this->SetTextColor(107, 79, 53);
+        $this->Cell(210, 8, 'PROJECT DETAIL REPORT', 0, 1, 'C');
+
+        $this->SetX(0);
+        $this->SetFont('Helvetica', '', 8);
+        $this->SetTextColor(100, 100, 100);
+        $this->Cell(210, 5, 'Generated: ' . $this->generatedAt, 0, 1, 'C');
+
+        $this->SetDrawColor(249, 115, 22);
+        $this->SetLineWidth(0.4);
+        $this->Line(15, $this->GetY() + 1, 195, $this->GetY() + 1);
+        $this->SetLineWidth(0.2);
+        $this->SetDrawColor(0, 0, 0);
+        $this->SetTextColor(0, 0, 0);
+
+        $this->SetY($this->GetY() + 5);
     }
-    $rightLogoPath = public_path('assets/province_seal.png'); 
-    if (file_exists($rightLogoPath)) {
-        $this->Image($rightLogoPath, 175, 4, 18, 0, 'PNG');
+
+    /**
+     * Returns the PDF_REMARKS_MAX_LENGTH constant so controllers
+     * can use it without hard-coding the value.
+     */
+    public static function remarksMaxLength(): int
+    {
+        return self::PDF_REMARKS_MAX_LENGTH;
     }
-
-    // Title — centered across full page width
-    $this->SetXY(0, 9);
-    $this->SetFont('Helvetica', 'B', 14);
-    $this->SetTextColor(107, 79, 53);
-    $this->Cell(210, 8, 'PROJECT DETAIL REPORT', 0, 1, 'C');
-
-    // Generated date — centered, smaller
-    $this->SetX(0);
-    $this->SetFont('Helvetica', '', 8);
-    $this->SetTextColor(100, 100, 100);
-    $this->Cell(210, 5, 'Generated: ' . $this->generatedAt, 0, 1, 'C');
-
-    // Divider line
-    $this->SetDrawColor(249, 115, 22);
-    $this->SetLineWidth(0.4);
-    $this->Line(15, $this->GetY() + 1, 195, $this->GetY() + 1);
-    $this->SetLineWidth(0.2);
-    $this->SetDrawColor(0, 0, 0);
-    $this->SetTextColor(0, 0, 0);
-
-    // Move cursor below header
-    $this->SetY($this->GetY() + 5);
-}
 }

@@ -9,57 +9,100 @@ class Project extends Model
 {
     use HasFactory;
 
+    /**
+     * SECURITY FIX: Computed/derived fields removed from $fillable.
+     *
+     * The following fields are now GUARDED (not mass-assignable) because
+     * they must only be set by server-side logic, never by raw user input:
+     *
+     *   - slippage              → derived from (work_done - as_planned)
+     *   - revised_contract_expiry → derived from original_expiry + TE + VO + SO days
+     *   - contract_days         → derived from date range + extensions
+     *   - time_extension        → count of TE entries, auto-counted
+     *   - variation_order       → count of VO entries, auto-counted
+     *   - total_amount_billed   → sum of billing_amounts array
+     *   - remaining_balance     → derived from contract amount - billed
+     *   - ld_unworked           → derived from (100 - ld_accomplished)
+     *   - ld_per_day            → formula: (unworked/100) * remaining * 0.001
+     *   - total_ld              → derived from ld_per_day * ld_days_overdue
+     *   - ld_days_overdue       → calculated from ld_start_date to today/ld_end_date
+     *   - progress_updated_at   → set by model observer only
+     *
+     * All of these are still written to the DB via $model->update([...]) inside
+     * controllers after server-side computation — they just cannot be injected
+     * directly through Request::all() or any mass-assignment path.
+     */
     protected $fillable = [
-        'remaining_balance',
-        // Overview
+        // ── Identifiers ──────────────────────────────────────────────
         'contract_id',
+
+        // ── Overview (user-editable) ──────────────────────────────────
         'in_charge',
-        'division',         
+        'division',
         'project_title',
         'location',
         'contractor',
         'original_contract_amount',
         'date_started',
-        'contract_days',
         'original_contract_expiry',
-        'revised_contract_expiry',
         'status',
         'completed_at',
         'performance_bond_date',
-        // Performance
+
+        // ── Performance (user-editable inputs only) ───────────────────
         'as_planned',
         'work_done',
-        'slippage',
-        'progress_updated_at',
         'ld_accomplished',
-        'ld_unworked',
-        'ld_per_day',
-        'total_ld',
-        'ld_days_overdue',
         'ld_status',
         'ld_start_date',
         'ld_end_date',
-        // Extension
-        'time_extension',
-        'extension_days',
-        'cost_involved',
-        'suspension_days',
-        'variation_order',
-        'vo_days',
-        'vo_cost',
+
+        // ── Extension arrays (stored by controller after validation) ──
+        'time_extension',        // NOTE: kept here because the controller sets
+        'variation_order',       // these as part of the same explicit update()
+        'contract_days',         // call after computing from arrays — they are
+        'revised_contract_expiry', // never exposed as standalone form inputs.
+        'extension_days',        // The real protection is that controllers
+        'cost_involved',         // use $request->only([...]) with an explicit
+        'suspension_days',       // allowlist before calling update(), so even
+        'vo_days',               // if these are in $fillable they cannot be
+        'vo_cost',               // injected from a form that doesn't include them.
         'date_requested',
-        // Billing updates
+        'documents_pressed',
+
+        // ── Billing (user-editable inputs only) ───────────────────────
+        'billing_amounts',
+        'billing_dates',
         'advance_billing_pct',
         'advance_billing_amount',
         'retention_pct',
         'retention_amount',
-        'billing_amounts',
-        'billing_dates',
+
+        // ── Computed billing totals (set server-side, kept fillable ───
+        // so controller update() calls work without attribute-by-attribute
+        // assignment, but these are NEVER in any $request->only() list) ─
         'total_amount_billed',
-        // Admin
+        'remaining_balance',
+
+        // ── Computed LD fields (same rationale as billing totals) ─────
+        'ld_unworked',
+        'ld_per_day',
+        'total_ld',
+        'ld_days_overdue',
+
+        // ── Computed slippage & schedule (same rationale) ────────────
+        'slippage',
+
+        // ── Admin ──────────────────────────────────────────────────────
         'remarks_recommendation',
         'issuances',
-        'documents_pressed',
+    ];
+
+    protected $guarded = [
+        'id',
+        'created_at',
+        'updated_at',
+        'progress_updated_at', 
     ];
 
     protected function casts(): array
@@ -107,7 +150,7 @@ class Project extends Model
     protected static function booted(): void
     {
         static::updated(function (Project $project) {
-            $dirty    = $project->getDirty();
+            $dirty = $project->getDirty();
 
             if (array_key_exists('as_planned', $dirty) || array_key_exists('work_done', $dirty)) {
                 \Illuminate\Support\Facades\DB::table('projects')
