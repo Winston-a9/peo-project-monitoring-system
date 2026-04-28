@@ -26,7 +26,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\Admin\ProjectController;
-use App\Http\Controllers\Admin\AdminUserController;   
+use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\User\UserProjectController;
 
 Route::get('/', function () {
@@ -50,21 +50,21 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
 
-    Route::patch('/projects/{project}/entry',      [ProjectController::class, 'updateEntry'])->name('projects.updateEntry');
-    Route::delete('/projects/{project}/entry',     [ProjectController::class, 'destroyEntry'])->name('projects.destroyEntry');
-    Route::patch('/projects/{project}/billing',    [ProjectController::class, 'updateBilling'])->name('projects.updateBilling');
+    Route::patch('/projects/{project}/entry', [ProjectController::class, 'updateEntry'])->name('projects.updateEntry');
+    Route::delete('/projects/{project}/entry', [ProjectController::class, 'destroyEntry'])->name('projects.destroyEntry');
+    Route::patch('/projects/{project}/billing', [ProjectController::class, 'updateBilling'])->name('projects.updateBilling');
     Route::patch('/projects/{project}/reactivate', [ProjectController::class, 'reactivate'])->name('projects.reactivate');
 
     Route::resource('projects', ProjectController::class);
 
     Route::get('/projects/{project}/export-pdf', [ProjectController::class, 'exportPdf'])->name('projects.export-pdf');
-    Route::get('/reports',          [ProjectController::class, 'reports'])->name('reports.index');
+    Route::get('/reports', [ProjectController::class, 'reports'])->name('reports.index');
     Route::get('/reports/generate', [ProjectController::class, 'generateReport'])->name('reports.generate');
 
     // ── User management (super admin only — enforced in controller) ──
-    Route::get('/users',           [AdminUserController::class, 'index'])->name('users.index');
-    Route::post('/users',          [AdminUserController::class, 'store'])->name('users.store');
-    Route::patch('/users/{user}',  [AdminUserController::class, 'update'])->name('users.update');
+    Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
+    Route::post('/users', [AdminUserController::class, 'store'])->name('users.store');
+    Route::patch('/users/{user}', [AdminUserController::class, 'update'])->name('users.update');
     Route::delete('/users/{user}', [AdminUserController::class, 'destroy'])->name('users.destroy');
 });
 
@@ -75,7 +75,11 @@ Route::middleware(['auth', 'role:user'])->prefix('user')->name('user.')->group(f
     })->name('dashboard');
 
     Route::get('/projects', [UserProjectController::class, 'index'])->name('projects.index');
+    Route::get('/projects/{project}/export-pdf', [UserProjectController::class, 'exportPdf'])->name('projects.export-pdf');
     Route::get('/projects/{project}', [UserProjectController::class, 'show'])->name('projects.show');
+
+    Route::get('/reports', [UserProjectController::class, 'reports'])->name('reports.index');
+    Route::get('/reports/generate', [UserProjectController::class, 'generateReport'])->name('reports.generate');
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

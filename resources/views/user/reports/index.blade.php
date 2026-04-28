@@ -4,18 +4,29 @@
         <div>
             <h2 style="font-family:'Syne',sans-serif; font-weight:800; font-size:1.6rem; letter-spacing:-0.03em; color:var(--text-primary); display:flex; align-items:center; gap:0.6rem;">
                 <span style="background:#f97316; width:34px; height:34px; border-radius:9px; display:inline-flex; align-items:center; justify-content:center; box-shadow:0 2px 10px rgba(249,115,22,0.35);">
-                    <i class="fas fa-folder-open" style="color:white; font-size:0.85rem;"></i>
+                    <i class="fas fa-file-pdf" style="color:white; font-size:0.85rem;"></i>
                 </span>
-                Projects
+                Reports
             </h2>
-            <p style="color:var(--text-secondary); font-size:0.82rem; margin-top:3px;">Browse and view all projects</p>
+            <p style="color:var(--text-secondary); font-size:0.82rem; margin-top:3px;">Generate and view project reports</p>
+        </div>
+        <div style="display:flex; gap:0.6rem; align-items:center;">
+            <form action="{{ route('user.reports.generate') }}" method="GET" style="display:inline;">
+                <input type="hidden" name="search"    value="{{ request('search') }}">
+                <input type="hidden" name="in_charge" value="{{ request('in_charge') }}">
+                <input type="hidden" name="status"    value="{{ request('status') }}">
+                <button type="submit" ...>
+                    <i class="fas fa-file-pdf"></i> Export PDF
+                </button>
+            </form>
         </div>
     </div>
 </x-slot>
-
 @push('styles')
-    @vite('resources/css/user/projects/index.css')
+    @vite('resources/css/user/reports/index.css')
 @endpush
+
+
 
 @php
     $today      = now();
@@ -23,29 +34,22 @@
     $search     = request('search','');
     $inCharge   = request('in_charge','');
     $slipFilter = request('slip','');
-    $dateFrom   = request('date_from','');
-    $dateTo     = request('date_to','');
     $status     = request('status','all');
     $sortCol    = request('sort','updated_at');
     $sortDir    = request('dir','desc') === 'asc' ? 'asc' : 'desc';
 
-    $allowed = ['project_title','contract_id','in_charge','contractor','location','work_done','slippage','original_contract_expiry','updated_at'];
+    $allowed = ['project_title','in_charge','contractor','location','work_done','slippage','original_contract_expiry','updated_at'];
     $sortCol = in_array($sortCol, $allowed) ? $sortCol : 'updated_at';
 
     $q = \App\Models\Project::query();
 
     if ($search) {
-        $q->where(fn($x) => $x->where('project_title','like',"%$search%")
-            ->orWhere('contract_id','like',"%$search%")
-            ->orWhere('contractor','like',"%$search%")
-            ->orWhere('location','like',"%$search%"));
+        $q->where(fn($x) => $x->where('project_title','like',"%$search%")->orWhere('contractor','like',"%$search%")->orWhere('location','like',"%$search%"));
     }
     if ($inCharge) $q->where('in_charge', $inCharge);
     if ($slipFilter === 'ahead')  $q->where('slippage','>',0);
     if ($slipFilter === 'behind') $q->where('slippage','<',0);
     if ($slipFilter === 'on')     $q->where('slippage',0);
-    if ($dateFrom) $q->where('date_started', '>=', $dateFrom);
-    if ($dateTo)   $q->where('date_started', '<=', $dateTo);
 
     if ($status === 'completed') {
         $q->where('status','completed');
@@ -61,12 +65,9 @@
 
     $projects = $q->orderBy($sortCol,$sortDir)->paginate($perPage)->withQueryString();
 
-    // Chip counts — without status filter applied
+    // Chip counts
     $base = \App\Models\Project::query();
-    if ($search)   $base->where(fn($x) => $x->where('project_title','like',"%$search%")
-        ->orWhere('contract_id','like',"%$search%")
-        ->orWhere('contractor','like',"%$search%")
-        ->orWhere('location','like',"%$search%"));
+    if ($search)   $base->where(fn($x) => $x->where('project_title','like',"%$search%")->orWhere('contractor','like',"%$search%")->orWhere('location','like',"%$search%"));
     if ($inCharge) $base->where('in_charge',$inCharge);
     if ($slipFilter === 'ahead')  $base->where('slippage','>',0);
     if ($slipFilter === 'behind') $base->where('slippage','<',0);
@@ -87,7 +88,7 @@
     $chipUrl = fn($val) => request()->fullUrlWithQuery(['status'=>$val,'page'=>1]);
 @endphp
 
-<div class="space-y-4">
+<div class="space-y-4" style="padding:2rem; max-width:1400px; margin:0 auto;">
 
     {{-- Chips --}}
     <div class="fade-up" style="display:flex; align-items:center; gap:0.45rem; flex-wrap:wrap;">
@@ -106,9 +107,9 @@
                 color:{{ $status===$val ? 'white':'#ea580c' }};">{{ $counts[$val] }}</span>
         </a>
         @endforeach
-        @if($search || $inCharge || $slipFilter || $dateFrom || $dateTo)
+        @if($search || $inCharge || $slipFilter)
             <span style="font-size:0.72rem; color:#9ca3af; padding:0 0.25rem;">·</span>
-            <a href="{{ request()->fullUrlWithQuery(['search'=>'','in_charge'=>'','slip'=>'','date_from'=>'','date_to'=>'','page'=>1]) }}"
+            <a href="{{ request()->fullUrlWithQuery(['search'=>'','in_charge'=>'','slip'=>'','page'=>1]) }}"
                style="display:inline-flex; align-items:center; gap:0.3rem; font-size:0.72rem; font-weight:600; color:#dc2626; text-decoration:none;">
                 <i class="fas fa-times" style="font-size:0.6rem;"></i> Clear filters
             </a>
@@ -120,16 +121,16 @@
 
         {{-- Filter bar --}}
         <div class="filter-bar">
-            <form method="GET" action="{{ route('user.projects.index') }}">
+            <form method="GET" action="{{ route('user.reports.index') }}">
                 <input type="hidden" name="status"   value="{{ $status }}">
                 <input type="hidden" name="sort"     value="{{ $sortCol }}">
                 <input type="hidden" name="dir"      value="{{ $sortDir }}">
                 <input type="hidden" name="per_page" value="{{ $perPage }}">
-                <div style="display:grid; grid-template-columns:1fr auto auto auto auto auto; gap:0.65rem; align-items:end;">
+                <div style="display:grid; grid-template-columns:1fr auto auto auto; gap:0.65rem; align-items:end;">
 
                     <div style="position:relative;">
                         <i class="fas fa-search" style="position:absolute; left:0.72rem; top:50%; transform:translateY(-50%); color:#9ca3af; font-size:0.7rem; pointer-events:none;"></i>
-                        <input type="text" name="search" id="searchInput" value="{{ $search }}" class="filter-input" placeholder="Search title, contract ID, contractor, location…">
+                        <input type="text" name="search" id="searchInput" value="{{ $search }}" class="filter-input" placeholder="Search title, contractor, location…">
                     </div>
 
                     <select name="in_charge" class="filter-select" style="width:auto; min-width:138px;" onchange="this.form.submit()">
@@ -145,11 +146,6 @@
                         <option value="behind" {{ $slipFilter==='behind'?'selected':'' }}>Behind</option>
                         <option value="on"     {{ $slipFilter==='on'    ?'selected':'' }}>On Schedule</option>
                     </select>
-                    <div style="display:flex; align-items:center; gap:0.3rem;">
-                        <input type="date" name="date_from" value="{{ $dateFrom }}" class="filter-input" style="width:140px;">
-                        <span style="color:#9ca3af; font-size:0.75rem; font-weight:600;">to</span>
-                        <input type="date" name="date_to"   value="{{ $dateTo }}"   class="filter-input" style="width:140px;">
-                    </div>
 
                     <button type="submit"
                         style="display:inline-flex; align-items:center; gap:0.35rem; padding:0.575rem 1.1rem; background:var(--orange-500); color:white; border:none; border-radius:9px; font-size:0.83rem; font-weight:600; cursor:pointer; font-family:'Instrument Sans',sans-serif; transition:background 0.18s; white-space:nowrap;"
@@ -168,7 +164,6 @@
                         @php
                             $cols = [
                                 ['project_title','Project Title',true],
-                                ['contract_id','Contract ID',true],
                                 ['in_charge','In Charge',true],
                                 ['contractor','Contractor',true],
                                 ['location','Location',false],
@@ -176,7 +171,6 @@
                                 [null,'Progress',false],
                                 ['slippage','Slippage',true],
                                 [null,'Status',false],
-                                [null,'',false],
                             ];
                         @endphp
                         @foreach($cols as [$c,$lbl,$sort])
@@ -193,24 +187,15 @@
                 <tbody>
                     @forelse($projects as $project)
                     @php
-                        $expiry   = $project->revised_contract_expiry ?? $project->original_contract_expiry;
-                        $daysLeft = (int)$today->diffInDays($expiry->copy()->endOfDay(), false);
-                        $sl       = (float)($project->slippage ?? 0);
-                        $sk = $project->status==='completed' ? 'completed'
-                            : ($project->status==='expired' || $daysLeft < 0 ? 'expired'
-                            : ($daysLeft < 30 ? 'expiring'
-                            : 'ongoing'));
+                        $expiry     = $project->revised_contract_expiry ?? $project->original_contract_expiry;
+                        $daysLeft   = (int)$today->diffInDays($expiry, false);
+                        $sl         = (float)($project->slippage ?? 0);
+                        $sk         = $project->status==='completed'?'completed':($daysLeft<0?'expired':($daysLeft<30?'expiring':($project->status==='ongoing'?'active':'ongoing')));
                     @endphp
-                    <tr onclick="window.location='{{ route('user.projects.show', $project) }}'">
+                    <tr>
                         <td>
                             <div style="font-weight:700; color:var(--ink); max-width:190px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ $project->project_title }}</div>
                             <div style="font-size:0.68rem; color:#9ca3af; margin-top:2px;">{{ $project->updated_at->diffForHumans() }}</div>
-                        </td>
-                        <td>
-                            <div style="display:flex; align-items:center; gap:0.45rem;">
-                                <div style="font-family:'Syne',sans-serif; font-weight:800; font-size:0.68rem; color:var(--orange-600);">#</div>
-                                <span style="color:var(--ink); font-weight:600; white-space:nowrap;">{{ $project->contract_id }}</span>
-                            </div>
                         </td>
                         <td>
                             <div style="display:flex; align-items:center; gap:0.45rem;">
@@ -252,13 +237,14 @@
                             @if($sk==='completed') <span class="badge badge-completed"><i class="fas fa-check-circle" style="font-size:0.55rem;"></i> Completed</span>
                             @elseif($sk==='expired') <span class="badge badge-expired"><i class="fas fa-times-circle" style="font-size:0.55rem;"></i> Expired</span>
                             @elseif($sk==='expiring') <span class="badge badge-expiring"><i class="fas fa-clock" style="font-size:0.55rem;"></i> Expiring</span>
+                            @elseif($sk==='active') <span class="badge badge-active"><i class="fas fa-hourglass-start" style="font-size:0.55rem;"></i> On Going</span>
                             @else <span class="badge badge-ongoing"><i class="fas fa-spinner" style="font-size:0.55rem;"></i> Ongoing</span>
                             @endif
                         </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="10">
+                        <td colspan="8">
                             <div class="empty-state">
                                 <div style="width:56px; height:56px; background:rgba(249,115,22,0.07); border-radius:14px; display:flex; align-items:center; justify-content:center; margin:0 auto 1rem;">
                                     <i class="fas fa-folder-open" style="font-size:1.4rem; color:rgba(249,115,22,0.35);"></i>
@@ -266,7 +252,7 @@
                                 <p style="font-family:'Syne',sans-serif; font-weight:800; font-size:1rem; color:var(--ink-muted); margin-bottom:0.3rem;">No projects found</p>
                                 <p style="font-size:0.82rem; color:#9ca3af;">Try adjusting your search or filters</p>
                                 @if($search || $inCharge || $slipFilter || $status !== 'all')
-                                <a href="{{ route('user.projects.index') }}"
+                                <a href="{{ route('user.reports.index') }}"
                                    style="display:inline-flex; align-items:center; gap:0.4rem; margin-top:1rem; padding:0.55rem 1.1rem; background:var(--orange-500); color:white; border-radius:9px; font-size:0.82rem; font-weight:600; text-decoration:none;">
                                     <i class="fas fa-times"></i> Clear all filters
                                 </a>
@@ -340,6 +326,6 @@
     </div>
 </div>
 @push('scripts')
-    @vite('resources/js/user/projects/index.js')
+    @vite('resources/js/user/reports/index.js')
 @endpush
 </x-app-layout>

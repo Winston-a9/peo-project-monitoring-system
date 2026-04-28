@@ -14,8 +14,12 @@
                 </p>
             </div>
             <div class="app-header-actions">
-                <a href="{{ route('user.projects.index') }}" class="app-btn-secondary"><i
-                        class="fas fa-arrow-left"></i> Back</a>
+                <a href="{{ route('user.projects.export-pdf', $project) }}" class="app-btn-secondary">
+                    <i class="fas fa-file-pdf"></i> Export PDF
+                </a>
+                <a href="{{ route('user.projects.index') }}" class="app-btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back
+                </a>
             </div>
         </div>
     </x-slot>

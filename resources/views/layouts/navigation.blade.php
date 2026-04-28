@@ -610,6 +610,14 @@
                     <span class="sb-active-dot"></span>
                 </a>
 
+                <a href="{{ route('user.reports.index') }}"
+                   class="sb-link {{ request()->routeIs('user.reports.*') ? 'active' : '' }}"
+                   data-tooltip="Reports">
+                    <span class="sb-link-icon"><i class="fas fa-file-pdf"></i></span>
+                    <span class="sb-link-label">Reports</span>
+                    <span class="sb-active-dot"></span>
+                </a>
+
             @endif
         @endauth
     </div>
