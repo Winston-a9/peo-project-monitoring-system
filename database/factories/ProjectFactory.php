@@ -9,6 +9,14 @@ class ProjectFactory extends Factory
 {
     public function definition(): array
     {
+        $divisions = [
+            'Maintenance',
+            'Construction',
+            'Water Works',
+            'Material Testing and Quality Control (MTQA)',
+            'Motorpool',
+        ];
+
         $inChargeOptions = ['Engr. Santos', 'Engr. Reyes', 'Engr. Cruz', 'Engr. Bautista', 'Engr. Garcia'];
         $locationOptions = ['Davao City', 'Tagum City', 'Digos City', 'Mati City', 'Panabo City', 'Samal Island'];
         $contractorOptions = [
@@ -133,7 +141,6 @@ class ProjectFactory extends Factory
         $remainingBalance  = null;
         $totalAmountBilled = null;
 
-        // Advance billing & retention (only when there is billing activity)
         $advanceBillingPct    = null;
         $advanceBillingAmount = null;
         $retentionPct         = null;
@@ -150,13 +157,11 @@ class ProjectFactory extends Factory
             $totalAmountBilled = round($totalBilled, 2);
             $remainingBalance  = round($contractAmount - $totalBilled, 2);
 
-            // Advance billing: typically 15% or 20% of contract amount
             if ($this->faker->boolean(60)) {
                 $advanceBillingPct    = $this->faker->randomElement([10.00, 15.00, 20.00]);
                 $advanceBillingAmount = round($contractAmount * $advanceBillingPct / 100, 2);
             }
 
-            // Retention: typically 5% or 10%
             if ($this->faker->boolean(70)) {
                 $retentionPct    = $this->faker->randomElement([5.00, 10.00]);
                 $retentionAmount = round($totalBilled * $retentionPct / 100, 2);
@@ -171,8 +176,8 @@ class ProjectFactory extends Factory
         $ldDaysOverdue  = null;
 
         if ($status === 'expired' && $this->faker->boolean(60)) {
-            $ldAccomplished = round($workDone, 3);                          // decimal(5,3)
-            $ldUnworked     = round(100 - $ldAccomplished, 2);             // decimal(5,2)
+            $ldAccomplished = round($workDone, 3);
+            $ldUnworked     = round(100 - $ldAccomplished, 2);
             $ldPerDayFull   = (100 - $ldAccomplished) / 100 * $contractAmount * 0.001;
             $ldPerDay       = round($ldPerDayFull, 2);
             $ldDaysOverdue  = $this->faker->numberBetween(5, 120);
@@ -180,7 +185,6 @@ class ProjectFactory extends Factory
         }
 
         // ── contract_id ───────────────────────────────────────────────
-        // Format: PROJ-{YEAR}-{5-digit sequence}, unique via static counter + random suffix
         static $sequence = 0;
         $sequence++;
         $year       = Carbon::instance($dateStarted)->year;
@@ -188,6 +192,7 @@ class ProjectFactory extends Factory
 
         return [
             'contract_id'              => $contractId,
+            'division'                 => $this->faker->randomElement($divisions),
             'in_charge'                => $this->faker->randomElement($inChargeOptions),
             'project_title'            => 'Construction of ' . $this->faker->randomElement([
                 'Barangay Road', 'Multi-Purpose Hall', 'Water System', 'Drainage Canal',
