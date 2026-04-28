@@ -148,6 +148,7 @@ extra updates:
 
 ==================================================================================================================================================================================================================================================================================================
 FIXED/added:
+<update> updated projectseeder and projectfactory
 <fix> bug: termination button not working
 <major update> added division based admin users
 		separated the css and js files of index.blade
