@@ -277,7 +277,7 @@
                 </span>
                 <div style="display:flex; align-items:center; gap:0.4rem;">
                     <span style="font-size:0.72rem; color:#9ca3af;">Per page:</span>
-                    <select class="per-page-select" onchange="changePerPage(this.value)">
+                    <select id="perPageSelect" name="per_page" class="per-page-select" onchange="changePerPage(this.value)">
                         @foreach([10,25,50] as $pp)
                             <option value="{{ $pp }}" {{ $perPage==$pp?'selected':'' }}>{{ $pp }}</option>
                         @endforeach

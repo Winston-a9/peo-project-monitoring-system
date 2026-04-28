@@ -477,7 +477,7 @@
                         </div>
 
                         <div class="field-group">
-                            <label class="field-label">
+                            <label for="slippage" class="field-label">
                                 Schedule Slippage <span
                                     style="font-weight:400; text-transform:none; letter-spacing:0; color:#9ca3af;">(automatic)</span>
                             </label>
@@ -555,7 +555,7 @@
 
                             <div class="grid-2col">
                                 <div class="field-group">
-                                    <label class="field-label">LD Start Date</label>
+                                    <label for="ld_start_date_input" class="field-label">LD Start Date</label>
 
                                     <input type="date" name="ld_start_date" id="ld_start_date_input" class="field-input"
                                         value="{{ old('ld_start_date', $project->ld_start_date?->format('Y-m-d') ?? '') }}"
@@ -566,7 +566,7 @@
                                     @enderror
                                 </div>
                                 <div class="field-group">
-                                    <label class="field-label">
+                                    <label for="ld_end_date_input" class="field-label">
                                         LD End Date
                                         <span style="font-weight:400; color:#9ca3af;">(optional)</span>
                                     </label>
@@ -615,7 +615,7 @@
                                 <div class="grid-2col">
 
                                     <div class="field-group">
-                                        <label class="field-label">Accomplished (%)</label>
+                                        <label for="ld_accomplished" class="field-label">Accomplished (%)</label>
                                         <input type="number" id="ld_accomplished" name="ld_accomplished"
                                             class="field-input"
                                             value="{{ old('ld_accomplished', $project->ld_accomplished ?? '') }}"
@@ -626,7 +626,7 @@
                                     </div>
 
                                     <div class="field-group">
-                                        <label class="field-label">
+                                        <label for="ld_unworked" class="field-label">
                                             Unworked (%) <span style="font-weight:400; color:#9ca3af;">(auto)</span>
                                         </label>
                                         <input type="hidden" id="ld_unworked" name="ld_unworked"
@@ -641,7 +641,7 @@
                                     </div>
 
                                     <div class="field-group">
-                                        <label class="field-label">
+                                        <label for="ld_days_overdue_input" class="field-label">
                                             Days Overdue <span style="font-weight:400; color:#9ca3af;">(auto)</span>
                                         </label>
                                         <input type="hidden" id="ld_days_overdue_input" name="ld_days_overdue"
@@ -668,7 +668,7 @@
                                     </div>
 
                                     <div class="field-group">
-                                        <label class="field-label">
+                                        <label for="ld_per_day" class="field-label">
                                             LD per Day (₱) <span style="font-weight:400; color:#9ca3af;">(auto)</span>
                                         </label>
                                         <input type="hidden" id="ld_per_day" name="ld_per_day"
@@ -683,7 +683,7 @@
                                     </div>
 
                                     <div class="field-group" style="grid-column:1/-1;">
-                                        <label class="field-label">
+                                        <label for="total_ld" class="field-label">
                                             Total LD (₱) <span style="font-weight:400; color:#9ca3af;">(auto)</span>
                                         </label>
                                         <input type="hidden" id="total_ld" name="total_ld"
@@ -1504,7 +1504,7 @@
                         <div id="issuances-list" style="display:flex; flex-direction:column; gap:0.75rem;">
                             @foreach($savedIssuances as $val)
                                 <div class="dynamic-row">
-                                    <select name="issuances[]" class="dynamic-select"
+                                    <select id="issuance-{{ $loop->index }}" name="issuances[]" class="dynamic-select"
                                         onchange="updateCount('issuances-list','issuance-count'); checkPerformanceBond()">
                                         <option value="">— Select Notification —</option>
                                         @foreach($issuanceOptions as $opt)
@@ -1631,7 +1631,7 @@
                     style="display:block; font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-muted); margin-bottom:0.4rem;">
                     Reason / Coverage <span style="color:#ef4444;">*</span>
                 </label>
-                <textarea id="rim-reason" rows="4" placeholder="Describe the reason or scope covered by this extension…"
+                <textarea id="rim-reason" name="rim_reason" rows="4" placeholder="Describe the reason or scope covered by this extension…"
                     style="width:100%; padding:0.72rem 1rem; border:1.5px solid var(--border); border-radius:9px; font-size:0.875rem; color:var(--text-primary); background:var(--bg-primary); outline:none; font-family:'Instrument Sans',sans-serif; resize:vertical; transition:border-color 0.2s,box-shadow 0.2s; box-sizing:border-box; min-height:100px; line-height:1.5;"
                     onfocus="this.style.borderColor='var(--orange-500)';this.style.boxShadow='0 0 0 3px rgba(249,115,22,0.1)'"
                     onblur="this.style.borderColor='var(--border)';this.style.boxShadow='none'"
