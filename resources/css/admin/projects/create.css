@@ -84,6 +84,10 @@ body {
     transition: border-color 0.2s, box-shadow 0.2s;
 }
 
+.field-input::placeholder {
+    color: var(--text-secondary);
+}
+
 .field-input:focus {
     border-color: var(--orange-500);
     box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
@@ -91,6 +95,89 @@ body {
 
 .field-input.has-error {
     border-color: #ef4444;
+}
+
+/* Hide number input spinners */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+/* Dark mode input styling */
+@media (prefers-color-scheme: dark) {
+    .field-input {
+        background: #1a1a1a;
+    }
+
+    .field-input::placeholder {
+        color: #6b7280;
+    }
+
+    /* Scrollbar styling */
+    .field-input::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+
+    .field-input::-webkit-scrollbar-track {
+        background: #1a1a1a;
+    }
+
+    .field-input::-webkit-scrollbar-thumb {
+        background: rgba(249, 115, 22, 0.3);
+        border-radius: 3px;
+    }
+
+    .field-input::-webkit-scrollbar-thumb:hover {
+        background: rgba(249, 115, 22, 0.5);
+    }
+
+    /* Text selection */
+    .field-input::selection {
+        background: rgba(249, 115, 22, 0.3);
+        color: var(--text-primary);
+    }
+
+    .field-input::-moz-selection {
+        background: rgba(249, 115, 22, 0.3);
+        color: var(--text-primary);
+    }
+}
+
+/* Light mode scrollbar styling */
+@media (prefers-color-scheme: light) {
+    .field-input::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+
+    .field-input::-webkit-scrollbar-track {
+        background: #ffffff;
+    }
+
+    .field-input::-webkit-scrollbar-thumb {
+        background: rgba(249, 115, 22, 0.2);
+        border-radius: 3px;
+    }
+
+    .field-input::-webkit-scrollbar-thumb:hover {
+        background: rgba(249, 115, 22, 0.4);
+    }
+
+    .field-input::selection {
+        background: rgba(249, 115, 22, 0.15);
+        color: var(--text-primary);
+    }
+
+    .field-input::-moz-selection {
+        background: rgba(249, 115, 22, 0.15);
+        color: var(--text-primary);
+    }
 }
 
 .field-error {
@@ -127,6 +214,12 @@ body {
     border-radius: 99px;
     margin-top: 0.5rem;
     overflow: hidden;
+}
+
+@media (prefers-color-scheme: dark) {
+    .prog-bar-track {
+        background: rgba(249, 115, 22, 0.15);
+    }
 }
 
 .prog-bar-fill {

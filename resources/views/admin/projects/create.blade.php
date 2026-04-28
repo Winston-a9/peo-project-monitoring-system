@@ -163,7 +163,7 @@
                             <input type="date" id="original_contract_expiry" name="original_contract_expiry"
                                 class="field-input {{ $errors->has('original_contract_expiry') ? 'has-error' : '' }}"
                                 value="{{ old('original_contract_expiry') }}" readonly
-                                style="background:rgba(249,115,22,0.08); cursor:not-allowed;">
+                                style="background:var(--bg-secondary); cursor:not-allowed;">
                             @error('original_contract_expiry')<p class="field-error"><i
                             class="fas fa-exclamation-circle"></i>{{ $message }}</p>@enderror
                         </div>
@@ -214,9 +214,9 @@
                             <div id="slippage-display" style="
                             display:flex; align-items:center; justify-content:space-between;
                             padding:0.75rem 1rem;
-                            border:1.5px solid rgba(26,15,0,0.08);
+                            border:1.5px solid var(--border);
                             border-radius:9px;
-                            background:#fffaf5;
+                            background:var(--bg-secondary);
                             min-height:42px;">
                                 <p id="slippage_label" style="font-size:0.825rem; font-weight:600; color:#9ca3af;">
                                     <i class="fas fa-minus"></i> Enter values above

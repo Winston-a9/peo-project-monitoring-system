@@ -41,7 +41,6 @@
         <div class="navbar-center">
             <a href="#features"  class="nav-link">Features</a>
             <a href="#overview"  class="nav-link">Overview</a>
-            <a href="#stats"     class="nav-link">Statistics</a>
         </div>
 
         <div class="navbar-right">
@@ -268,35 +267,6 @@
     </div>
 </section>
 
-
-<!-- ═══════════════════════ STATS STRIP ═══════════════════════════════ -->
-<section class="stats-strip" id="stats">
-    <div class="stats-strip-bg"></div>
-    <div class="stats-strip-pattern"></div>
-    <div class="stats-strip-glow"></div>
-    <div class="stats-inner">
-        <div class="stat-block reveal">
-            <div class="stat-block-num"><span id="count-total">0</span><span>+</span></div>
-            <div class="stat-block-label">Projects Monitored</div>
-            <div class="stat-block-sublabel">Across all districts</div>
-        </div>
-        <div class="stat-block reveal reveal-delay-1">
-            <div class="stat-block-num"><span id="count-ongoing">0</span><span>+</span></div>
-            <div class="stat-block-label">Active Projects</div>
-            <div class="stat-block-sublabel">Currently in execution</div>
-        </div>
-        <div class="stat-block reveal reveal-delay-2">
-            <div class="stat-block-num"><span id="count-completed">0</span><span>+</span></div>
-            <div class="stat-block-label">Completed</div>
-            <div class="stat-block-sublabel">Successfully delivered</div>
-        </div>
-        <div class="stat-block reveal reveal-delay-3">
-            <div class="stat-block-num">100<span>%</span></div>
-            <div class="stat-block-label">Data Integrity</div>
-            <div class="stat-block-sublabel">Verified records</div>
-        </div>
-    </div>
-</section>
 
 
 <!-- ═══════════════════════ SYSTEM OVERVIEW ═══════════════════════════ -->

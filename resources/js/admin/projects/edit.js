@@ -192,6 +192,7 @@ window.computeSlippage = function () {
     const wd = parseFloat(document.getElementById('work_done').value);
     const lbl = document.getElementById('slippage_label');
     const valEl = document.getElementById('slippage-value');
+    const display = document.getElementById('slippage-display');
 
     document.getElementById('ap_bar').style.width = Math.min(ap || 0, 100) + '%';
     document.getElementById('wd_bar').style.width = Math.min(wd || 0, 100) + '%';
@@ -201,9 +202,27 @@ window.computeSlippage = function () {
     const sl = parseFloat((wd - ap).toFixed(3));
     document.getElementById('slippage').value = sl;
 
-    if (sl > 0) { lbl.style.color = '#16a34a'; lbl.innerHTML = '<i class="fas fa-arrow-up"></i> Ahead'; valEl.style.color = '#16a34a'; }
-    else if (sl < 0) { lbl.style.color = '#dc2626'; lbl.innerHTML = '<i class="fas fa-arrow-down"></i> Behind'; valEl.style.color = '#dc2626'; }
-    else { lbl.style.color = '#9ca3af'; lbl.innerHTML = '<i class="fas fa-minus"></i> On schedule'; valEl.style.color = '#9ca3af'; }
+    if (sl > 0) { 
+        lbl.style.color = '#16a34a'; 
+        lbl.innerHTML = '<i class="fas fa-arrow-up"></i> Ahead'; 
+        valEl.style.color = '#16a34a'; 
+        display.style.borderColor = 'rgba(22,163,74,0.2)';
+        display.style.background = 'rgba(22,163,74,0.04)';
+    }
+    else if (sl < 0) { 
+        lbl.style.color = '#dc2626'; 
+        lbl.innerHTML = '<i class="fas fa-arrow-down"></i> Behind'; 
+        valEl.style.color = '#dc2626'; 
+        display.style.borderColor = 'rgba(220,38,38,0.2)';
+        display.style.background = 'rgba(220,38,38,0.04)';
+    }
+    else { 
+        lbl.style.color = '#9ca3af'; 
+        lbl.innerHTML = '<i class="fas fa-minus"></i> On schedule'; 
+        valEl.style.color = '#9ca3af'; 
+        display.style.borderColor = 'rgba(156,163,175,0.2)';
+        display.style.background = 'rgba(156,163,175,0.06)';
+    }
 
     valEl.textContent = (sl > 0 ? '+' : '') + sl + '%';
 

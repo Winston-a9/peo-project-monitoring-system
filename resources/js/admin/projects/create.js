@@ -98,8 +98,8 @@ window.liveSlippage = function () {
         lbl.style.color = '#9ca3af';  // Gray = on schedule
         lbl.innerHTML = '<i class="fas fa-minus"></i> On schedule';
         valEl.style.color = '#9ca3af';
-        display.style.borderColor = 'rgba(26,15,0,0.08)';
-        display.style.background = '#fffaf5';
+        display.style.borderColor = 'rgba(156,163,175,0.2)';
+        display.style.background = 'rgba(156,163,175,0.06)';
     }
 
     // Show the final value e.g. "+2.500%" or "-1.200%"
