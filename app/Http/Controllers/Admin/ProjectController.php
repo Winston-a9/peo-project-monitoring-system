@@ -1297,7 +1297,7 @@ class ProjectController extends Controller
     $daysLeft = (int) $today->diffInDays(
         \Carbon\Carbon::parse($effectiveExpiry, config('app.timezone'))->startOfDay(), false
     );
-    $daysLeftLabel = $daysLeft < 0 ? abs($daysLeft) . ' days overdue' : $daysLeft . ' days remaining';
+    $daysLeftLabel = $daysLeft < 0 ? abs($daysLeft) . ' Days Overdue' : $daysLeft . ' Days Remaining';
 
     // ── Compute revised expiry per TE/VO row (same logic as show page) ─
     $baseExpiry = $fresh->original_contract_expiry;
@@ -1460,10 +1460,10 @@ class ProjectController extends Controller
     $originalContractDays = (int) $fresh->date_started->diffInDays($fresh->original_contract_expiry) + 1;
 
     $twoCol('Date Started',        $fresh->date_started->format('M d, Y'),            'Original Contract Expiry', $fresh->original_contract_expiry->format('M d, Y'));
-    $twoCol('Original Duration',   $originalContractDays . ' days',                   'Revised Duration',         $fresh->revised_contract_days ? $fresh->revised_contract_days . ' days' : 'N/A');
+    $twoCol('Original Duration',   $originalContractDays . ' Contract Days',                   'Revised Duration',         $fresh->revised_contract_days ? $fresh->revised_contract_days . ' Contract Days' : 'N/A');
     $twoCol('Revised Expiry',      $fresh->revised_contract_expiry ? $fresh->revised_contract_expiry->format('M d, Y') : 'N/A', 'Days Until Expiry', $daysLeftLabel);
-    $twoCol('Extended By',         $totalExtDays > 0 ? '+' . $totalExtDays . ' days' : 'No extensions', 'Suspension Days', $hasSO ? '+' . $totalSODays : 'None');
-    $twoCol('Time Extensions',     $teCount > 0 ? $teCount . ' entr' . ($teCount === 1 ? 'y' : 'ies') . ' (+' . $totalTEDays . 'd)' : 'None', 'Variation Orders', $voCount > 0 ? $voCount . ' entr' . ($voCount === 1 ? 'y' : 'ies') . ' (+' . $totalVODays . 'd)' : 'None');
+    $twoCol('Extended By',         $totalExtDays > 0 ? $totalExtDays . ' Days' : 'No extensions', 'Suspension Days', $hasSO ? $totalSODays . ' Days' : 'None');
+    $twoCol('Time Extensions',     $teCount > 0 ? $teCount : 'None', 'Variation Orders', $voCount > 0 ? $voCount : 'None');
     $twoCol('Performance Bond',    $fresh->performance_bond_date ? $fresh->performance_bond_date->format('M d, Y') : 'Not set', '', '');
 
     // ════════════════════════════════════════════════════════
@@ -1505,7 +1505,7 @@ class ProjectController extends Controller
             $pdf->Cell(6,  5.5, (string) ($ri + 1),                          0, 0, 'C', true);
             $pdf->Cell(45, 5.5, $clean($row['label']),                        0, 0, 'L', true);
             $pdf->Cell(8,  5.5, $row['type'],                                 0, 0, 'C', true);
-            $pdf->Cell(16, 5.5, (string) $row['days'],                        0, 0, 'C', true);
+            $pdf->Cell(16, 5.5, (string) $row['Days'],                        0, 0, 'C', true);
             $pdf->Cell(30, 5.5, $row['date'] ? \Carbon\Carbon::parse($row['date'])->format('m/d/Y') : '-', 0, 0, 'C', true);
             $pdf->Cell(35, 5.5, $row['revised']->format('M d, Y'),            0, 0, 'C', true);
             $costStr = $row['cost'] !== null ? 'PHP ' . number_format($row['cost'], 2) : '-';
@@ -1594,7 +1594,7 @@ class ProjectController extends Controller
     if ($hasLD || $ldStatus !== 'inactive') {
         $sectionHeader('Liquidated Damages');
 
-        $twoCol('LD Status',       $ldStatusLabel,                                                                          'Days Overdue',  $fresh->ld_days_overdue !== null ? (string) $fresh->ld_days_overdue . ' days' : 'N/A');
+        $twoCol('LD Status',       $ldStatusLabel,                                                                          'Days Overdue',  $fresh->ld_days_overdue !== null ? (string) $fresh->ld_days_overdue . ' Days' : 'N/A');
         $twoCol('LD Start Date',   $fresh->ld_start_date ? $fresh->ld_start_date->format('M d, Y') : 'N/A',                'LD End Date',   $fresh->ld_end_date ? $fresh->ld_end_date->format('M d, Y') : 'N/A');
         $twoCol('Accomplished %',  $fresh->ld_accomplished !== null ? $fresh->ld_accomplished . '%' : 'N/A',               'Unworked %',    $fresh->ld_unworked !== null ? $fresh->ld_unworked . '%' : 'N/A');
         $twoCol('LD Per Day',      $fresh->ld_per_day !== null ? 'PHP ' . number_format((float) $fresh->ld_per_day, 2) : 'N/A', 'Total LD', $fresh->total_ld !== null ? 'PHP ' . number_format((float) $fresh->total_ld, 2) : 'PHP 0.00');

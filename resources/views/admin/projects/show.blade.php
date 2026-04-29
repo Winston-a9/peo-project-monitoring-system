@@ -463,7 +463,7 @@
                                     style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--ink2);">
                                     Time Extensions</p>
                                 <p style="font-size:0.72rem;color:#9ca3af;margin-top:2px;">
-                                    {{ $totalTEDays > 0 ? $totalTEDays . ' total days' : 'None applied' }}</p>
+                                    {{ $totalTEDays > 0 ? $totalTEDays . ' Total Days' : 'None Applied' }}</p>
                             </div>
                         </div>
                         <span
@@ -480,7 +480,7 @@
                                     style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--ink2);">
                                     Variation Orders</p>
                                 <p style="font-size:0.72rem;color:#9ca3af;margin-top:2px;">
-                                    {{ $totalVODays > 0 ? $totalVODays . ' total days' : 'None applied' }}</p>
+                                    {{ $totalVODays > 0 ? $totalVODays . ' Total Days' : 'None Applied' }}</p>
                             </div>
                         </div>
                         <span
@@ -497,11 +497,11 @@
                                     style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--ink2);">
                                     Suspension Order</p>
                                 <p style="font-size:0.72rem;color:#9ca3af;margin-top:2px;">
-                                    {{ $hasSO ? 'Extends revised expiry' : 'None applied' }}</p>
+                                    {{ $hasSO ? 'Extends Revised Expiry' : 'None Applied' }}</p>
                             </div>
                         </div>
                         <span
-                            style="font-family:'Syne',sans-serif;font-size:2.2rem;font-weight:800;color:#d97706;line-height:1;">{{ $totalSODays > 0 ? $totalSODays . 'd' : '0' }}</span>
+                            style="font-family:'Syne',sans-serif;font-size:2.2rem;font-weight:800;color:#d97706;line-height:1;">{{ $totalSODays > 0 ? $totalSODays . ' d' : '0' }}</span>
                     </div>
                 </div>
 
@@ -818,7 +818,7 @@
                             <span class="dl"><i class="fas fa-calendar-xmark"></i> Days Overdue</span>
                             @if($ldLiveOverdue > 0)
                                 <span class="dv" style="color:#dc2626;">{{ $ldLiveOverdue }}
-                                    {{ $ldLiveOverdue === 1 ? 'day' : 'days' }}</span>
+                                    {{ $ldLiveOverdue === 1 ? 'day' : 'Days' }}</span>
                             @else
                                 <span style="color:#9ca3af;font-size:0.82rem;">—</span>
                             @endif
