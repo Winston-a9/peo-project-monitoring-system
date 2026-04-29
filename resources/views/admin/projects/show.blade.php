@@ -73,13 +73,13 @@
 
         $revisedBreakdown = '';
         if ($totalTEDays > 0 || $voCount > 0 || $hasSO) {
-            $revisedBreakdown = 'Original';
+            $revisedBreakdown = 'Original Duration';
             if ($totalTEDays > 0)
-                $revisedBreakdown .= ' +' . $totalTEDays . 'd TE';
+                $revisedBreakdown .= ' + ' . $teCount . ' TE' . ($teCount > 1 ? 's' : '') . ' (' . $totalTEDays . ' Days)';
             if ($voCount > 0)
-                $revisedBreakdown .= ' +' . $voCount . ' VO' . ($totalVODays > 0 ? ' (' . $totalVODays . 'd)' : '');
+                $revisedBreakdown .= ' + ' . $voCount . ' VO' . ($voCount > 1 ? 's' : '') . ($totalVODays > 0 ? ' (' . $totalVODays . ' Days)' : '');
             if ($hasSO)
-                $revisedBreakdown .= ' +' . $totalSODays . 'd SO';
+                $revisedBreakdown .= ' + ' . 'SO ('. $totalSODays . ' Days)';
         }
 
         $originalContractDays = (int) $project->date_started->diffInDays($project->original_contract_expiry) + 1;
