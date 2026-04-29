@@ -149,6 +149,8 @@ extra updates:
 
 ==================================================================================================================================================================================================================================================================================================
 FIXED/added:
+<fix> division roles consistency fixing
+<update> added revised contract duration to compute the days added in TE and VO
 <fix> narrow $fillable to exclude computed fields; add server-side output encoding for remarks in PDFs; add rate limiting to export routes.
 <update> updated projectseeder and projectfactory
 <fix> bug: termination button not working

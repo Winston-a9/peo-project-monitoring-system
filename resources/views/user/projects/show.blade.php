@@ -14,12 +14,10 @@
                 </p>
             </div>
             <div class="app-header-actions">
-                <a href="{{ route('user.projects.export-pdf', $project) }}" class="app-btn-secondary">
-                    <i class="fas fa-file-pdf"></i> Export PDF
-                </a>
-                <a href="{{ route('user.projects.index') }}" class="app-btn-secondary">
-                    <i class="fas fa-arrow-left"></i> Back
-                </a>
+                <a href="{{ route('user.projects.export-pdf', $project) }}">
+                        Export PDF</a>
+                <a href="{{ route('user.projects.index') }}" class="app-btn-secondary"><i
+                        class="fas fa-arrow-left"></i> Back</a>
             </div>
         </div>
     </x-slot>
@@ -82,8 +80,8 @@
                 $revisedBreakdown .= ' +' . $totalSODays . 'd SO';
         }
 
-        $contractDaysTotal = max((int) ($project->contract_days ?? 1), 1);
-        $elapsed = max(0, (int) $today->diffInDays($project->date_started));
+        $originalContractDays = (int) $project->date_started->diffInDays($project->original_contract_expiry) + 1;
+        $contractDaysTotal = max($originalContractDays, 1);        $elapsed = max(0, (int) $today->diffInDays($project->date_started));
         $pct = min(100, round(($elapsed / $contractDaysTotal) * 100));
         $barColor = $project->status === 'completed' ? '#22c55e' : ($daysLeft < 0 ? '#ef4444' : ($daysLeft <= 30 ? '#f59e0b' : '#f97316'));
 
@@ -264,6 +262,10 @@
                         <span class="dv">{{ $project->in_charge }}</span>
                     </div>
                     <div class="dr">
+                        <span class="dl"><i class="fas fa-sitemap"></i> Division</span>
+                        <span class="dv">{{ $project->division }}</span>
+                    </div>
+                    <div class="dr">
                         <span class="dl"><i class="fas fa-map-marker-alt"></i> Location</span>
                         <span class="dv" style="text-align:right;max-width:60%;">{{ $project->location }}</span>
                     </div>
@@ -341,12 +343,23 @@
                             <p class="ds">{{ $project->original_contract_expiry->format('l') }}</p>
                         </div>
                     </div>
-                    <div class="dr">
+                    <div class="dr" style="{{ $totalDaysAdded > 0 ? '' : 'opacity:0.48;' }}">
                         <span class="dl"><i class="fas fa-ruler-vertical"></i> Original Duration</span>
                         <div>
                             <p class="dv">{{ $contractDaysTotal }} days</p>
                             <p class="ds">From start to original expiry</p>
                         </div>
+                    </div>
+                    <div class="dr" style="{{ $project->revised_contract_days ? '' : 'opacity:0.48;' }}">
+                        <span class="dl"><i class="fas fa-ruler-combined"></i> Revised Duration</span>
+                        @if($project->revised_contract_days)
+                            <div>
+                                <p class="dv">{{ $project->revised_contract_days }} days</p>
+                                <p class="ds">Original + TE/VO extensions only</p>
+                            </div>
+                        @else
+                            <span class="pill p-gy">No extensions</span>
+                        @endif
                     </div>
                     <div class="dr" style="{{ $totalDaysAdded > 0 ? '' : 'opacity:0.48;' }}">
                         <span class="dl"><i class="fas fa-arrow-up-right-from-square"
@@ -506,8 +519,18 @@
                                         $baseDate = $project->original_contract_expiry;
                                         $runningDays = 0;
                                         $allRows = [];
-                                        $costInvolved = is_array($project->cost_involved ?? null) ? $project->cost_involved : [];
 
+                                        // TE costs: indexed directly from project->cost_involved
+                                        $costInvolved = is_array($project->cost_involved ?? null)
+                                            ? array_values($project->cost_involved)
+                                            : [];
+
+                                        // VO costs: indexed directly from project->vo_cost
+                                        $voCostsArr = is_array($project->vo_cost ?? null)
+                                            ? array_values($project->vo_cost)
+                                            : [];
+
+                                        // Parse reasons from remarks
                                         $remarksText = $project->remarks_recommendation ?? '';
                                         $teReasonMap = [];
                                         $voReasonMap = [];
@@ -515,9 +538,7 @@
                                         preg_match_all(
                                             '/(?:\[.*?\]\s*)?(?:●\s*\d{1,2}:\d{2}\s+(?:AM|PM)(?:\s+•\s*[^
 ]+)?\n)?\s*(Time Extension\s+\d+|Extension\s+#\d+)\s+(?:added|edited|updated|deleted)\s*\n(?:Justification|Reason):\s*(.+?)(?=\s*\[|$)/si',
-                                            $remarksText,
-                                            $teMatches,
-                                            PREG_SET_ORDER
+                                            $remarksText, $teMatches, PREG_SET_ORDER
                                         );
                                         foreach ($teMatches as $match) {
                                             $label = trim($match[1]);
@@ -530,9 +551,7 @@
                                         preg_match_all(
                                             '/(?:\[.*?\]\s*)?(?:●\s*\d{1,2}:\d{2}\s+(?:AM|PM)(?:\s+•\s*[^
 ]+)?\n)?\s*(Variation Order\s+\d+|Variation\s+#\d+)\s+(?:added|edited|updated|deleted)\s*\n(?:Justification|Reason):\s*(.+?)(?=\s*\[|$)/si',
-                                            $remarksText,
-                                            $voMatches,
-                                            PREG_SET_ORDER
+                                            $remarksText, $voMatches, PREG_SET_ORDER
                                         );
                                         foreach ($voMatches as $match) {
                                             $label = trim($match[1]);
@@ -542,44 +561,56 @@
                                             $voReasonMap[$label] = trim($match[2]);
                                         }
 
+                                        // Build TE rows
                                         foreach ($teEntries as $idx => $label) {
                                             $days = (int) ($extensionDays[$idx] ?? 0);
-                                            $cost = $costInvolved[$idx] ?? null;
+                                            $cost = isset($costInvolved[$idx]) && (float)$costInvolved[$idx] != 0
+                                                ? (float) $costInvolved[$idx]
+                                                : null;
                                             $date = $dateRequested[$idx] ?? null;
                                             $runningDays += $days;
                                             $allRows[] = [
-                                                'type' => 'te',
-                                                'label' => $label,
-                                                'days' => $days,
-                                                'running' => $runningDays,
-                                                'cost' => $cost,
+                                                'type'           => 'te',
+                                                'label'          => $label,
+                                                'days'           => $days,
+                                                'running'        => $runningDays,
+                                                'cost'           => $cost,
                                                 'date_requested' => $date,
-                                                'revised' => (clone $baseDate)->addDays($runningDays),
-                                                'reason' => $teReasonMap[$label] ?? null,
+                                                'revised'        => (clone $baseDate)->addDays($runningDays),
+                                                'reason'         => $teReasonMap[$label] ?? null,
                                             ];
                                         }
+
+                                        // Build VO rows — offset date_requested by teEntries count
                                         $voDateOffset = $teEntries->count();
                                         foreach ($voEntries as $vIdx => $label) {
                                             $days = (int) ($voDays[$vIdx] ?? 0);
-                                            $cost = $voCosts[$vIdx] ?? null;
+                                            $cost = isset($voCostsArr[$vIdx]) && (float)$voCostsArr[$vIdx] != 0
+                                                ? (float) $voCostsArr[$vIdx]
+                                                : null;
                                             $date = $dateRequested[$voDateOffset + $vIdx] ?? null;
                                             $runningDays += $days;
                                             $allRows[] = [
-                                                'type' => 'vo',
-                                                'label' => $label,
-                                                'days' => $days,
-                                                'running' => $runningDays,
-                                                'cost' => $cost,
+                                                'type'           => 'vo',
+                                                'label'          => $label,
+                                                'days'           => $days,
+                                                'running'        => $runningDays,
+                                                'cost'           => $cost,
                                                 'date_requested' => $date,
-                                                'revised' => (clone $baseDate)->addDays($runningDays),
-                                                'reason' => $voReasonMap[$label] ?? null,
+                                                'revised'        => (clone $baseDate)->addDays($runningDays),
+                                                'reason'         => $voReasonMap[$label] ?? null,
                                             ];
                                         }
+
+                                        // Sort by date_requested ascending, nulls last
                                         usort($allRows, function ($a, $b) {
                                             $dateA = $a['date_requested'] ? strtotime($a['date_requested']) : PHP_INT_MAX;
                                             $dateB = $b['date_requested'] ? strtotime($b['date_requested']) : PHP_INT_MAX;
                                             return $dateA - $dateB;
                                         });
+
+                                        // Pre-compute total cost for the footer
+                                        $totalExtCost = collect($allRows)->sum(fn($r) => (float) ($r['cost'] ?? 0));
                                     @endphp
                                     @foreach($allRows as $ri => $row)
                                         @php $isEven = $ri % 2 === 0;
@@ -653,10 +684,13 @@
                                             @endif
                                         </td>
                                         <td style="text-align:right;">
-                                            @php $totalCost = collect($allRows)->sum(fn($r) => (float) ($r['cost'] ?? 0)); @endphp
-                                            @if($totalCost > 0)<span
-                                            style="font-weight:800;color:#16a34a;white-space:nowrap;">₱{{ number_format($totalCost, 2) }}</span>@else<span
-                                                style="color:#9ca3af;">—</span>@endif
+                                            @if($totalExtCost > 0)
+                                                <span style="font-weight:800;color:#16a34a;white-space:nowrap;">
+                                                    ₱{{ number_format($totalExtCost, 2) }}
+                                                </span>
+                                            @else
+                                                <span style="color:#9ca3af;">—</span>
+                                            @endif
                                         </td>
                                     </tr>
                                 </tbody>
@@ -711,7 +745,45 @@
                             <span class="pill p-re">Total: ₱{{ number_format($project->total_ld, 2) }}</span>
                         @endif
                     </div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;">
+                    
+                    @php
+                        $ldStatus = $project->ld_status ?? 'inactive';
+                        $statusConfig = [
+                            'inactive' => [
+                                'label' => 'Not Started',
+                                'icon' => 'fa-circle-pause',
+                                'bgColor' => 'rgba(156,163,175,0.08)',
+                                'borderColor' => 'rgba(156,163,175,0.2)',
+                                'iconColor' => '#9ca3af',
+                                'textColor' => '#9ca3af'
+                            ],
+                            'active' => [
+                                'label' => 'Penalty Running',
+                                'icon' => 'fa-circle-play',
+                                'bgColor' => 'rgba(220,38,38,0.06)',
+                                'borderColor' => 'rgba(220,38,38,0.2)',
+                                'iconColor' => '#dc2626',
+                                'textColor' => '#dc2626'
+                            ],
+                            'terminated' => [
+                                'label' => 'Terminated',
+                                'icon' => 'fa-circle-stop',
+                                'bgColor' => 'rgba(34,197,94,0.06)',
+                                'borderColor' => 'rgba(34,197,94,0.2)',
+                                'iconColor' => '#16a34a',
+                                'textColor' => '#16a34a'
+                            ]
+                        ];
+                        $config = $statusConfig[$ldStatus] ?? $statusConfig['inactive'];
+                    @endphp
+                    
+                    <div style="display:flex; align-items:center; gap:0.6rem; padding:0.75rem 1rem; border-radius:9px; margin-bottom:0.75rem;
+                        background:{{ $config['bgColor'] }}; border:1.5px solid {{ $config['borderColor'] }};">
+                        <i class="fas {{ $config['icon'] }}" style="color:{{ $config['iconColor'] }}; font-size:0.85rem; flex-shrink:0;"></i>
+                        <p style="margin:0; font-size:0.8rem; font-weight:600; color:{{ $config['textColor'] }};">
+                            LD Status: <span style="font-weight:700;">{{ $config['label'] }}</span>
+                        </p>
+                    </div>
                         <div class="dr" style="border-right:1px solid var(--bd);">
                             <span class="dl"><i class="fas fa-percent"></i> Accomplished</span>
                             <span
@@ -835,7 +907,7 @@
                                 <thead>
                                     <tr>
                                         <th style="text-align:left;">Entry</th>
-                                        <th style="text-align:center;">Date</th>
+                                        <th style="text-align:center;">Date Requested</th>
                                         <th style="text-align:right;">Amount</th>
                                         <th style="text-align:right;">Remaining Balance</th>
                                     </tr>
@@ -844,50 +916,118 @@
                                 <tbody>
                                     @php
                                         $tableRows = [];
+
                                         $allExtCosts = array_merge(
                                             is_array($project->cost_involved ?? null) ? $project->cost_involved : [],
                                             is_array($project->vo_cost ?? null) ? $project->vo_cost : []
                                         );
                                         $allDocs = array_values(array_filter(
                                             is_array($project->documents_pressed ?? null) ? $project->documents_pressed : [],
-                                            fn($d) => str_starts_with((string) $d, 'Time Extension') || str_starts_with((string) $d, 'Variation Order')
+                                            fn($d) => str_starts_with((string) $d, 'Time Extension')
+                                                || str_starts_with((string) $d, 'Variation Order')
                                         ));
-                                        foreach ($allExtCosts as $ei => $cost) {
-                                            if ($cost !== null && (float) $cost != 0) {
-                                                $tableRows[] = ['type' => 'ext', 'label' => $allDocs[$ei] ?? 'Extension Cost', 'date' => null, 'amount' => (float) $cost];
+
+                                        // Build TE/VO ext rows — use date_requested from allRows context
+                                        // We re-derive date_requested per ext entry using the same offset logic as the extensions tab
+                                        $teCount_fin    = collect($allDocs)->filter(fn($d) => str_starts_with($d, 'Time Extension'))->count();
+                                        $voCount_fin    = collect($allDocs)->filter(fn($d) => str_starts_with($d, 'Variation Order'))->count();
+                                        $dateReqAll_fin = is_array($project->date_requested ?? null) ? $project->date_requested : [];
+
+                                        // TE entries occupy date_requested[0..teCount-1], VO entries occupy [teCount..teCount+voCount-1]
+                                        $extDateMap = [];
+                                        $teIdx = 0; $voIdx = 0;
+                                        foreach ($allDocs as $di => $doc) {
+                                            if (str_starts_with($doc, 'Time Extension')) {
+                                                $extDateMap[$di] = $dateReqAll_fin[$teIdx] ?? null;
+                                                $teIdx++;
+                                            } elseif (str_starts_with($doc, 'Variation Order')) {
+                                                $extDateMap[$di] = $dateReqAll_fin[$teCount_fin + $voIdx] ?? null;
+                                                $voIdx++;
                                             }
                                         }
-                                        foreach ($billingAmounts as $bi => $amount) {
-                                            $tableRows[] = ['type' => 'billing', 'label' => 'Billing No.' . ($bi + 1), 'date' => $billingDates[$bi] ?? null, 'amount' => (float) $amount, 'isLast' => $bi === $billingCount - 1];
+
+                                        foreach ($allExtCosts as $ei => $cost) {
+                                            if ($cost !== null && (float) $cost != 0) {
+                                                $tableRows[] = [
+                                                    'type'     => 'ext',
+                                                    'label'    => $allDocs[$ei] ?? 'Extension Cost',
+                                                    'date'     => $extDateMap[$ei] ?? null,
+                                                    'amount'   => (float) $cost,
+                                                    'isDeduct' => (float) $cost < 0,
+                                                ];
+                                            }
                                         }
-                                        $adjustedContract = max(0, (float) $project->original_contract_amount + collect($allExtCosts)->filter(fn($c) => $c !== null && (float) $c != 0)->sum());
+
+                                        foreach ($billingAmounts as $bi => $amount) {
+                                            $tableRows[] = [
+                                                'type'    => 'billing',
+                                                'label'   => 'Billing No.' . ($bi + 1),
+                                                'date'    => $billingDates[$bi] ?? null,
+                                                'amount'  => (float) $amount,
+                                                'isDeduct'=> false,
+                                            ];
+                                        }
+
+                                        // Sort by date ascending (oldest → newest / most recent at bottom), nulls first
+                                        usort($tableRows, function ($a, $b) {
+                                            $da = $a['date'] ? strtotime($a['date']) : 0;
+                                            $db = $b['date'] ? strtotime($b['date']) : 0;
+                                            return $da - $db;
+                                        });
+
+                                        // Re-stamp isLast on the last billing row after sort
+                                        $lastBillingIdx = null;
+                                        foreach ($tableRows as $ri => $row) {
+                                            if ($row['type'] === 'billing') $lastBillingIdx = $ri;
+                                        }
+                                        foreach ($tableRows as $ri => &$row) {
+                                            if ($row['type'] === 'billing') {
+                                                $row['isLast'] = ($ri === $lastBillingIdx);
+                                            }
+                                        }
+                                        unset($row);
+
+                                        // Adjusted contract = original + sum of all signed ext costs
+                                        $adjustedContract = (float) $project->original_contract_amount
+                                            + collect($tableRows)->where('type', 'ext')->sum('amount');
+
                                         $runningBilled = 0;
+                                        $runningAdjustedContract = (float) $project->original_contract_amount;
                                     @endphp
-                                    @foreach($tableRows as $ri => $row)
-                                        @php
-                                            $isEven = $ri % 2 === 0;
-                                            $isExt = $row['type'] === 'ext';
-                                            if (!$isExt)
-                                                $runningBilled += $row['amount'];
-                                            $runningRemain = $adjustedContract - $runningBilled;
-                                        @endphp
+                                        @foreach($tableRows as $ri => $row)
+                                            @php
+                                                $isEven = $ri % 2 === 0;
+                                                $isExt = $row['type'] === 'ext';
+                                                if ($isExt) {
+                                                    $runningAdjustedContract += $row['amount']; // apply signed adjustment
+                                                } else {
+                                                    $runningBilled += $row['amount'];
+                                                }
+                                                $runningRemain = $runningAdjustedContract - $runningBilled;
+                                            @endphp
                                         <tr style="background:{{ $isEven ? 'var(--bg)' : 'var(--bg2)' }};"
                                             onmouseover="this.style.background='rgba({{ $isExt ? '99,102,241' : '34,197,94' }},0.04)'"
                                             onmouseout="this.style.background='{{ $isEven ? 'var(--bg)' : 'var(--bg2)' }}'">
                                             <td>
                                                 <div style="display:flex;align-items:center;gap:0.5rem;">
                                                     <div
-                                                        style="width:26px;height:26px;border-radius:7px;background:{{ $isExt ? 'rgba(99,102,241,0.1)' : 'rgba(34,197,94,0.1)' }};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                                        style="width:26px;height:26px;border-radius:7px;background:{{ $isExt ? ($row['amount'] < 0 ? 'rgba(239,68,68,0.1)' : 'rgba(99,102,241,0.1)') : 'rgba(34,197,94,0.1)' }};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                                                         <i class="fas {{ $isExt ? 'fa-file-signature' : 'fa-file-invoice-dollar' }}"
-                                                            style="font-size:0.65rem;color:{{ $isExt ? '#6366f1' : '#16a34a' }};"></i>
+                                                            style="font-size:0.65rem;color:{{ $isExt ? ($row['amount'] < 0 ? '#dc2626' : '#6366f1') : '#16a34a' }};"></i>
                                                     </div>
                                                     <div>
                                                         <span
-                                                            style="font-weight:700;color:{{ $isExt ? '#6366f1' : 'var(--tx)' }};">{{ $row['label'] }}</span>
+                                                            style="font-weight:700;color:{{ $isExt ? ($row['amount'] < 0 ? '#dc2626' : '#6366f1') : 'var(--tx)' }};">{{ $row['label'] }}</span>
                                                         @if($isExt)
+                                                            @php $isDeduct = $row['amount'] < 0; @endphp
                                                             <span
-                                                                style="font-size:0.6rem;font-weight:700;background:rgba(99,102,241,0.1);color:#6366f1;border:1px solid rgba(99,102,241,0.2);border-radius:99px;padding:1px 6px;margin-left:4px;">Contract
-                                                                Adj.</span>
+                                                                style="font-size:0.6rem;font-weight:700;
+                                                                    background:{{ $isDeduct ? 'rgba(239,68,68,0.1)' : 'rgba(99,102,241,0.1)' }};
+                                                                    color:{{ $isDeduct ? '#dc2626' : '#6366f1' }};
+                                                                    border:1px solid {{ $isDeduct ? 'rgba(239,68,68,0.2)' : 'rgba(99,102,241,0.2)' }};
+                                                                    border-radius:99px;padding:1px 6px;margin-left:4px;">
+                                                                {{ $isDeduct ? 'Deduction' : 'Contract Adj.' }}
+                                                            </span>
                                                         @endif
                                                         @if(!$isExt && ($row['isLast'] ?? false))
                                                             <span
@@ -906,24 +1046,35 @@
                                             </td>
                                             <td style="text-align:right;">
                                                 @if($isExt)
-                                                    <span
-                                                        style="font-weight:600;color:{{ $row['amount'] >= 0 ? '#16a34a' : '#dc2626' }};opacity:0.7;font-size:0.85rem;">
-                                                        {{ $row['amount'] >= 0 ? '+' : '−' }}₱{{ number_format(abs($row['amount']), 2) }}
+                                                    @php $isDeduct = $row['amount'] < 0; @endphp
+                                                    <span style="font-weight:600;
+                                                        color:{{ $isDeduct ? '#dc2626' : '#16a34a' }};
+                                                        opacity:0.85;font-size:0.85rem;">
+                                                        {{ $isDeduct ? '−' : '+' }}₱{{ number_format(abs($row['amount']), 2) }}
                                                     </span>
-                                                    <p style="font-size:0.6rem;color:#9ca3af;margin-top:1px;text-align:right;">
-                                                        contract adj.</p>
+                                                    <p style="font-size:0.6rem;
+                                                        color:{{ $isDeduct ? '#dc2626' : '#9ca3af' }};
+                                                        margin-top:1px;text-align:right;">
+                                                        {{ $isDeduct ? 'deduction' : 'contract adj.' }}
+                                                    </p>
                                                 @else
-                                                    <span
-                                                        style="font-weight:700;color:#dc2626;font-family:'Syne',sans-serif;font-size:0.95rem;">
+                                                    <span style="font-weight:700;color:#dc2626;
+                                                        font-family:'Syne',sans-serif;font-size:0.95rem;">
                                                         −₱{{ number_format($row['amount'], 2) }}
                                                     </span>
                                                     <p style="font-size:0.6rem;color:#9ca3af;margin-top:1px;text-align:right;">
-                                                        payment</p>
+                                                        payment
+                                                    </p>
                                                 @endif
                                             </td>
                                             <td style="text-align:right;">
                                                 @if($isExt)
-                                                    <span style="color:#9ca3af;font-size:0.8rem;">—</span>
+                                                    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px;">
+                                                        <span style="font-weight:700;color:{{ $runningRemain >= 0 ? '#3b82f6' : '#dc2626' }};">
+                                                            ₱{{ number_format($runningRemain, 2) }}
+                                                        </span>
+                                                        <span style="font-size:0.62rem;color:#9ca3af;">after adj.</span>
+                                                    </div>
                                                 @else
                                                     <span
                                                         style="font-weight:700;color:{{ $runningRemain >= 0 ? '#3b82f6' : '#dc2626' }};">₱{{ number_format($runningRemain, 2) }}</span>
@@ -933,16 +1084,41 @@
                                     @endforeach
                                 </tbody>
                                 <tfoot>
-                                    <tr>
+    <tr>
                                         <td colspan="2"
                                             style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink2);">
-                                            Total</td>
-                                        <td style="text-align:right;"><span
-                                                style="font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:800;color:#16a34a;">₱{{ number_format($totalBilled, 2) }}</span>
+                                            Total
                                         </td>
-                                        <td style="text-align:right;"><span
-                                                style="font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:800;color:{{ ($adjustedContract - $totalBilled) >= 0 ? '#3b82f6' : '#dc2626' }};">₱{{ number_format($adjustedContract - $totalBilled, 2) }}</span>
+
+                                        {{-- Amount: sum of billings + ext cost adjustments --}}
+                                        <td style="text-align:right;">
+                                            @php
+                                                $totalExtCostFinancials = collect($tableRows)
+                                                    ->where('type', 'ext')
+                                                    ->sum(fn($r) => (float) $r['amount']);
+                                                $grandTotal = $totalBilled + $totalExtCostFinancials;
+                                            @endphp
+                                            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
+                                                @if($totalExtCostFinancials > 0)
+                                                    <span style="font-size:0.7rem;color:#6366f1;font-weight:600;">
+                                                        +₱{{ number_format($totalExtCostFinancials, 2) }} adj.
+                                                    </span>
+                                                @endif
+                                                <span style="font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:800;color:#16a34a;">
+                                                    ₱{{ number_format($totalBilled, 2) }}
+                                                </span>
+                                            </div>
                                         </td>
+
+                                        {{-- Remaining balance: adjusted contract minus billed --}}
+                                        <td style="text-align:right;">
+                                            @php $finalRemaining = $adjustedContract - $totalBilled; @endphp
+                                            <span style="font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:800;
+                                                color:{{ $finalRemaining >= 0 ? '#3b82f6' : '#dc2626' }};">
+                                                ₱{{ number_format($finalRemaining, 2) }}
+                                            </span>
+                                        </td>
+                                    </tr>
                                 </tfoot>
                             </table>
                         </div>

@@ -19,11 +19,11 @@ class ProjectController extends Controller
 
     // Available divisions — single source of truth used by create/edit forms
     public const DIVISIONS = [
-        'First District Engineering Office',
-        'Second District Engineering Office',
-        'Third District Engineering Office',
-        'Fourth District Engineering Office',
-        'Fifth District Engineering Office',
+        'Maintenance',
+        'Construction',
+        'Water Works',
+        'Material Testing and Quality Control (MTQA)',
+        'Motorpool',
     ];
 
     // Magic constants for improved code clarity
