@@ -10,30 +10,8 @@ class ProjectReportPdf extends FPDF
     private $generatedAt = '';
     private $filterLabel = 'All Projects';
 
-    /**
-     * SECURITY FIX: Maximum character length for remarks rendered in PDFs.
-     *
-     * The remarks_recommendation field allows up to 50,000 characters in the DB,
-     * but rendering that in FPDF MultiCell() can exhaust PHP memory and produce
-     * malformed/oversized PDFs. We cap at 8,000 characters for PDF output.
-     * The full text remains stored in the DB and visible in the web UI.
-     */
     private const PDF_REMARKS_MAX_LENGTH = 8000;
 
-    /**
-     * SECURITY FIX: Sanitize a string for safe rendering inside FPDF.
-     *
-     * This goes beyond the original clean() closure used in controllers by:
-     *   1. Converting encoding (windows-1252 safe, same as before).
-     *   2. Stripping null bytes and other control characters (0x00–0x08,
-     *      0x0B–0x0C, 0x0E–0x1F) that can corrupt PDF streams.
-     *   3. Normalising line endings to \n so FPDF MultiCell behaves consistently.
-     *   4. Enforcing a hard character cap for PDF output only.
-     *
-     * @param  string $s         Raw input string (UTF-8 from DB).
-     * @param  int    $maxLength Maximum output length. 0 = no cap.
-     * @return string            Safe, encoding-normalised string for FPDF.
-     */
     public function sanitizeForPdf(string $s, int $maxLength = 0): string
     {
         // Step 1 — Encoding conversion (matches original controller logic)
