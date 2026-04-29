@@ -514,7 +514,9 @@ class ProjectController extends Controller
 
         $data['contract_days'] = $baseContractDays + $totalTEDays + $totalVODays;
 
-        $data['contract_days'] = $baseContractDays + $totalTEDays + $totalVODays;
+        $data['revised_contract_days'] = $totalTEDays + $totalVODays > 0 
+            ? $baseContractDays + $totalTEDays + $totalVODays 
+            : null;
 
         if ($totalExtDays > 0) {
             $extra = $hasSO ? $totalSODays : 0;
@@ -818,6 +820,10 @@ class ProjectController extends Controller
 
         $data['contract_days'] = $originalContractDays + $currentTEDays + $currentVODays;
 
+        $data['revised_contract_days'] = ($currentTEDays + $currentVODays) > 0
+            ? $originalContractDays + $currentTEDays + $currentVODays
+            : null;
+
         // Resolve label
         $labelCounter = 0;
         $resolvedLabel = ($type === 'te' ? 'Time Extension' : 'Variation Order') . ' ' . ($index + 1);
@@ -1034,6 +1040,10 @@ class ProjectController extends Controller
             ->diffInDays(Carbon::parse($fresh->original_contract_expiry, config('app.timezone'))) + 1;
 
         $data['contract_days'] = $originalContractDays + $totalTE + $totalVO;
+
+        $data['revised_contract_days'] = ($totalTE + $totalVO) > 0
+            ? $originalContractDays + $totalTE + $totalVO
+            : null;
 
         $existing = trim($fresh->remarks_recommendation ?? '');
         $note = $this->formatEntryRemark($deletedLabel, 'deleted', $reason);

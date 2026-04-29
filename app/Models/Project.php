@@ -61,6 +61,7 @@ class Project extends Model
         'time_extension',        // NOTE: kept here because the controller sets
         'variation_order',       // these as part of the same explicit update()
         'contract_days',         // call after computing from arrays — they are
+        'revised_contract_days',  // not directly user-editable, but they are derived from TE/VO arrays, so we allow mass assignment for convenience.
         'revised_contract_expiry', // never exposed as standalone form inputs.
         'extension_days',        // The real protection is that controllers
         'cost_involved',         // use $request->only([...]) with an explicit

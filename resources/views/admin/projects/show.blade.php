@@ -82,8 +82,8 @@
                 $revisedBreakdown .= ' +' . $totalSODays . 'd SO';
         }
 
-        $contractDaysTotal = max((int) ($project->contract_days ?? 1), 1);
-        $elapsed = max(0, (int) $today->diffInDays($project->date_started));
+        $originalContractDays = (int) $project->date_started->diffInDays($project->original_contract_expiry) + 1;
+        $contractDaysTotal = max($originalContractDays, 1);        $elapsed = max(0, (int) $today->diffInDays($project->date_started));
         $pct = min(100, round(($elapsed / $contractDaysTotal) * 100));
         $barColor = $project->status === 'completed' ? '#22c55e' : ($daysLeft < 0 ? '#ef4444' : ($daysLeft <= 30 ? '#f59e0b' : '#f97316'));
 
@@ -351,6 +351,17 @@
                             <p class="dv">{{ $contractDaysTotal }} days</p>
                             <p class="ds">From start to original expiry</p>
                         </div>
+                    </div>
+                    <div class="dr" style="{{ $project->revised_contract_days ? '' : 'opacity:0.48;' }}">
+                        <span class="dl"><i class="fas fa-ruler-combined"></i> Revised Duration</span>
+                        @if($project->revised_contract_days)
+                            <div>
+                                <p class="dv">{{ $project->revised_contract_days }} days</p>
+                                <p class="ds">Original + TE/VO extensions only</p>
+                            </div>
+                        @else
+                            <span class="pill p-gy">No extensions</span>
+                        @endif
                     </div>
                     <div class="dr" style="{{ $totalDaysAdded > 0 ? '' : 'opacity:0.48;' }}">
                         <span class="dl"><i class="fas fa-arrow-up-right-from-square"
