@@ -20,7 +20,8 @@
                 </button>
             </form>
             <a href="{{ route('admin.projects.index') }}"
-               style="display:inline-flex; align-items:center; gap:0.4rem; padding:0.65rem 1.1rem; border:1.5px solid var(--border); border-radius:9px; font-weight:600; font-size:0.825rem; color:var(--text-secondary); text-decoration:none; background:var(--bg-secondary); transition:all 0.2s;">
+                style="display:inline-flex; align-items:center; gap:0.5rem; padding:0.65rem 1.25rem; background:#f97316; color:white; border:none; border-radius:9px; font-size:0.855rem; font-weight:700; cursor:pointer; font-family:'Instrument Sans',sans-serif; box-shadow:0 2px 10px rgba(249,115,22,0.35); transition:all 0.2s;"
+                onmouseover="this.style.background='#ea580c'" onmouseout="this.style.background='#f97316'">
                 <i class="fas fa-arrow-left"></i> Back
             </a>
         </div>
