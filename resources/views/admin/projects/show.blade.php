@@ -317,6 +317,18 @@
                             <p class="ds">{{ $project->created_at->format('h:i A') }}</p>
                         </div>
                     </div>
+                    {{-- Performance Bond Expiry --}}
+                    <div class="dr" style="{{ $project->performance_bond_date ? '' : 'opacity:0.48;' }}">
+                        <span class="dl"><i class="fas fa-certificate" style="{{ $project->performance_bond_date ? 'color:#06b6d4;' : 'color:#9ca3af;' }}"></i> Performance Bond Expiry</span>
+                        @if($project->performance_bond_date)
+                            <div>
+                                <p class="dv">{{ $project->performance_bond_date->format('F d, Y') }}</p>
+                                <p class="ds">{{ $project->performance_bond_date->format('l') }}</p>
+                            </div>
+                        @else
+                            <span class="pill p-gy">Not set</span>
+                        @endif
+                    </div>
                 </div>
 
                 {{-- Contract Dates --}}
@@ -431,18 +443,6 @@
                                 <span class="pill p-gy">Not set</span>
                             @endif
                         </div>
-                    </div>
-                    {{-- Performance Bond Expiry --}}
-                    <div class="dr" style="{{ $project->performance_bond_date ? '' : 'opacity:0.48;' }}">
-                        <span class="dl"><i class="fas fa-certificate" style="{{ $project->performance_bond_date ? 'color:#06b6d4;' : 'color:#9ca3af;' }}"></i> Performance Bond Expiry</span>
-                        @if($project->performance_bond_date)
-                            <div>
-                                <p class="dv">{{ $project->performance_bond_date->format('F d, Y') }}</p>
-                                <p class="ds">{{ $project->performance_bond_date->format('l') }}</p>
-                            </div>
-                        @else
-                            <span class="pill p-gy">Not set</span>
-                        @endif
                     </div>
                 </div>
             </div>
