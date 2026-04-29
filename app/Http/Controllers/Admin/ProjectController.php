@@ -155,9 +155,9 @@ class ProjectController extends Controller
         $currentDivision = $this->currentDivision();
 
         // ── Normalize stored JSON arrays ──────────────────────────
-        $existingDocs  = $this->normalizeArray($fresh->documents_pressed);
-        $existingDays  = $this->normalizeArray($fresh->extension_days,  'int');
-        $existingCosts = $this->normalizeArray($fresh->cost_involved,   'float');
+        $existingDocs = $this->normalizeArray($fresh->documents_pressed);
+        $existingDays = $this->normalizeArray($fresh->extension_days, 'int');
+        $existingCosts = $this->normalizeArray($fresh->cost_involved, 'float');
 
         $existingDates = $this->normalizeArray($fresh->date_requested);
 
@@ -186,9 +186,6 @@ class ProjectController extends Controller
         $existingVoDays = array_map('intval', array_filter((array) $existingVoDays));
         $existingVoCosts = array_map(fn($v) => $v !== null ? (float) $v : null, $existingVoCosts);
 
-        // FIX BUG 4: Guard against missing date entries before accessing offset.
-        // VO dates are stored at indices $teCount, $teCount+1, ... in $existingDates.
-        // We validate the offset exists before reading to prevent silent null misassignment.
         $voHistory = [];
         $voIndex = 0;
         foreach ($existingDocs as $doc) {
@@ -222,13 +219,15 @@ class ProjectController extends Controller
         $voReasonMap = [];
 
         $teMatches = [];
-        if (preg_match_all(
-            '/(?:\[.*?\]\s*)?(?:●\s*\d{1,2}:\d{2}\s+(?:AM|PM)(?:\s+•\s*[^
+        if (
+            preg_match_all(
+                '/(?:\[.*?\]\s*)?(?:●\s*\d{1,2}:\d{2}\s+(?:AM|PM)(?:\s+•\s*[^
 ]+)?\n)?\s*(Time Extension\s+\d+|Extension\s+#\d+)\s+(?:added|edited|updated|deleted)\s*\n(?:Justification|Reason):\s*(.+?)(?=\n\n|\z)/si',
-            $remarksText,
-            $teMatches,
-            PREG_SET_ORDER
-        ) === false) {
+                $remarksText,
+                $teMatches,
+                PREG_SET_ORDER
+            ) === false
+        ) {
             $teMatches = [];
         }
         foreach ($teMatches as $match) {
@@ -236,13 +235,15 @@ class ProjectController extends Controller
         }
 
         $voMatches = [];
-        if (preg_match_all(
-            '/(?:\[.*?\]\s*)?(?:●\s*\d{1,2}:\d{2}\s+(?:AM|PM)(?:\s+•\s*[^
+        if (
+            preg_match_all(
+                '/(?:\[.*?\]\s*)?(?:●\s*\d{1,2}:\d{2}\s+(?:AM|PM)(?:\s+•\s*[^
 ]+)?\n)?\s*(Variation Order\s+\d+|Variation\s+#\d+)\s+(?:added|edited|updated|deleted)\s*\n(?:Justification|Reason):\s*(.+?)(?=\n\n|\z)/si',
-            $remarksText,
-            $voMatches,
-            PREG_SET_ORDER
-        ) === false) {
+                $remarksText,
+                $voMatches,
+                PREG_SET_ORDER
+            ) === false
+        ) {
             $voMatches = [];
         }
         foreach ($voMatches as $match) {
@@ -322,7 +323,7 @@ class ProjectController extends Controller
             'ld_start_date' => 'nullable|date',
             'ld_end_date' => 'nullable|date|after_or_equal:ld_start_date|before_or_equal:' . now(config('app.timezone'))->addYears(10)->format('Y-m-d'),
             'new_billing_amount' => 'nullable|numeric|min:0|max:' . self::MAX_BILLING_AMOUNT,
-            'new_billing_date'   => 'nullable|date',
+            'new_billing_date' => 'nullable|date',
         ]);
 
         // Division admins cannot reassign a project to a different division
@@ -379,13 +380,13 @@ class ProjectController extends Controller
         // ── Step 3: Carry forward existing arrays from DB ─────────
         $fresh = $project->fresh();
 
-        $existingDocs  = $this->normalizeArray($fresh->documents_pressed);
-        $existingDays  = $this->normalizeArray($fresh->extension_days, 'int');
+        $existingDocs = $this->normalizeArray($fresh->documents_pressed);
+        $existingDays = $this->normalizeArray($fresh->extension_days, 'int');
         $existingCosts = $this->normalizeArray($fresh->cost_involved, 'float');
         $existingSuspDay = (int) ($fresh->suspension_days ?? 0);
-        $existingVoDays  = $this->normalizeArray($fresh->vo_days, 'int');
+        $existingVoDays = $this->normalizeArray($fresh->vo_days, 'int');
         $existingVoCosts = $this->normalizeArray($fresh->vo_cost, 'float');
-        $existingDates   = $this->normalizeArray($fresh->date_requested);
+        $existingDates = $this->normalizeArray($fresh->date_requested);
 
         $currentTECount = collect($existingDocs)
             ->filter(fn($d) => str_starts_with((string) $d, 'Time Extension'))
@@ -393,7 +394,7 @@ class ProjectController extends Controller
 
         // ── Step 3b: Carry forward & append billing ───────────────
         $existingBillingAmounts = $this->normalizeArray($fresh->billing_amounts, 'float');
-        $existingBillingDates   = $this->normalizeArray($fresh->billing_dates);
+        $existingBillingDates = $this->normalizeArray($fresh->billing_dates);
 
         $newBillingAmount = $request->input('new_billing_amount');
         $newBillingDate = $request->input('new_billing_date');
@@ -514,8 +515,8 @@ class ProjectController extends Controller
 
         $data['contract_days'] = $baseContractDays + $totalTEDays + $totalVODays;
 
-        $data['revised_contract_days'] = $totalTEDays + $totalVODays > 0 
-            ? $baseContractDays + $totalTEDays + $totalVODays 
+        $data['revised_contract_days'] = $totalTEDays + $totalVODays > 0
+            ? $baseContractDays + $totalTEDays + $totalVODays
             : null;
 
         if ($totalExtDays > 0) {
@@ -553,10 +554,6 @@ class ProjectController extends Controller
         }
 
         // ── Step 8: Liquidated Damages ────────────────────────────
-        // FIX BUG 2: LD must use the adjusted contract amount computed from scratch here,
-        // NOT $data['remaining_balance'] which was set in Step 4c using old costs.
-        // The final billing recalc at the bottom will overwrite remaining_balance anyway,
-        // so we compute the LD basis independently to guarantee correctness.
         $ldAccomplished = isset($data['ld_accomplished']) && $data['ld_accomplished'] !== null
             ? (float) $data['ld_accomplished']
             : 0.0;
@@ -774,7 +771,7 @@ class ProjectController extends Controller
                 return back()->with('error', 'Time Extension entry not found.');
             }
             $extensionDays[$index] = $days;
-            $costInvolved[$index]  = ($cost !== null && $cost !== '') ? (float) $cost : null;
+            $costInvolved[$index] = ($cost !== null && $cost !== '') ? (float) $cost : null;
             $dateRequested[$index] = $date ?: null;
 
             $data['extension_days'] = array_values($extensionDays);
@@ -788,10 +785,10 @@ class ProjectController extends Controller
                 return back()->with('error', 'Variation Order entry not found.');
             }
 
-           if (!isset($voDays[$index])) {
+            if (!isset($voDays[$index])) {
                 return back()->with('error', 'Variation Order entry not found.');
             }
-            $voDays[$index]  = $days;
+            $voDays[$index] = $days;
             $voCosts[$index] = ($cost !== null && $cost !== '') ? (float) $cost : null;
             $dateRequested[$teCount + $index] = $date ?: null;
 
@@ -869,7 +866,7 @@ class ProjectController extends Controller
         $arr = is_array($value) ? $value : (json_decode($value ?? '[]', true) ?? []);
 
         return match ($type) {
-            'int'   => array_map('intval', $arr),
+            'int' => array_map('intval', $arr),
             'float' => array_map(fn($v) => $v !== null ? (float) $v : null, $arr),
             default => $arr,
         };
@@ -923,11 +920,11 @@ class ProjectController extends Controller
         $index = (int) $request->input('entry_index');
         $reason = trim($request->input('delete_reason'));
 
-        $existingDocs  = $this->normalizeArray($fresh->documents_pressed);
-        $existingDays  = $this->normalizeArray($fresh->extension_days, 'int');
+        $existingDocs = $this->normalizeArray($fresh->documents_pressed);
+        $existingDays = $this->normalizeArray($fresh->extension_days, 'int');
         $existingCosts = $this->normalizeArray($fresh->cost_involved, 'float');
         $existingDates = $this->normalizeArray($fresh->date_requested);
-        $existingVoDays  = $this->normalizeArray($fresh->vo_days, 'int');
+        $existingVoDays = $this->normalizeArray($fresh->vo_days, 'int');
         $existingVoCosts = $this->normalizeArray($fresh->vo_cost, 'float');
 
         $teCount = collect($existingDocs)
@@ -935,9 +932,6 @@ class ProjectController extends Controller
             ->count();
 
         if ($type === 'te') {
-            // FIX BUG 3: Validate array bounds BEFORE splicing to prevent silent data corruption.
-            // If $existingDays or $existingCosts are shorter than expected (data corruption),
-            // we bail early rather than splice wrong indices and silently destroy unrelated entries.
             if ($index >= count($existingDays) || $index >= count($existingCosts)) {
                 return back()->with('error', 'Array mismatch detected: Time Extension data may be corrupted. Please contact your administrator.');
             }
@@ -972,7 +966,6 @@ class ProjectController extends Controller
             }
             unset($doc);
         } else {
-            // FIX BUG 3 (VO side): Same bounds check for Variation Order arrays.
             if ($index >= count($existingVoDays) || $index >= count($existingVoCosts)) {
                 return back()->with('error', 'Array mismatch detected: Variation Order data may be corrupted. Please contact your administrator.');
             }
@@ -1255,12 +1248,12 @@ class ProjectController extends Controller
         $this->authorizeProjectAccess($project);
 
         $clean = function (string $s): string {
-    if (!extension_loaded('iconv')) {
-        return preg_replace('/[^\x20-\x7E]/', '?', $s);
-    }
-    $result = iconv('UTF-8', 'windows-1252//TRANSLIT//IGNORE', $s);
-    return ($result !== false && $result !== '') ? $result : preg_replace('/[^\x20-\x7E]/', '?', $s);
-};
+            if (!extension_loaded('iconv')) {
+                return preg_replace('/[^\x20-\x7E]/', '?', $s);
+            }
+            $result = iconv('UTF-8', 'windows-1252//TRANSLIT//IGNORE', $s);
+            return ($result !== false && $result !== '') ? $result : preg_replace('/[^\x20-\x7E]/', '?', $s);
+        };
         $fresh = $project->fresh();
 
         $docs = $this->normalizeArray($fresh->documents_pressed);

@@ -408,6 +408,18 @@
                             <span class="pill p-gy">None</span>
                         @endif
                     </div>
+                    {{-- Performance Bond Expiry --}}
+                    <div class="dr" style="{{ $project->performance_bond_date ? '' : 'opacity:0.48;' }}">
+                        <span class="dl"><i class="fas fa-certificate" style="{{ $project->performance_bond_date ? 'color:#06b6d4;' : 'color:#9ca3af;' }}"></i> Performance Bond Expiry</span>
+                        @if($project->performance_bond_date)
+                            <div>
+                                <p class="dv">{{ $project->performance_bond_date->format('F d, Y') }}</p>
+                                <p class="ds">{{ $project->performance_bond_date->format('l') }}</p>
+                            </div>
+                        @else
+                            <span class="pill p-gy">Not set</span>
+                        @endif
+                    </div>
                     <div
                         style="padding:0.875rem 1.25rem;background:{{ $project->revised_contract_expiry ? 'rgba(249,115,22,0.04)' : 'transparent' }};border-top:1px solid var(--bd);">
                         <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;">
