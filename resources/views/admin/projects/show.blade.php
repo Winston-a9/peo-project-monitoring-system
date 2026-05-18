@@ -299,10 +299,6 @@
                         </div>
                     </div>
                     <div class="dr">
-                        <span class="dl"><i class="fas fa-peso-sign"></i> Original Amount</span>
-                        <span class="dv">₱{{ number_format($project->original_contract_amount, 2) }}</span>
-                    </div>
-                    <div class="dr">
                         <span class="dl"><i class="fas fa-clock-rotate-left"></i> Last Updated</span>
                         <div>
                             <p class="dv">{{ $project->updated_at->format('M d, Y') }}</p>

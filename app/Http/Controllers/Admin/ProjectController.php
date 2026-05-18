@@ -1505,7 +1505,7 @@ class ProjectController extends Controller
             $pdf->Cell(6,  5.5, (string) ($ri + 1),                          0, 0, 'C', true);
             $pdf->Cell(45, 5.5, $clean($row['label']),                        0, 0, 'L', true);
             $pdf->Cell(8,  5.5, $row['type'],                                 0, 0, 'C', true);
-            $pdf->Cell(16, 5.5, (string) $row['Days'],                        0, 0, 'C', true);
+            $pdf->Cell(16, 5.5, (string) $row['days'],                        0, 0, 'C', true);
             $pdf->Cell(30, 5.5, $row['date'] ? \Carbon\Carbon::parse($row['date'])->format('m/d/Y') : '-', 0, 0, 'C', true);
             $pdf->Cell(35, 5.5, $row['revised']->format('M d, Y'),            0, 0, 'C', true);
             $costStr = $row['cost'] !== null ? 'PHP ' . number_format($row['cost'], 2) : '-';
@@ -1542,8 +1542,7 @@ class ProjectController extends Controller
     $sectionHeader('Contract Financials');
 
     $twoCol('Original Contract Amount', 'PHP ' . number_format((float) $fresh->original_contract_amount, 2), 'Total Cost Adjustments', ($totalAdj >= 0 ? '+' : '') . 'PHP ' . number_format($totalAdj, 2));
-    $twoCol('Adjusted Contract Amount', 'PHP ' . number_format($adjustedContractAmount, 2), 'Total Amount Billed', 'PHP ' . number_format($totalBilled, 2));
-    $twoCol('Remaining Balance',        'PHP ' . number_format($remainingBalance, 2),        '', '');
+    $twoCol('Remaining Balance',        'PHP ' . number_format($remainingBalance, 2), 'Total Amount Billed', 'PHP ' . number_format($totalBilled, 2));
 
     $pdf->Ln(1.5);
     $twoCol('Advance Billing %',   $fresh->advance_billing_pct !== null ? $fresh->advance_billing_pct . '%' : 'N/A',   'Advance Billing Amount', $fresh->advance_billing_amount !== null ? 'PHP ' . number_format((float) $fresh->advance_billing_amount, 2) : 'N/A');
