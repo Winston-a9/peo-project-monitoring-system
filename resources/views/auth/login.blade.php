@@ -7,7 +7,7 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=Playfair+Display:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
     @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
@@ -45,6 +45,7 @@
 
             --font-display: 'Syne', sans-serif;
             --font-body:    'DM Sans', sans-serif;
+            --font-serif:   'Playfair Display', serif;
             --ease-spring:  cubic-bezier(0.34, 1.56, 0.64, 1);
             --ease-smooth:  cubic-bezier(0.23, 1, 0.32, 1);
         }
@@ -206,7 +207,7 @@
         }
 
         .panel-h1 {
-            font-family: var(--font-display);
+            font-family: var(--font-serif);
             font-size: clamp(2.8rem, 4.5vw, 4.2rem);
             font-weight: 800; line-height: 1.05; letter-spacing: -2px;
             margin-bottom: 1.5rem;

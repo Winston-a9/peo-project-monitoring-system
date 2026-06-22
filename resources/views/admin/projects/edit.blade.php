@@ -510,198 +510,6 @@
                     </div>
                 </div>{{-- /form-card: Work Progress --}}
 
-                <div class="form-card" style="margin-bottom:1.5rem;" id="ld-card"
-                    data-ld-status="{{ $project->ld_status ?? 'inactive' }}">
-
-                    <div class="section-header">
-                        <i class="fas fa-calculator"></i>
-                        <span>Liquidated Damages Assessment</span>
-                    </div>
-
-                    <div class="section-body">
-
-                        <input type="hidden" name="ld_action" id="ld_action_input" value="">
-                        
-                        <div id="ld-chunk-start">
-                            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.75rem;
-                        padding:0.85rem 1rem; border-radius:10px;
-                        background:rgba(156,163,175,0.08); border:1.5px solid rgba(156,163,175,0.2);">
-                                <div style="display:flex; align-items:center; gap:0.6rem;">
-                                    <i class="fas fa-circle-pause" style="color:#9ca3af; font-size:0.9rem;"></i>
-                                    <span style="font-size:0.82rem; font-weight:700; color:#9ca3af;">LD Penalty: Not
-                                        Started</span>
-                                </div>
-                                <button type="button" id="ld-start-btn" onclick="ldSetState('setup')" style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.4rem 1rem;
-                           border-radius:8px;border:none;background:#dc2626;color:white;
-                           font-size:0.75rem;font-weight:700;cursor:pointer;
-                           font-family:'Instrument Sans',sans-serif;
-                           box-shadow:0 2px 6px rgba(220,38,38,0.25);">
-                                    <i class="fas fa-circle-play" style="font-size:0.7rem;"></i> Start LD Penalty
-                                </button>
-                            </div>
-                        </div>
-
-                        <div id="ld-chunk-dates" style="display:none;">
-
-                            <div style="display:flex; align-items:center; gap:0.6rem; margin-bottom:1.25rem;
-                        padding:0.75rem 1rem; border-radius:9px;
-                        background:rgba(220,38,38,0.06); border:1.5px solid rgba(220,38,38,0.18);">
-                                <i class="fas fa-circle-play"
-                                    style="color:#dc2626; font-size:0.85rem; flex-shrink:0;"></i>
-                                <p style="margin:0; font-size:0.8rem; color:#dc2626; font-weight:600;">
-                                    Set the penalty start date to begin calculating liquidated damages.
-                                </p>
-                            </div>
-
-                            <div class="grid-2col">
-                                <div class="field-group">
-                                    <label for="ld_start_date_input" class="field-label">LD Start Date</label>
-
-                                    <input type="date" name="ld_start_date" id="ld_start_date_input" class="field-input"
-                                        value="{{ old('ld_start_date', $project->ld_start_date?->format('Y-m-d') ?? '') }}"
-                                        oninput="ldOnStartDateChange()">
-                                    <p class="field-hint">Penalty begins counting from this date</p>
-                                    @error('ld_start_date')
-                                        <p class="field-error"><i class="fas fa-exclamation-circle"></i> {{ $message }}</p>
-                                    @enderror
-                                </div>
-                                <div class="field-group">
-                                    <label for="ld_end_date_input" class="field-label">
-                                        LD End Date
-                                        <span style="font-weight:400; color:#9ca3af;">(optional)</span>
-                                    </label>
-                                    <input type="date" name="ld_end_date" id="ld_end_date_input" class="field-input"
-                                        value="{{ old('ld_end_date', $project->ld_end_date?->format('Y-m-d') ?? '') }}"
-                                        oninput="window.calculateDaysOverdue()">
-                                    <p class="field-hint">Leave blank to count until work is 100% complete</p>
-                                    @error('ld_end_date')
-                                        <p class="field-error"><i class="fas fa-exclamation-circle"></i> {{ $message }}</p>
-                                    @enderror
-                                </div>
-                            </div>
-                        </div>
-
-                            <div id="ld-chunk-fields" style="display:none;">
-
-                                {{-- Status banner — dynamically updated by ldSetStatusBanner() --}}
-                                <div id="ld-status-banner" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.75rem;
-                       padding:0.85rem 1rem; border-radius:10px; margin-bottom:1.25rem;
-                       background:rgba(220,38,38,0.06); border:1.5px solid rgba(220,38,38,0.2);">
-                                    <div style="display:flex; align-items:center; gap:0.6rem;">
-                                        <i id="ld-banner-icon" class="fas fa-circle-play"
-                                            style="color:#dc2626; font-size:0.9rem;"></i>
-                                        <span id="ld-banner-label"
-                                            style="font-size:0.82rem; font-weight:700; color:#dc2626;">
-                                            LD Penalty: Penalty Running
-                                        </span>
-                                        <span id="ld-banner-dates"
-                                            style="font-size:0.72rem; color:#9ca3af; font-weight:500;"></span>
-                                    </div>
-
-                                    {{-- Terminate button — only shown when active --}}
-                                    @if(($project->ld_status ?? 'inactive') === 'active')
-                                                <button type="submit" id="ld-terminate-btn"
-                                                    onclick="document.getElementById('ld_action_input').value='terminate'" style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.4rem 1rem;
-                                           border-radius:8px;border:none;background:#d97706;color:white;
-                                           font-size:0.75rem;font-weight:700;cursor:pointer;
-                                           font-family:'Instrument Sans',sans-serif;
-                                           box-shadow:0 2px 6px rgba(217,119,6,0.25);">
-                                                    <i class="fas fa-circle-stop" style="font-size:0.7rem;"></i> Terminate Penalty
-                                                </button>
-                                    @endif
-                                </div>
-
-                                {{-- Calculation grid — your existing fields, untouched --}}
-                                <div class="grid-2col">
-
-                                    <div class="field-group">
-                                        <label for="ld_accomplished" class="field-label">Accomplished (%)</label>
-                                        <input type="number" id="ld_accomplished" name="ld_accomplished"
-                                            class="field-input"
-                                            value="{{ old('ld_accomplished', $project->ld_accomplished ?? '') }}"
-                                            min="0" max="100" step="0.001" style="padding-right:2.5rem;"
-                                            onkeydown="return event.key !== '-' && event.key !== 'e'"
-                                            oninput="if(parseFloat(this.value)>100)this.value=100; calculateLDPerDay()">
-                                        <p class="field-hint">Percentage of work completed</p>
-                                    </div>
-
-                                    <div class="field-group">
-                                        <label for="ld_unworked" class="field-label">
-                                            Unworked (%) <span style="font-weight:400; color:#9ca3af;">(auto)</span>
-                                        </label>
-                                        <input type="hidden" id="ld_unworked" name="ld_unworked"
-                                            value="{{ old('ld_unworked', $project->ld_unworked ?? '') }}">
-                                        <p
-                                            style="font-size:0.9rem; font-weight:600; color:var(--text-primary); margin:0; padding:0.1rem 0;">
-                                            <span
-                                                id="ld_unworked_display">{{ old('ld_unworked', $project->ld_unworked ?? '—') }}</span>
-                                            <span
-                                                style="color:var(--ink-muted); font-weight:500; margin-left:2px;">%</span>
-                                        </p>
-                                    </div>
-
-                                    <div class="field-group">
-                                        <label for="ld_days_overdue_input" class="field-label">
-                                            Days Overdue <span style="font-weight:400; color:#9ca3af;">(auto)</span>
-                                        </label>
-                                        <input type="hidden" id="ld_days_overdue_input" name="ld_days_overdue"
-                                            value="{{ old('ld_days_overdue', $project->ld_days_overdue ?? 0) }}">
-                                        <div
-                                            style="padding:0.75rem 1rem; border:1.5px solid var(--border); border-radius:9px; background:var(--bg-secondary);">
-                                            <p style="margin:0; display:flex; align-items:baseline; gap:0.4rem;">
-                                                <span id="ld_days_overdue_display"
-                                                    style="font-size:1.1rem; font-weight:800; font-family:'Syne',sans-serif; letter-spacing:-0.02em; color:var(--tx2);">—</span>
-                                                <span id="ld_days_unit"
-                                                    style="font-size:0.8rem; font-weight:600; color:var(--tx2);">calculating…</span>
-                                            </p>
-                                            <p style="font-size:0.68rem; color:#9ca3af; margin:3px 0 0;">
-                                                {{ $project->revised_contract_expiry
-    ? 'Revised Expiry: ' . $project->revised_contract_expiry->format('M d, Y')
-    : 'Original Expiry: ' . $project->original_contract_expiry->format('M d, Y') }}
-                                            </p>
-                                        </div>
-                                        <p class="field-hint" id="ld_overdue_hint">
-                                            Auto-calculated from
-                                            {{ $project->revised_contract_expiry ? 'revised' : 'original' }} contract
-                                            expiry
-                                        </p>
-                                    </div>
-
-                                    <div class="field-group">
-                                        <label for="ld_per_day" class="field-label">
-                                            LD per Day (₱) <span style="font-weight:400; color:#9ca3af;">(auto)</span>
-                                        </label>
-                                        <input type="hidden" id="ld_per_day" name="ld_per_day"
-                                            value="{{ old('ld_per_day', $project->ld_per_day ?? '0') }}">
-                                        <p
-                                            style="font-size:0.9rem; font-weight:700; color:var(--text-primary); margin:0; padding:0.1rem 0; font-family:'Syne',sans-serif;">
-                                            ₱<span
-                                                id="ld_per_day_display">{{ number_format((float) old('ld_per_day', $project->ld_per_day ?? 0), 2) }}</span>
-                                        </p>
-                                        <p class="field-hint">Formula: (Unworked % ÷ 100) × Remaining Balance × 0.001
-                                        </p>
-                                    </div>
-
-                                    <div class="field-group" style="grid-column:1/-1;">
-                                        <label for="total_ld" class="field-label">
-                                            Total LD (₱) <span style="font-weight:400; color:#9ca3af;">(auto)</span>
-                                        </label>
-                                        <input type="hidden" id="total_ld" name="total_ld"
-                                            value="{{ old('total_ld', $project->total_ld ?? '0') }}">
-                                        <p
-                                            style="font-size:1.35rem; font-weight:800; color:#dc2626; margin:0; padding:0.1rem 0; font-family:'Syne',sans-serif; letter-spacing:-0.02em;">
-                                            ₱<span
-                                                id="total_ld_display">{{ number_format((float) old('total_ld', $project->total_ld ?? 0), 2) }}</span>
-                                        </p>
-                                        <p class="field-hint">Formula: LD per Day × Days Overdue</p>
-                                    </div>
-
-                                </div>
-                            </div>
-
-                    </div>
-                </div>
-
             </div>{{-- /tab-progress --}}
 
             {{-- ====================================================
@@ -828,19 +636,6 @@
                                             onkeydown="return event.key !== '-' && event.key !== 'e'"
                                             oninput="updateTEPreview()">
                                         <p class="field-hint">Number of days to extend the contract deadline</p>
-                                    </div>
-                                    <div class="field-group">
-                                        <label class="field-label">Cost Involved (₱)</label>
-                                        <div style="position:relative;">
-                                            <span
-                                                style="position:absolute; left:1rem; top:50%; transform:translateY(-50%); color:var(--ink-muted); font-weight:600; pointer-events:none;">₱</span>
-                                            <input type="text" name="new_te_cost" class="field-input" data-amount
-                                                inputmode="decimal" placeholder="0.00" style="padding-left:1.75rem;">
-                                        </div>
-                                        <p class="field-hint"><i class="fas fa-minus"
-                                                style="color:#ef4444; font-size:0.6rem;"></i> Use a negative value (e.g.
-                                            <strong>−50,000</strong>) to deduct from the contract amount
-                                        </p>
                                     </div>
                                     <div class="field-group">
                                         <label class="field-label">Date Requested</label>
@@ -1291,6 +1086,7 @@
                     </div>
                 </div>{{-- /form-card: 171 Billing --}}
 
+
                 {{-- Advance Billing accordion --}}
                 <div class="form-card" style="margin-bottom:1.5rem; border-color:rgba(59,130,246,0.18);">
                     <div class="acc-header" id="acc-advance-hdr" onclick="toggleAcc('advance')" role="button"
@@ -1467,6 +1263,198 @@
                         </div>
                     </div>
                 </div>{{-- /form-card: Retention --}}
+                 {{-- Liquidated Damages Assessment --}}
+                <div class="form-card" style="margin-bottom:1.5rem;" id="ld-card"
+                    data-ld-status="{{ $project->ld_status ?? 'inactive' }}">
+
+                    <div class="section-header">
+                        <i class="fas fa-calculator"></i>
+                        <span>Liquidated Damages Assessment</span>
+                    </div>
+
+                    <div class="section-body">
+
+                        <input type="hidden" name="ld_action" id="ld_action_input" value="">
+                        
+                        <div id="ld-chunk-start">
+                            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.75rem;
+                        padding:0.85rem 1rem; border-radius:10px;
+                        background:rgba(156,163,175,0.08); border:1.5px solid rgba(156,163,175,0.2);">
+                                <div style="display:flex; align-items:center; gap:0.6rem;">
+                                    <i class="fas fa-circle-pause" style="color:#9ca3af; font-size:0.9rem;"></i>
+                                    <span style="font-size:0.82rem; font-weight:700; color:#9ca3af;">LD Penalty: Not
+                                        Started</span>
+                                </div>
+                                <button type="button" id="ld-start-btn" onclick="ldSetState('setup')" style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.4rem 1rem;
+                           border-radius:8px;border:none;background:#dc2626;color:white;
+                           font-size:0.75rem;font-weight:700;cursor:pointer;
+                           font-family:'Instrument Sans',sans-serif;
+                           box-shadow:0 2px 6px rgba(220,38,38,0.25);">
+                                    <i class="fas fa-circle-play" style="font-size:0.7rem;"></i> Start LD Penalty
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="ld-chunk-dates" style="display:none;">
+
+                            <div style="display:flex; align-items:center; gap:0.6rem; margin-bottom:1.25rem;
+                        padding:0.75rem 1rem; border-radius:9px;
+                        background:rgba(220,38,38,0.06); border:1.5px solid rgba(220,38,38,0.18);">
+                                <i class="fas fa-circle-play"
+                                    style="color:#dc2626; font-size:0.85rem; flex-shrink:0;"></i>
+                                <p style="margin:0; font-size:0.8rem; color:#dc2626; font-weight:600;">
+                                    Set the penalty start date to begin calculating liquidated damages.
+                                </p>
+                            </div>
+
+                            <div class="grid-2col">
+                                <div class="field-group">
+                                    <label for="ld_start_date_input" class="field-label">LD Start Date</label>
+
+                                    <input type="date" name="ld_start_date" id="ld_start_date_input" class="field-input"
+                                        value="{{ old('ld_start_date', $project->ld_start_date?->format('Y-m-d') ?? '') }}"
+                                        oninput="ldOnStartDateChange()">
+                                    <p class="field-hint">Penalty begins counting from this date</p>
+                                    @error('ld_start_date')
+                                        <p class="field-error"><i class="fas fa-exclamation-circle"></i> {{ $message }}</p>
+                                    @enderror
+                                </div>
+                                <div class="field-group">
+                                    <label for="ld_end_date_input" class="field-label">
+                                        LD End Date
+                                        <span style="font-weight:400; color:#9ca3af;">(optional)</span>
+                                    </label>
+                                    <input type="date" name="ld_end_date" id="ld_end_date_input" class="field-input"
+                                        value="{{ old('ld_end_date', $project->ld_end_date?->format('Y-m-d') ?? '') }}"
+                                        oninput="window.calculateDaysOverdue()">
+                                    <p class="field-hint">Leave blank to count until work is 100% complete</p>
+                                    @error('ld_end_date')
+                                        <p class="field-error"><i class="fas fa-exclamation-circle"></i> {{ $message }}</p>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+
+                            <div id="ld-chunk-fields" style="display:none;">
+
+                                {{-- Status banner — dynamically updated by ldSetStatusBanner() --}}
+                                <div id="ld-status-banner" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.75rem;
+                       padding:0.85rem 1rem; border-radius:10px; margin-bottom:1.25rem;
+                       background:rgba(220,38,38,0.06); border:1.5px solid rgba(220,38,38,0.2);">
+                                    <div style="display:flex; align-items:center; gap:0.6rem;">
+                                        <i id="ld-banner-icon" class="fas fa-circle-play"
+                                            style="color:#dc2626; font-size:0.9rem;"></i>
+                                        <span id="ld-banner-label"
+                                            style="font-size:0.82rem; font-weight:700; color:#dc2626;">
+                                            LD Penalty: Penalty Running
+                                        </span>
+                                        <span id="ld-banner-dates"
+                                            style="font-size:0.72rem; color:#9ca3af; font-weight:500;"></span>
+                                    </div>
+
+                                    {{-- Terminate button — only shown when active --}}
+                                    @if(($project->ld_status ?? 'inactive') === 'active')
+                                                <button type="submit" id="ld-terminate-btn"
+                                                    onclick="document.getElementById('ld_action_input').value='terminate'" style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.4rem 1rem;
+                                           border-radius:8px;border:none;background:#d97706;color:white;
+                                           font-size:0.75rem;font-weight:700;cursor:pointer;
+                                           font-family:'Instrument Sans',sans-serif;
+                                           box-shadow:0 2px 6px rgba(217,119,6,0.25);">
+                                                    <i class="fas fa-circle-stop" style="font-size:0.7rem;"></i> Terminate Penalty
+                                                </button>
+                                    @endif
+                                </div>
+
+                                {{-- Calculation grid — your existing fields, untouched --}}
+                                <div class="grid-2col">
+
+                                    <div class="field-group">
+                                        <label for="ld_accomplished" class="field-label">Accomplished (%)</label>
+                                        <input type="number" id="ld_accomplished" name="ld_accomplished"
+                                            class="field-input"
+                                            value="{{ old('ld_accomplished', $project->ld_accomplished ?? '') }}"
+                                            min="0" max="100" step="0.001" style="padding-right:2.5rem;"
+                                            onkeydown="return event.key !== '-' && event.key !== 'e'"
+                                            oninput="if(parseFloat(this.value)>100)this.value=100; calculateLDPerDay()">
+                                        <p class="field-hint">Percentage of work completed</p>
+                                    </div>
+
+                                    <div class="field-group">
+                                        <label for="ld_unworked" class="field-label">
+                                            Unworked (%) <span style="font-weight:400; color:#9ca3af;">(auto)</span>
+                                        </label>
+                                        <input type="hidden" id="ld_unworked" name="ld_unworked"
+                                            value="{{ old('ld_unworked', $project->ld_unworked ?? '') }}">
+                                        <p
+                                            style="font-size:0.9rem; font-weight:600; color:var(--text-primary); margin:0; padding:0.1rem 0;">
+                                            <span
+                                                id="ld_unworked_display">{{ old('ld_unworked', $project->ld_unworked ?? '—') }}</span>
+                                            <span
+                                                style="color:var(--ink-muted); font-weight:500; margin-left:2px;">%</span>
+                                        </p>
+                                    </div>
+
+                                    <div class="field-group">
+                                        <label for="ld_days_overdue_input" class="field-label">
+                                            Days Overdue <span style="font-weight:400; color:#9ca3af;">(auto)</span>
+                                        </label>
+                                        <input type="hidden" id="ld_days_overdue_input" name="ld_days_overdue"
+                                            value="{{ old('ld_days_overdue', $project->ld_days_overdue ?? 0) }}">
+                                        <div
+                                            style="padding:0.75rem 1rem; border:1.5px solid var(--border); border-radius:9px; background:var(--bg-secondary);">
+                                            <p style="margin:0; display:flex; align-items:baseline; gap:0.4rem;">
+                                                <span id="ld_days_overdue_display"
+                                                    style="font-size:1.1rem; font-weight:800; font-family:'Syne',sans-serif; letter-spacing:-0.02em; color:var(--tx2);">—</span>
+                                                <span id="ld_days_unit"
+                                                    style="font-size:0.8rem; font-weight:600; color:var(--tx2);">calculating…</span>
+                                            </p>
+                                            <p style="font-size:0.68rem; color:#9ca3af; margin:3px 0 0;">
+                                                {{ $project->revised_contract_expiry
+    ? 'Revised Expiry: ' . $project->revised_contract_expiry->format('M d, Y')
+    : 'Original Expiry: ' . $project->original_contract_expiry->format('M d, Y') }}
+                                            </p>
+                                        </div>
+                                        <p class="field-hint" id="ld_overdue_hint">
+                                            Auto-calculated from
+                                            {{ $project->revised_contract_expiry ? 'revised' : 'original' }} contract
+                                            expiry
+                                        </p>
+                                    </div>
+
+                                    <div class="field-group">
+                                        <label for="ld_per_day" class="field-label">
+                                            LD per Day (₱) <span style="font-weight:400; color:#9ca3af;">(auto)</span>
+                                        </label>
+                                        <input type="hidden" id="ld_per_day" name="ld_per_day"
+                                            value="{{ old('ld_per_day', $project->ld_per_day ?? '0') }}">
+                                        <p
+                                            style="font-size:0.9rem; font-weight:700; color:var(--text-primary); margin:0; padding:0.1rem 0; font-family:'Syne',sans-serif;">
+                                            ₱<span
+                                                id="ld_per_day_display">{{ number_format((float) old('ld_per_day', $project->ld_per_day ?? 0), 2) }}</span>
+                                        </p>
+                                        <p class="field-hint">Formula: (Unworked % ÷ 100) × Remaining Balance × 0.001
+                                        </p>
+                                    </div>
+
+                                    <div class="field-group" style="grid-column:1/-1;">
+                                        <label for="total_ld" class="field-label">
+                                            Total LD (₱) <span style="font-weight:400; color:#9ca3af;">(auto)</span>
+                                        </label>
+                                        <input type="hidden" id="total_ld" name="total_ld"
+                                            value="{{ old('total_ld', $project->total_ld ?? '0') }}">
+                                        <p
+                                            style="font-size:1.35rem; font-weight:800; color:#dc2626; margin:0; padding:0.1rem 0; font-family:'Syne',sans-serif; letter-spacing:-0.02em;">
+                                            ₱<span
+                                                id="total_ld_display">{{ number_format((float) old('total_ld', $project->total_ld ?? 0), 2) }}</span>
+                                        </p>
+                                        <p class="field-hint">Formula: LD per Day × Days Overdue</p>
+                                    </div>
+
+                                </div>
+                            </div>
+
+                    </div>
+                </div>
 
             </div>{{-- /tab-171 --}}
 
@@ -1716,22 +1704,6 @@
                 </div>
 
                 <div>
-                    <label for="edit_cost"
-                        style="display:block; font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-muted); margin-bottom:0.4rem;">
-                        Cost Involved (₱)
-                    </label>
-                    <div style="position:relative;">
-                        <span
-                            style="position:absolute; left:1rem; top:50%; transform:translateY(-50%); color:var(--ink-muted); font-weight:600; pointer-events:none; font-size:0.9rem;">₱</span>
-                        <input type="text" id="edit_cost" name="edit_cost" data-amount inputmode="decimal"
-                            placeholder="0.00"
-                            style="width:100%; padding:0.72rem 1rem 0.72rem 1.75rem; border:1.5px solid var(--border); border-radius:9px; font-size:0.875rem; color:var(--text-primary); background:var(--bg-primary); outline:none; font-family:'Instrument Sans',sans-serif; transition:border-color 0.2s,box-shadow 0.2s; box-sizing:border-box;"
-                            onfocus="this.style.borderColor='var(--orange-500)';this.style.boxShadow='0 0 0 3px rgba(249,115,22,0.1)'"
-                            onblur="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
-                    </div>
-                </div>
-
-                <div>
                     <label for="edit_reason"
                         style="display:block; font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-muted); margin-bottom:0.4rem;">
                         Reason / Coverage <span style="color:#ef4444;">*</span>
@@ -1791,7 +1763,7 @@
             document.getElementById('edit_entry_index').value = index;
             document.getElementById('edit_entry_label_display').textContent = label;
             document.getElementById('edit_days').value = days || '';
-            document.getElementById('edit_cost').value = cost ? Number(cost).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''; document.getElementById('edit_date_requested').value = dateRequested || '';
+            document.getElementById('edit_date_requested').value = dateRequested || '';
 
             const reasonEl = document.getElementById('edit_reason');
             const reasonCountEl = document.getElementById('edit_reason_count');
@@ -1847,7 +1819,6 @@
                 'edit_entry_type': type,
                 'edit_entry_index': index,
                 'edit_days': days,
-                'edit_cost': document.getElementById('edit_cost').value.replace(/,/g, ''),
                 'edit_date_requested': document.getElementById('edit_date_requested').value,
                 'edit_reason': reason,
             };

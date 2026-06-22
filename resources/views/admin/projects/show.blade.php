@@ -281,6 +281,11 @@
                             style="text-align:right;max-width:60%;">₱{{ number_format($project->original_contract_amount, 2) }}</span>
                     </div>
                     <div class="dr">
+                        <span class="dl"><i class="fas fa-file-invoice-dollar"></i> Revised Contract Amount</span>
+                        <span class="dv"
+                            style="text-align:right;max-width:60%;">₱{{ number_format($remainingBal, 2) }}</span>
+                    </div>
+                    <div class="dr">
                         <span class="dl"><i class="fas fa-circle-dot"></i> Status</span>
                         <div
                             style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;justify-content:flex-end;">
@@ -919,7 +924,6 @@
                                 <thead>
                                     <tr>
                                         <th style="text-align:left;">Entry</th>
-                                        <th style="text-align:center;">Date Requested</th>
                                         <th style="text-align:right;">Amount</th>
                                         <th style="text-align:right;">Remaining Balance</th>
                                     </tr>
@@ -1048,14 +1052,6 @@
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td style="text-align:center;color:var(--tx2);font-size:0.8rem;">
-                                                @if($row['date'])
-                                                    <span
-                                                        style="font-weight:600;color:var(--tx);">{{ \Carbon\Carbon::parse($row['date'])->format('M d, Y') }}</span>
-                                                @else
-                                                    <span style="color:#9ca3af;">—</span>
-                                                @endif
-                                            </td>
                                             <td style="text-align:right;">
                                                 @if($isExt)
                                                     @php $isDeduct = $row['amount'] < 0; @endphp
@@ -1097,7 +1093,7 @@
                                 </tbody>
                                 <tfoot>
     <tr>
-        <td colspan="2"
+        <td colspan="1"
             style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink2);">
             Total
         </td>
