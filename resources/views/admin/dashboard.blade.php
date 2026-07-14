@@ -90,12 +90,13 @@
     <div class="space-y-5">
 
         {{-- ══ ROW 1: Stat cards ══ --}}
-        <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:1rem;" class="fade-up">
+        <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:1rem;" class="fade-up">
             @foreach([
                 ['Total Projects', $total,     'fa-folder',       '#f97316', 'rgba(249,115,22,0.1)',  route('admin.projects.index')],
                 ['Ongoing',        $ongoing,   'fa-spinner',      '#3b82f6', 'rgba(59,130,246,0.1)',  route('admin.projects.index',['status'=>'ongoing'])],
                 ['Completed',      $completed, 'fa-check-circle', '#22c55e', 'rgba(34,197,94,0.1)',   route('admin.projects.index',['status'=>'completed'])],
                 ['Expiring Soon',  $expiring,  'fa-clock',        '#eab308', 'rgba(234,179,8,0.1)',   route('admin.projects.index',['status'=>'expiring'])],
+                ['Expired',        $expired,   'fa-circle-exclamation', '#dc2626', 'rgba(239,68,68,0.1)', route('admin.projects.index',['status'=>'expired'])],
             ] as [$label, $val, $icon, $color, $bg, $link])
             <a href="{{ $link }}" class="stat-card">
                 <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:0.5rem;">
