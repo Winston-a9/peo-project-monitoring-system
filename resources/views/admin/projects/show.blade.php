@@ -272,6 +272,14 @@
                         <span class="dv" style="text-align:right;max-width:60%;">{{ $project->location }}</span>
                     </div>
                     <div class="dr">
+                        <span class="dl"><i class="fas fa-crosshairs"></i> Geotagged Location</span>
+                        <span class="dv" style="text-align:right;max-width:60%;">{{ $project->geotagged_location ?: '—' }}</span>
+                    </div>
+                    <div class="dr">
+                        <span class="dl"><i class="fas fa-wallet"></i> Fund Source</span>
+                        <span class="dv" style="text-align:right;max-width:60%;">{{ $project->fund_source ?: '—' }}</span>
+                    </div>
+                    <div class="dr">
                         <span class="dl"><i class="fas fa-building"></i> Contractor</span>
                         <span class="dv" style="text-align:right;max-width:60%;">{{ $project->contractor }}</span>
                     </div>

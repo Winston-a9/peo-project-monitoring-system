@@ -24,11 +24,32 @@ document.addEventListener('DOMContentLoaded', function () {
     calculateOriginalExpiry(); // Calculate expiry if old() values are present
     toggleCompletedAt();     // Show/hide the Date Completed field on load
     initContractAmount();     // Format the Contract Amount field on load
+    toggleFundSourceOther();  // Initialize fund source visibility on load
+
+    const fundSelect = document.getElementById('fund_source_select');
+    if (fundSelect) {
+        fundSelect.addEventListener('change', toggleFundSourceOther);
+    }
+
+    const fundOtherField = document.getElementById('fund_source_other');
+    if (fundOtherField) {
+        fundOtherField.addEventListener('input', toggleFundSourceOther);
+    }
 });
 
-document.querySelector('form').addEventListener('submit', function () {
+document.querySelector('form').addEventListener('submit', function (e) {
+    toggleFundSourceOther(); // Ensure hidden fund_source is final before submit
+
     const raw = document.getElementById('original_contract_amount_raw').value;
     document.getElementById('original_contract_amount_raw').value = raw.replace(/,/g, '');
+
+    const select = document.getElementById('fund_source_select');
+    const otherField = document.getElementById('fund_source_other');
+    if (select && otherField && select.value === '__other' && !otherField.value.trim()) {
+        e.preventDefault();
+        alert('Please specify your custom fund source.');
+        otherField.focus();
+    }
 });
 
 
@@ -42,6 +63,26 @@ window.toggleCompletedAt = function () {
     const field = document.getElementById('completed_at_field');
     if (!sel || !field) return;
     field.classList.toggle('hidden', sel.value !== 'completed');
+};
+
+window.toggleFundSourceOther = function () {
+    const select = document.getElementById('fund_source_select');
+    const otherField = document.getElementById('fund_source_other');
+    const hiddenField = document.getElementById('fund_source_hidden');
+    if (!select || !otherField || !hiddenField) return;
+
+    const isOther = select.value === '__other';
+    otherField.style.display = isOther ? 'block' : 'none';
+    hiddenField.value = isOther ? otherField.value : select.value;
+};
+
+window.syncFundSourceHidden = function () {
+    const select = document.getElementById('fund_source_select');
+    const otherField = document.getElementById('fund_source_other');
+    const hiddenField = document.getElementById('fund_source_hidden');
+    if (!select || !otherField || !hiddenField) return;
+
+    hiddenField.value = select.value === '__other' ? otherField.value : select.value;
 };
 
 

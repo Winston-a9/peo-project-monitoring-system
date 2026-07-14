@@ -96,7 +96,7 @@ class ProjectReportPdf extends FPDF
         $this->Ln(1);
         $this->SetFont('Helvetica', '', 7.5);
         $this->SetTextColor(156, 163, 175);
-        $this->Cell(0, 5, 'Project Monitoring System  -  Confidential', 0, 0, 'L');
+        $this->Cell(0, 5, 'Project Monitoring System  -  For Public Use', 0, 0, 'L');
         $this->Cell(0, 5, 'Page ' . $this->PageNo(), 0, 0, 'R');
     }
 

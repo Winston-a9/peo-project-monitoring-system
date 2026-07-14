@@ -214,6 +214,50 @@
                                 @enderror
                             </div>
 
+                            {{-- Geotagged Location --}}
+                            <div class="field-group">
+                                <label class="field-label">Geotagged Location</label>
+                                <input type="text" name="geotagged_location" class="field-input {{ $errors->has('geotagged_location') ? 'has-error' : '' }}"
+                                    value="{{ old('geotagged_location', $project->geotagged_location) }}"
+                                    placeholder="e.g. GPS coordinates or landmark description">
+                                @error('geotagged_location')
+                                    <p class="field-error"><i class="fas fa-exclamation-circle"></i> {{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            {{-- Fund Source --}}
+                            <div class="field-group">
+                                <label class="field-label">Fund Source</label>
+                                <select name="fund_source_select" id="fund_source_select"
+                                    class="field-input {{ $errors->has('fund_source') ? 'has-error' : '' }}"
+                                    onchange="toggleFundSourceOther()">
+                                    <option value="" disabled {{ old('fund_source_select', old('fund_source', $project->fund_source)) ? '' : 'selected' }}>Select a fund source</option>
+                                    @php
+                                        $fundOptions = ['General Fund', '20% Development Fund', 'Supplemental Budget 1', 'Supplemental Budget 2', 'National Fund'];
+                                        $oldFund = old('fund_source_select', old('fund_source', $project->fund_source));
+                                        $isOther = $oldFund && !in_array($oldFund, $fundOptions);
+                                    @endphp
+                                    @foreach($fundOptions as $opt)
+                                        <option value="{{ $opt }}" {{ $oldFund === $opt ? 'selected' : '' }}>{{ $opt }}</option>
+                                    @endforeach
+                                    <option value="__other" {{ $isOther ? 'selected' : '' }}>Other (specify)</option>
+                                </select>
+
+                                <input type="text" id="fund_source_other"
+                                    class="field-input {{ $errors->has('fund_source') ? 'has-error' : '' }}"
+                                    placeholder="Enter custom fund source"
+                                    value="{{ $isOther ? $oldFund : '' }}"
+                                    style="margin-top:0.6rem; {{ $isOther ? '' : 'display:none;' }}"
+                                    oninput="toggleFundSourceOther()">
+
+                                {{-- This is the field actually submitted to Laravel --}}
+                                <input type="hidden" name="fund_source" id="fund_source_hidden" value="{{ old('fund_source', $project->fund_source) }}">
+
+                                @error('fund_source')
+                                    <p class="field-error"><i class="fas fa-exclamation-circle"></i> {{ $message }}</p>
+                                @enderror
+                            </div>
+
                             {{-- Contractor --}}
                             <div class="field-group">
                                 <label class="field-label">Contractor</label>

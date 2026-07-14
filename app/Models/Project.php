@@ -48,6 +48,8 @@ class Project extends Model
         'status',
         'completed_at',
         'performance_bond_date',
+        'fund_source',
+        'geotagged_location',
 
         // ── Performance (user-editable inputs only) ───────────────────
         'as_planned',

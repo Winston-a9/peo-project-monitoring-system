@@ -99,6 +99,18 @@ window.toggleCompletedAt = function () {
         .classList.toggle('hidden', document.getElementById('status_sel').value !== 'completed');
 };
 
+window.toggleFundSourceOther = function () {
+    const select = document.getElementById('fund_source_select');
+    const otherField = document.getElementById('fund_source_other');
+    const hiddenField = document.getElementById('fund_source_hidden');
+    if (!select || !otherField || !hiddenField) return;
+
+    const isOther = select.value === '__other';
+    otherField.style.display = isOther ? 'block' : 'none';
+    otherField.required = isOther;
+    hiddenField.value = isOther ? otherField.value.trim() : select.value;
+};
+
 /* ── LDA read-only toggle ── */
 window.toggleLDAReadOnly = function (isComplete) {
     const ldAccomplishedInput = document.getElementById('ld_accomplished');
@@ -615,6 +627,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // ── Run LDA lock on initial load if work_done is already 100 ──
     const initialWD = parseFloat(document.getElementById('work_done')?.value) || 0;
     window.toggleLDAReadOnly(initialWD >= 100);
+
+    const fundSelect = document.getElementById('fund_source_select');
+    if (fundSelect) {
+        fundSelect.addEventListener('change', toggleFundSourceOther);
+    }
+    const fundOtherField = document.getElementById('fund_source_other');
+    if (fundOtherField) {
+        fundOtherField.addEventListener('input', toggleFundSourceOther);
+    }
+    toggleFundSourceOther();
 
     const issuancesList = document.getElementById('issuances-list');
     if (issuancesList) window.updateCount('issuances-list', 'issuance-count');
