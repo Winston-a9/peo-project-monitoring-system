@@ -1146,6 +1146,14 @@ $project->update($data);
             $query->where('in_charge', request('in_charge'));
         }
 
+        if (request('date_from')) {
+            $query->where('date_started', '>=', request('date_from'));
+        }
+
+        if (request('date_to')) {
+            $query->where('date_started', '<=', request('date_to'));
+        }
+
         $status = request('status', 'all');
         $expiryThreshold = now(config('app.timezone'))->addDays(self::EXPIRY_WARNING_DAYS);
         $today = now(config('app.timezone'));
@@ -1185,6 +1193,10 @@ $project->update($data);
             $filterParts[] = 'Search: "' . request('search') . '"';
         if (request('in_charge'))
             $filterParts[] = 'In Charge: ' . request('in_charge');
+        if (request('date_from'))
+            $filterParts[] = 'Date From: ' . request('date_from');
+        if (request('date_to'))
+            $filterParts[] = 'Date To: ' . request('date_to');
         if ($status && $status !== 'all')
             $filterParts[] = 'Status: ' . ucfirst($status);
 
@@ -1224,12 +1236,14 @@ $project->update($data);
         $pdf->TableHeader($cols);
 
         foreach ($projects as $i => $project) {
-            if ($pdf->GetY() + 7 > 200) {
-                $pdf->AddPage();
-                $pdf->TableHeader($cols);
-            }
-
             $expiry = $project->revised_contract_expiry ?? $project->original_contract_expiry;
+            $daysLeft = (int) now(config('app.timezone'))->startOfDay()->diffInDays(
+                Carbon::parse($expiry, config('app.timezone'))->startOfDay(),
+                false
+            );
+            $projectStatus = $project->status === 'completed'
+                ? 'completed'
+                : ($daysLeft < 0 ? 'expired' : ($daysLeft <= self::EXPIRY_WARNING_DAYS ? 'expiring' : 'ongoing'));
             $slip = (float) ($project->slippage ?? 0);
             $slipStr = ($slip > 0 ? '+' : '') . number_format($slip, 2) . '%';
             $even = $i % 2 === 0;
@@ -1241,14 +1255,29 @@ $project->update($data);
                 'expiring' => [[255, 251, 235], [217, 119, 6], 'Expiring'],
                 'ongoing' => [[239, 246, 255], [37, 99, 235], 'Ongoing'],
             ];
-            [$statusBg, $statusFg, $statusLabel] = $statusMap[$project->status] ?? $statusMap['ongoing'];
+            [$statusBg, $statusFg, $statusLabel] = $statusMap[$projectStatus] ?? $statusMap['ongoing'];
+
+            $texts = [
+                $i + 1,
+                $clean($project->project_title ?? ''),
+                $clean($project->in_charge ?? ''),
+                $clean($project->location ?? ''),
+                $clean($project->contractor ?? ''),
+                '', '', '', '', '',
+            ];
+            $rowH = $pdf->calculateRowHeight($texts, [8, 55, 32, 30, 32, 30, 25, 25, 20, 20]);
+
+            if ($pdf->GetY() + $rowH > 200) {
+                $pdf->AddPage();
+                $pdf->TableHeader($cols);
+            }
 
             $pdf->ProjectRow(
                 $i + 1,
-                mb_strimwidth($clean($project->project_title), 0, 35, '...'),
-                mb_strimwidth($clean($project->in_charge), 0, 20, '...'),
-                mb_strimwidth($clean($project->location), 0, 18, '...'),
-                mb_strimwidth($clean($project->contractor), 0, 20, '...'),
+                $clean($project->project_title ?? ''),
+                $clean($project->in_charge ?? ''),
+                $clean($project->location ?? ''),
+                $clean($project->contractor ?? ''),
                 'P' . number_format($project->original_contract_amount, 2),
                 $project->date_started->format('m/d/Y'),
                 $expiry->format('m/d/Y'),
