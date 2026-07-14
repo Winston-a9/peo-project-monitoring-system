@@ -435,6 +435,9 @@
                             milestones</span>
                     </div>
                     <input type="hidden" name="date_started" value="{{ $project->date_started->format('Y-m-d') }}">
+                    @error('date_started')
+                        <p class="field-error" style="margin-bottom:0.75rem;"><i class="fas fa-exclamation-circle"></i> {{ $message }}</p>
+                    @enderror
                     <input type="hidden" name="original_contract_expiry"
                         value="{{ $project->original_contract_expiry->format('Y-m-d') }}">
                     <div class="section-body">

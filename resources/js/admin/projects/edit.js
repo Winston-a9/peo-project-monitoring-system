@@ -120,79 +120,20 @@ window.toggleLDAReadOnly = function (isComplete) {
     const fieldsChunk = document.getElementById('ld-chunk-fields');
     if (!fieldsChunk) return;
 
-    // If locking and the fields chunk is hidden, reveal it first so the lock
-    // can apply — otherwise the inputs are inaccessible but not actually locked.
-    if (isComplete && fieldsChunk.style.display === 'none') {
-        // We don't want to show the chunk visually in this case,
-        // so we lock the hidden input values directly instead of showing UI.
-        ['ld_per_day', 'total_ld', 'ld_unworked', 'ld_days_overdue_input'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.value = '0';
-        });
-        ['ld_per_day_display', 'total_ld_display', 'ld_unworked_display'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.textContent = '0.00';
-        });
-        return; // chunk stays hidden, but hidden inputs are zeroed
-    }
-
     const inputs = ldSection.querySelectorAll('input:not([type="hidden"])');
 
-    if (isComplete) {
-        // Lock all visible inputs
-        inputs.forEach(input => {
-            input.setAttribute('readonly', true);
-            input.style.opacity = '0.5';
-            input.style.cursor = 'not-allowed';
-            input.style.pointerEvents = 'none';
-        });
+    // Keep the LD assessment editable so users can update the values manually.
+    // The form still recalculates derived fields from the current inputs.
+    inputs.forEach(input => {
+        input.removeAttribute('readonly');
+        input.style.opacity = '';
+        input.style.cursor = '';
+        input.style.pointerEvents = '';
+    });
 
-        // Show a notice if not already present
-        if (!document.getElementById('lda-readonly-notice')) {
-            const notice = document.createElement('div');
-            notice.id = 'lda-readonly-notice';
-            notice.style.cssText = `
-                display:flex; align-items:center; gap:0.6rem;
-                padding:0.75rem 1rem; border-radius:9px;
-                background:rgba(22,163,74,0.06);
-                border:1.5px solid rgba(22,163,74,0.2);
-                margin-bottom:1rem;
-            `;
-            notice.innerHTML = `
-                <i class="fas fa-lock" style="color:#16a34a; font-size:0.85rem; flex-shrink:0;"></i>
-                <p style="margin:0; font-size:0.8rem; color:#15803d; font-weight:600;">
-                    Work is 100% complete — Liquidated Damages assessment is locked.
-                    <span style="font-weight:400; color:#16a34a;">No LD applies when work is fully done.</span>
-                </p>
-            `;
-            // Insert before the grid inside section-body
-            const fieldsChunk = document.getElementById('ld-chunk-fields');
-            if (fieldsChunk) fieldsChunk.prepend(notice);
-        }
+    document.getElementById('lda-readonly-notice')?.remove();
 
-        // Zero out LD values visually and in hidden inputs
-        ['ld_per_day_display', 'total_ld_display', 'ld_unworked_display'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.textContent = '0.00';
-        });
-        ['ld_per_day', 'total_ld', 'ld_unworked', 'ld_days_overdue_input'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.value = '0';
-        });
-
-    } else {
-        // Unlock
-        inputs.forEach(input => {
-            input.removeAttribute('readonly');
-            input.style.opacity = '';
-            input.style.cursor = '';
-            input.style.pointerEvents = '';
-        });
-
-        // Remove notice
-        document.getElementById('lda-readonly-notice')?.remove();
-
-        // Recalculate with current values
+    if (!isComplete) {
         window.calculateLDPerDay();
         window.calculateDaysOverdue();
     }

@@ -88,5 +88,31 @@ window.toggleBillingTab = function (tab) {
     }
 };
 
+/* ── LD inner tab toggle ── */
+window.toggleLdTab = function (tab) {
+    const overviewBtn = document.getElementById('ld-tab-overview');
+    const historyBtn = document.getElementById('ld-tab-history');
+    const overviewContent = document.getElementById('ld-tab-overview-content');
+    const historyContent = document.getElementById('ld-tab-history-content');
+
+    const activeColor = '#dc2626';
+
+    if (tab === 'overview') {
+        overviewContent.style.display = 'block';
+        historyContent.style.display = 'none';
+        overviewBtn.style.borderBottomColor = activeColor;
+        overviewBtn.style.color = 'var(--tx)';
+        historyBtn.style.borderBottomColor = 'transparent';
+        historyBtn.style.color = 'var(--tx2)';
+    } else {
+        overviewContent.style.display = 'none';
+        historyContent.style.display = 'block';
+        historyBtn.style.borderBottomColor = activeColor;
+        historyBtn.style.color = 'var(--tx)';
+        overviewBtn.style.borderBottomColor = 'transparent';
+        overviewBtn.style.color = 'var(--tx2)';
+    }
+};
+
 /* ── Init ── */
 initTheme();

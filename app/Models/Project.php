@@ -194,4 +194,8 @@ class Project extends Model
     {
         return $this->hasMany(\App\Models\ProjectLog::class);
     }
+    public function ldHistories()
+{
+    return $this->hasMany(LdHistory::class)->orderBy('month');
+}
 }

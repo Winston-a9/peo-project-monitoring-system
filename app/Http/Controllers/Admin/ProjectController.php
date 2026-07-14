@@ -12,6 +12,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use App\Services\ProjectReportPdf;
 use Illuminate\Support\Facades\Schema;
+use App\Models\LdHistory;
 
 class ProjectController extends Controller
 {
@@ -59,14 +60,16 @@ class ProjectController extends Controller
      * Show a single project — enforce division access.
      */
     public function show(Project $project): View
-    {
-        $this->authorizeProjectAccess($project);
+{
+    $this->authorizeProjectAccess($project);
 
-        $project->load(['logs.user' => fn($q) => $q->select('id', 'name')]);
-        $project->logs = $project->logs->sortByDesc('created_at');
+    $project->load(['logs.user' => fn($q) => $q->select('id', 'name')]);
+    $project->logs = $project->logs->sortByDesc('created_at');
 
-        return view('admin.projects.show', compact('project'));
-    }
+    $ldHistories = $project->ldHistories()->with('updatedBy')->orderBy('month', 'desc')->get();
+
+    return view('admin.projects.show', compact('project', 'ldHistories'));
+}
 
 
     // ============================================================
@@ -581,13 +584,13 @@ class ProjectController extends Controller
         $data['ld_per_day'] = $ldPerDay > 0 ? round($ldPerDay, 2) : null;
         $data['ld_unworked'] = $ldPerDay > 0 ? round($ldUnworked, 2) : null;
 
-        $ldStartDate = $request->input('ld_start_date');
-        $ldEndDate = $request->input('ld_end_date');
+        $ldStartDate = $request->input('ld_start_date') ?: $fresh->ld_start_date?->toDateString();
+        $ldEndDate = $request->input('ld_end_date') ?: $fresh->ld_end_date?->toDateString();
         $workDone = (float) $request->input('work_done', 0);
         $today = now(config('app.timezone'))->startOfDay();
 
-        $data['ld_start_date'] = $ldStartDate ?: null;
-        $data['ld_end_date'] = $ldEndDate ?: null;
+        $data['ld_start_date'] = $ldStartDate;
+        $data['ld_end_date'] = $ldEndDate;
 
         // ── LD Termination override ───────────────────────────────
         $ldAction = $request->input('ld_action');
@@ -672,7 +675,26 @@ class ProjectController extends Controller
             $data['total_amount_billed']
         );
 
+$project->update($data);
         $project->update($data);
+
+        // ── Step 11: Snapshot LD into monthly history ────────────
+        if (!empty($data['total_ld']) && (float) $data['total_ld'] > 0) {
+            LdHistory::updateOrCreate(
+                [
+                    'project_id' => $project->id,
+                    'month' => now(config('app.timezone'))->startOfMonth()->toDateString(),
+                ],
+                [
+                    'ld_accomplished' => $data['ld_accomplished'] ?? null,
+                    'ld_unworked' => $data['ld_unworked'] ?? null,
+                    'ld_per_day' => $data['ld_per_day'] ?? null,
+                    'days_overdue' => $data['ld_days_overdue'] ?? 0,
+                    'ld_amount' => (float) $data['total_ld'],
+                    'updated_by' => auth()->id(),
+                ]
+            );
+        }
 
         return redirect()->route('admin.projects.show', $project)
             ->with('success', 'Project updated successfully.');

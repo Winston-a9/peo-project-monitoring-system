@@ -119,6 +119,7 @@
 
         $extCount = $teCount + $voCount + ($hasSO ? 1 : 0);
         $logs = $project->logs()->with('user')->latest()->get();
+        $ldHistories = $project->ldHistories()->orderBy('month', 'desc')->with('updatedBy')->get();
     @endphp
 
     <div class="show-page-inner">
@@ -768,82 +769,143 @@
                             <span class="pill p-re">Total: ₱{{ number_format($project->total_ld, 2) }}</span>
                         @endif
                     </div>
-                    
-                    @php
-                        $ldStatus = $project->ld_status ?? 'inactive';
-                        $statusConfig = [
-                            'inactive' => [
-                                'label' => 'Not Started',
-                                'icon' => 'fa-circle-pause',
-                                'bgColor' => 'rgba(156,163,175,0.08)',
-                                'borderColor' => 'rgba(156,163,175,0.2)',
-                                'iconColor' => '#9ca3af',
-                                'textColor' => '#9ca3af'
-                            ],
-                            'active' => [
-                                'label' => 'Penalty Running',
-                                'icon' => 'fa-circle-play',
-                                'bgColor' => 'rgba(220,38,38,0.06)',
-                                'borderColor' => 'rgba(220,38,38,0.2)',
-                                'iconColor' => '#dc2626',
-                                'textColor' => '#dc2626'
-                            ],
-                            'terminated' => [
-                                'label' => 'Terminated',
-                                'icon' => 'fa-circle-stop',
-                                'bgColor' => 'rgba(34,197,94,0.06)',
-                                'borderColor' => 'rgba(34,197,94,0.2)',
-                                'iconColor' => '#16a34a',
-                                'textColor' => '#16a34a'
-                            ]
-                        ];
-                        $config = $statusConfig[$ldStatus] ?? $statusConfig['inactive'];
-                    @endphp
-                    
-                    <div style="display:flex; align-items:center; gap:0.6rem; padding:0.75rem 1rem; border-radius:9px; margin-bottom:0.75rem;
-                        background:{{ $config['bgColor'] }}; border:1.5px solid {{ $config['borderColor'] }};">
-                        <i class="fas {{ $config['icon'] }}" style="color:{{ $config['iconColor'] }}; font-size:0.85rem; flex-shrink:0;"></i>
-                        <p style="margin:0; font-size:0.8rem; font-weight:600; color:{{ $config['textColor'] }};">
-                            LD Status: <span style="font-weight:700;">{{ $config['label'] }}</span>
-                        </p>
+
+                    <div style="display:flex;align-items:center;border-bottom:1px solid var(--bd);background:var(--bg2);">
+                        <button onclick="toggleLdTab('overview')" id="ld-tab-overview"
+                            style="flex:1;padding:0.7rem 1.25rem;background:transparent;border:none;cursor:pointer;font-size:0.8rem;font-weight:700;color:var(--tx);border-bottom:2px solid #dc2626;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:0.5rem;font-family:'Instrument Sans',sans-serif;">
+                            <i class="fas fa-gauge" style="font-size:0.72rem;color:#dc2626;"></i> Overview
+                        </button>
+                        <button onclick="toggleLdTab('history')" id="ld-tab-history"
+                            style="flex:1;padding:0.7rem 1.25rem;background:transparent;border:none;cursor:pointer;font-size:0.8rem;font-weight:700;color:var(--tx2);border-bottom:2px solid transparent;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:0.5rem;font-family:'Instrument Sans',sans-serif;">
+                            <i class="fas fa-table-list" style="font-size:0.72rem;"></i> Monthly History
+                            @if($ldHistories->count())
+                                <span class="pill" style="background:rgba(220,38,38,0.1);color:#dc2626;border:1px solid rgba(220,38,38,0.22);">{{ $ldHistories->count() }}</span>
+                            @endif
+                        </button>
                     </div>
 
-                    <div style="display:grid;grid-template-columns:1fr 1fr;">
-                        <div class="dr" style="border-right:1px solid var(--bd);">
-                            <span class="dl"><i class="fas fa-percent"></i> Accomplished</span>
-                            <span
-                                class="dv">{{ $project->ld_accomplished !== null ? $project->ld_accomplished . '%' : '—' }}</span>
-                        </div>
-                        <div class="dr">
-                            <span class="dl"><i class="fas fa-percent"></i> Unworked</span>
-                            <span class="dv">{{ $project->ld_unworked !== null ? $project->ld_unworked . '%' : '—' }}</span>
-                        </div>
+                    <div id="ld-tab-overview-content" style="display:block;">
                         @php
-                            $ldExpiryDate = $project->revised_contract_expiry ?? $project->original_contract_expiry;
-                            $ldLiveDays = (int) now()->startOfDay()->diffInDays($ldExpiryDate->startOfDay(), false);
-                            $ldLiveOverdue = $ldLiveDays < 0 ? abs($ldLiveDays) : 0;
+                            $ldStatus = $project->ld_status ?? 'inactive';
+                            $statusConfig = [
+                                'inactive' => [
+                                    'label' => 'Not Started',
+                                    'icon' => 'fa-circle-pause',
+                                    'bgColor' => 'rgba(156,163,175,0.08)',
+                                    'borderColor' => 'rgba(156,163,175,0.2)',
+                                    'iconColor' => '#9ca3af',
+                                    'textColor' => '#9ca3af'
+                                ],
+                                'active' => [
+                                    'label' => 'Penalty Running',
+                                    'icon' => 'fa-circle-play',
+                                    'bgColor' => 'rgba(220,38,38,0.06)',
+                                    'borderColor' => 'rgba(220,38,38,0.2)',
+                                    'iconColor' => '#dc2626',
+                                    'textColor' => '#dc2626'
+                                ],
+                                'terminated' => [
+                                    'label' => 'Terminated',
+                                    'icon' => 'fa-circle-stop',
+                                    'bgColor' => 'rgba(34,197,94,0.06)',
+                                    'borderColor' => 'rgba(34,197,94,0.2)',
+                                    'iconColor' => '#16a34a',
+                                    'textColor' => '#16a34a'
+                                ]
+                            ];
+                            $config = $statusConfig[$ldStatus] ?? $statusConfig['inactive'];
                         @endphp
-                        <div class="dr" style="border-right:1px solid var(--bd);">
-                            <span class="dl"><i class="fas fa-calendar-xmark"></i> Days Overdue</span>
-                            @if($ldLiveOverdue > 0)
-                                <span class="dv" style="color:#dc2626;">{{ $ldLiveOverdue }}
-                                    {{ $ldLiveOverdue === 1 ? 'day' : 'Days' }}</span>
-                            @else
-                                <span style="color:#9ca3af;font-size:0.82rem;">—</span>
-                            @endif
+
+                        <div style="display:flex; align-items:center; gap:0.6rem; padding:0.75rem 1rem; border-radius:9px; margin-bottom:0.75rem;
+                            background:{{ $config['bgColor'] }}; border:1.5px solid {{ $config['borderColor'] }};">
+                            <i class="fas {{ $config['icon'] }}" style="color:{{ $config['iconColor'] }}; font-size:0.85rem; flex-shrink:0;"></i>
+                            <p style="margin:0; font-size:0.8rem; font-weight:600; color:{{ $config['textColor'] }};">
+                                LD Status: <span style="font-weight:700;">{{ $config['label'] }}</span>
+                            </p>
                         </div>
-                        <div class="dr">
-                            <span class="dl"><i class="fas fa-peso-sign"></i> LD / Day</span>
-                            <span
-                                class="dv">{{ $project->ld_per_day ? '₱' . number_format($project->ld_per_day, 2) : '—' }}</span>
+
+                        <div style="display:grid;grid-template-columns:1fr 1fr;">
+                            <div class="dr" style="border-right:1px solid var(--bd);">
+                                <span class="dl"><i class="fas fa-percent"></i> Accomplished</span>
+                                <span
+                                    class="dv">{{ $project->ld_accomplished !== null ? $project->ld_accomplished . '%' : '—' }}</span>
+                            </div>
+                            <div class="dr">
+                                <span class="dl"><i class="fas fa-percent"></i> Unworked</span>
+                                <span class="dv">{{ $project->ld_unworked !== null ? $project->ld_unworked . '%' : '—' }}</span>
+                            </div>
+                            @php
+                                $ldExpiryDate = $project->revised_contract_expiry ?? $project->original_contract_expiry;
+                                $ldLiveDays = (int) now()->startOfDay()->diffInDays($ldExpiryDate->startOfDay(), false);
+                                $ldLiveOverdue = $ldLiveDays < 0 ? abs($ldLiveDays) : 0;
+                            @endphp
+                            <div class="dr" style="border-right:1px solid var(--bd);">
+                                <span class="dl"><i class="fas fa-calendar-xmark"></i> Days Overdue</span>
+                                @if($ldLiveOverdue > 0)
+                                    <span class="dv" style="color:#dc2626;">{{ $ldLiveOverdue }}
+                                        {{ $ldLiveOverdue === 1 ? 'day' : 'Days' }}</span>
+                                @else
+                                    <span style="color:#9ca3af;font-size:0.82rem;">—</span>
+                                @endif
+                            </div>
+                            <div class="dr">
+                                <span class="dl"><i class="fas fa-peso-sign"></i> LD / Day</span>
+                                <span
+                                    class="dv">{{ $project->ld_per_day ? '₱' . number_format($project->ld_per_day, 2) : '—' }}</span>
+                            </div>
+                        </div>
+                        <div
+                            style="padding:0.875rem 1.25rem;background:rgba(239,68,68,0.04);border-top:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;">
+                            <span class="dl"><i class="fas fa-peso-sign" style="color:#dc2626;"></i> Total LD</span>
+                            <span style="font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;color:#dc2626;">
+                                ₱{{ $project->total_ld ? number_format($project->total_ld, 2) : '0.00' }}
+                            </span>
                         </div>
                     </div>
-                    <div
-                        style="padding:0.875rem 1.25rem;background:rgba(239,68,68,0.04);border-top:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;">
-                        <span class="dl"><i class="fas fa-peso-sign" style="color:#dc2626;"></i> Total LD</span>
-                        <span style="font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;color:#dc2626;">
-                            ₱{{ $project->total_ld ? number_format($project->total_ld, 2) : '0.00' }}
-                        </span>
+
+                    <div id="ld-tab-history-content" style="display:none;">
+                        @if($ldHistories->count())
+                            <div style="overflow-x:auto;">
+                                <table class="te-tbl">
+                                    <thead>
+                                        <tr>
+                                            <th style="text-align:left;">Month</th>
+                                            <th style="text-align:center;">Accomplished</th>
+                                            <th style="text-align:center;">Unworked</th>
+                                            <th style="text-align:center;">Days Overdue</th>
+                                            <th style="text-align:right;">LD Amount</th>
+                                            <th style="text-align:right;">Last Updated</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($ldHistories as $i => $entry)
+                                            <tr style="background:{{ $i % 2 === 0 ? 'var(--bg)' : 'var(--bg2)' }};">
+                                                <td style="font-weight:700;color:#dc2626;white-space:nowrap;">
+                                                    {{ $entry->month->format('F Y') }}
+                                                </td>
+                                                <td style="text-align:center;">{{ $entry->ld_accomplished !== null ? $entry->ld_accomplished . '%' : '—' }}</td>
+                                                <td style="text-align:center;">{{ $entry->ld_unworked !== null ? $entry->ld_unworked . '%' : '—' }}</td>
+                                                <td style="text-align:center;">{{ $entry->days_overdue }}</td>
+                                                <td style="text-align:right;font-weight:700;color:#dc2626;">₱{{ number_format($entry->ld_amount, 2) }}</td>
+                                                <td style="text-align:right;">
+                                                    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px;">
+                                                        <span style="font-size:0.75rem;color:var(--tx2);">{{ $entry->updated_at->format('M d, Y') }}</span>
+                                                        @if($entry->updatedBy)
+                                                            <span style="font-size:0.65rem;color:#9ca3af;">by {{ $entry->updatedBy->name }}</span>
+                                                        @endif
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @else
+                            <div style="padding:2rem 1.25rem;text-align:center;color:#9ca3af;">
+                                <i class="fas fa-inbox" style="font-size:1.1rem;margin-bottom:0.5rem;display:block;"></i>
+                                <p style="font-size:0.82rem;">No monthly LD history recorded yet.</p>
+                            </div>
+                        @endif
                     </div>
                 </div>
             @endif
