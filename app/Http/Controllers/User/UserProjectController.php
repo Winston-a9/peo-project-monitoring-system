@@ -55,6 +55,7 @@ class UserProjectController extends Controller
         $pdf->SetMargins(15, 15, 15);
         $pdf->SetAutoPageBreak(true, 20);
         $pdf->setGeneratedAt(now(config('app.timezone'))->format('F d, Y  h:i A'));
+        $pdf->setGeneratedBy(auth()->user()?->name ?? auth()->user()?->email ?? 'System');
         $pdf->suppressAutoHeader(true);
         $pdf->AddPage();
         $pdf->SetFont('Helvetica', '', 9);
@@ -296,6 +297,7 @@ class UserProjectController extends Controller
         $pdf->SetMargins(10, 10, 10);
         $pdf->setGeneratedAt(now(config('app.timezone'))->format('F d, Y  h:i A'));
         $pdf->setFilterLabel($filterLabel);
+        $pdf->setGeneratedBy(auth()->user()?->name ?? auth()->user()?->email ?? 'System');
         $pdf->AddPage();
 
         $pdf->SetFont('Helvetica', 'B', 8);
