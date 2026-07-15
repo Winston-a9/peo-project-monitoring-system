@@ -9,7 +9,27 @@
         --sb-width-collapsed: 68px;
         --sb-width-expanded:  248px;
         --sb-bg: #1a0f00;
+        --sb-text: rgba(255,255,255,0.92);
+        --sb-muted: rgba(255,255,255,0.45);
+        --sb-divider: rgba(249,115,22,0.12);
+        --sb-hover: rgba(255,255,255,0.07);
         --sb-transition: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    html.light {
+        --sb-bg: #fffaf5;
+        --sb-text: #1a0f00;
+        --sb-muted: #6b4f35;
+        --sb-divider: rgba(249,115,22,0.16);
+        --sb-hover: rgba(249,115,22,0.08);
+    }
+
+    html.dark {
+        --sb-bg: #1a0f00;
+        --sb-text: rgba(255,255,255,0.92);
+        --sb-muted: rgba(255,255,255,0.45);
+        --sb-divider: rgba(249,115,22,0.12);
+        --sb-hover: rgba(255,255,255,0.07);
     }
 
     /* ── SIDEBAR SHELL ── */
@@ -118,14 +138,14 @@
         font-family: 'Syne', sans-serif;
         font-weight: 800;
         font-size: 1rem;
-        color: white;
+        color: var(--sb-text);
         letter-spacing: -0.02em;
         line-height: 1;
     }
 
     .sb-logo-sub {
         font-size: 0.6rem;
-        color: rgba(255,255,255,0.35);
+        color: var(--sb-muted);
         letter-spacing: 0.1em;
         text-transform: uppercase;
         margin-top: 2px;
@@ -176,7 +196,7 @@
         padding: 0.6rem 0.6rem;
         border-radius: 10px;
         text-decoration: none;
-        color: rgba(255,255,255,0.5);
+        color: var(--sb-muted);
         font-size: 0.855rem;
         font-weight: 500;
         transition: all 0.2s ease;
@@ -187,13 +207,13 @@
     }
 
     .sb-link:hover {
-        color: white;
-        background: rgba(255,255,255,0.07);
-        border-color: rgba(255,255,255,0.06);
+        color: var(--sb-text);
+        background: var(--sb-hover);
+        border-color: rgba(249,115,22,0.14);
     }
 
     .sb-link.active {
-        color: white;
+        color: var(--sb-text);
         background: rgba(249,115,22,0.16);
         border-color: rgba(249,115,22,0.28);
         font-weight: 600;
@@ -216,12 +236,13 @@
         display: flex; align-items: center; justify-content: center;
         font-size: 0.8rem;
         background: rgba(255,255,255,0.05);
+        color: inherit;
         flex-shrink: 0;
         transition: background 0.2s, transform 0.2s;
     }
 
     .sb-link:hover .sb-link-icon {
-        background: rgba(255,255,255,0.1);
+        background: rgba(249,115,22,0.14);
         transform: scale(1.05);
     }
 
@@ -277,7 +298,7 @@
     /* ── DIVIDER ── */
     .sb-divider {
         height: 1px;
-        background: rgba(255,255,255,0.06);
+        background: var(--sb-divider);
         margin: 0.4rem 0;
     }
 
@@ -369,7 +390,7 @@
     .sb-user-name {
         font-size: 0.82rem;
         font-weight: 600;
-        color: white;
+        color: var(--sb-text);
         overflow: hidden;
         text-overflow: ellipsis;
         line-height: 1.2;
@@ -377,7 +398,7 @@
 
     .sb-user-role {
         font-size: 0.64rem;
-        color: rgba(255,255,255,0.32);
+        color: var(--sb-muted);
         text-transform: capitalize;
         letter-spacing: 0.04em;
         margin-top: 1px;
@@ -390,7 +411,7 @@
         padding: 0.5rem 0.6rem;
         border-radius: 9px;
         text-decoration: none;
-        color: rgba(255,255,255,0.42);
+        color: var(--sb-muted);
         font-size: 0.815rem;
         font-weight: 500;
         transition: all 0.2s;
@@ -405,9 +426,9 @@
     }
 
     .sb-footer-link:hover {
-        color: white;
-        background: rgba(255,255,255,0.06);
-        border-color: rgba(255,255,255,0.06);
+        color: var(--sb-text);
+        background: var(--sb-hover);
+        border-color: rgba(249,115,22,0.14);
     }
 
     .sb-footer-link.logout:hover {
@@ -427,7 +448,7 @@
     }
 
     .sb-footer-link:hover .sb-footer-link-icon {
-        background: rgba(255,255,255,0.1);
+        background: rgba(249,115,22,0.14);
     }
 
     .sb-footer-link-label {
@@ -634,6 +655,11 @@
 
         <div class="sb-divider"></div>
 
+        <button id="theme-toggle" type="button" class="sb-footer-link" data-tooltip="Toggle theme">
+            <span class="sb-footer-link-icon"><i id="theme-toggle-icon" class="fas fa-moon"></i></span>
+            <span id="theme-toggle-label" class="sb-footer-link-label">Dark mode</span>
+        </button>
+
         <a href="{{ route('profile.edit') }}" class="sb-footer-link" data-tooltip="Profile">
             <span class="sb-footer-link-icon"><i class="fas fa-user-cog"></i></span>
             <span class="sb-footer-link-label">Profile Settings</span>
@@ -655,7 +681,43 @@
 <script>
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('sidebar-overlay');
-    let isPinned  = localStorage.getItem('sb-pinned') === 'true';
+    const themeToggle = document.getElementById('theme-toggle');
+    const themeToggleIcon = document.getElementById('theme-toggle-icon');
+    const themeToggleLabel = document.getElementById('theme-toggle-label');
+    const html = document.documentElement;
+    let isPinned = localStorage.getItem('sb-pinned') === 'true';
+
+    function applyTheme(theme) {
+        html.classList.remove('light', 'dark');
+        html.classList.add(theme);
+        document.body?.classList.toggle('dark', theme === 'dark');
+        html.setAttribute('data-theme', theme);
+        localStorage.setItem('theme-mode', theme);
+
+        if (themeToggleIcon && themeToggleLabel) {
+            if (theme === 'dark') {
+                themeToggleIcon.className = 'fas fa-sun';
+                themeToggleLabel.textContent = 'Light mode';
+            } else {
+                themeToggleIcon.className = 'fas fa-moon';
+                themeToggleLabel.textContent = 'Dark mode';
+            }
+        }
+    }
+
+    function toggleTheme() {
+        const nextTheme = html.classList.contains('dark') ? 'light' : 'dark';
+        applyTheme(nextTheme);
+    }
+
+    const savedTheme = localStorage.getItem('theme-mode');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const initialTheme = savedTheme || (prefersDark ? 'dark' : 'light');
+    applyTheme(initialTheme);
+
+    if (themeToggle) {
+        themeToggle.addEventListener('click', toggleTheme);
+    }
 
     // Apply pinned state on load
     if (isPinned) sidebar.classList.add('pinned');
@@ -699,6 +761,4 @@
     window.toggleSidebar = function () {
         sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
     };
-
-
 </script>
