@@ -5,6 +5,24 @@ function toUTCDay(str) {
     return new Date(Date.UTC(y, m, d));
 }
 
+/* ── Photo viewer modal ── */
+window.openPhotoModal = function (url, caption, date, uploader, originalName, downloadUrl) {
+    const img = document.getElementById('photo-viewer-img');
+    const captionEl = document.getElementById('photo-viewer-caption');
+    const metaEl = document.getElementById('photo-viewer-meta');
+    const downloadLink = document.getElementById('photo-viewer-download');
+
+    if (img) img.src = url;
+    if (captionEl) captionEl.textContent = caption || '';
+    if (metaEl) metaEl.textContent = date + (uploader ? ' · ' + uploader : '');
+    if (downloadLink) {
+        downloadLink.href = downloadUrl;
+        downloadLink.removeAttribute('download');
+    }
+
+    openModal('photo-viewer-modal');
+};
+
 /* ── Amount input comma formatter ── */
 (function () {
     function rawVal(str) {
@@ -846,14 +864,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (input) input.value = reason;
         }
 
-        closeModal('reason-intercept-modal');
-
         if (window._rimQueue.length > 0) {
             window._rimType = window._rimQueue.shift();
             openRIM();
             return;
         }
 
+        // Queue is fully drained — now it's safe to actually close.
+        closeModal('reason-intercept-modal');
         window._rimType = null;
 
         // Set bypass flag so the submit event listener doesn't re-trigger the modal

@@ -113,6 +113,20 @@ window.toggleLdTab = function (tab) {
         overviewBtn.style.color = 'var(--tx2)';
     }
 };
+/* ── Photo viewer modal ── */
+window.openPhotoModal = function (url, caption, date, uploader, originalName, downloadUrl) {
+    const img = document.getElementById('photo-viewer-img');
+    const captionEl = document.getElementById('photo-viewer-caption');
+    const metaEl = document.getElementById('photo-viewer-meta');
+    const downloadLink = document.getElementById('photo-viewer-download');
+
+    if (img) img.src = url;
+    if (captionEl) captionEl.textContent = caption || '';
+    if (metaEl) metaEl.textContent = date + (uploader ? ' · ' + uploader : '');
+    if (downloadLink) downloadLink.href = downloadUrl;
+
+    openModal('photo-viewer-modal');
+};
 
 /* ── Init ── */
 initTheme();

@@ -561,7 +561,9 @@
                         <div class="field-group" id="progress_photo_field">
                             <label class="field-label">
                                 Progress Photo
-                                <span id="progress_photo_required_badge" style="display:none; color:#ef4444; font-weight:700;">* required — performance changed</span>
+                                <span id="progress_photo_required_badge"
+                                    style="display:none; color:#ef4444; font-weight:700;">* required — performance
+                                    changed</span>
                             </label>
                             <input type="file" name="progress_photo" id="progress_photo_input" class="field-input"
                                 accept="image/png,image/jpeg,image/webp">
@@ -577,11 +579,12 @@
                         @if($latestAttachment)
                             <div class="field-group">
                                 <label class="field-label">Latest Progress Photo</label>
-                                <div style="display:grid; grid-template-columns:120px minmax(0,1fr); gap:0.85rem; align-items:center; padding:0.9rem; border:1px solid var(--border); border-radius:12px; background:linear-gradient(135deg, rgba(249,115,22,0.06), rgba(255,255,255,0.95));">
+                                <div class="latest-progress-photo-card">
                                     <img src="{{ $latestAttachment->url }}" alt="Latest progress photo"
                                         style="width:100%; height:92px; object-fit:cover; border-radius:10px; border:1px solid var(--border); display:block;">
                                     <div style="display:flex; flex-direction:column; gap:0.35rem; min-width:0;">
-                                        <p style="margin:0; font-size:0.82rem; font-weight:600; color:var(--text-primary); line-height:1.45;">
+                                        <p
+                                            style="margin:0; font-size:0.82rem; font-weight:600; color:var(--text-primary); line-height:1.45;">
                                             {{ $latestAttachment->caption ?: 'Latest work progress update' }}
                                         </p>
                                         <p style="margin:0; font-size:0.72rem; color:var(--text-secondary);">
@@ -596,36 +599,38 @@
                         @endif
                     </div>
                     {{-- Progress Photo Gallery card --}}
-                @if($project->attachments->count() > 0)
-                    <div class="form-card" style="margin-bottom:1.5rem;">
-                        <div class="section-header">
-                            <i class="fas fa-images"></i>
-                            <span>Progress Photos</span>
-                            <span class="tag-chip" style="margin-left:auto;">{{ $project->attachments->count() }}</span>
-                        </div>
-                        <div class="section-body">
-                            <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:1rem;">
-                                @foreach($project->attachments->sortByDesc('created_at') as $attachment)
-                                    <div style="border:1.5px solid var(--border); border-radius:10px; overflow:hidden; background:var(--bg-secondary);">
-                                        <img src="{{ $attachment->url }}" alt="Progress photo"
-                                            style="width:100%; height:120px; object-fit:cover; display:block;">
-                                        <div style="padding:0.6rem 0.75rem;">
-                                            <p style="margin:0; font-size:0.7rem; color:var(--text-secondary); line-height:1.4;">
-                                                {{ $attachment->caption }}
-                                            </p>
-                                            <p style="margin:0.3rem 0 0; font-size:0.65rem; color:#9ca3af;">
-                                                {{ $attachment->created_at->format('M d, Y h:i A') }}
-                                                @if($attachment->user)
-                                                    · {{ $attachment->user->name }}
-                                                @endif
-                                            </p>
+                    @if($project->attachments->count() > 0)
+                        <div class="form-card" style="margin-bottom:1.5rem;">
+                            <div class="section-header">
+                                <i class="fas fa-images"></i>
+                                <span>Progress Photos</span>
+                                <span class="tag-chip" style="margin-left:auto;">{{ $project->attachments->count() }}</span>
+                            </div>
+                            <div class="section-body">
+                                <div
+                                    style="display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:1rem;">
+                                    @foreach($project->attachments->sortByDesc('created_at') as $attachment)
+                                        <div style="border:1.5px solid var(--border); border-radius:10px; overflow:hidden; background:var(--bg-secondary); cursor:pointer;"
+                                            onclick="openPhotoModal('{{ $attachment->url }}', '{{ addslashes($attachment->caption ?? '') }}', '{{ $attachment->created_at->format('M d, Y h:i A') }}', '{{ addslashes($attachment->user->name ?? 'Unknown') }}', '{{ addslashes($attachment->original_name) }}', '{{ route('admin.attachments.download', $attachment) }}')">
+                                            <img src="{{ $attachment->url }}" alt="Progress photo"
+                                                style="width:100%; height:120px; object-fit:cover; display:block; pointer-events:none;">
+                                            <div style="padding:0.6rem 0.75rem;">
+                                                <p style="margin:0; font-size:0.7rem; color:var(--text-secondary); line-height:1.4;">
+                                                    {{ $attachment->caption }}
+                                                </p>
+                                                <p style="margin:0.3rem 0 0; font-size:0.65rem; color:#9ca3af;">
+                                                    {{ $attachment->created_at->format('M d, Y h:i A') }}
+                                                    @if($attachment->user)
+                                                        · {{ $attachment->user->name }}
+                                                    @endif
+                                                </p>
+                                            </div>
                                         </div>
-                                    </div>
-                                @endforeach
+                                    @endforeach
+                                </div>
                             </div>
                         </div>
-                    </div>
-                @endif
+                    @endif
                 </div>{{-- /form-card: Work Progress --}}
 
             </div>{{-- /tab-progress --}}
@@ -1123,8 +1128,8 @@
                                         </div>
                                         <div
                                             style="margin-top:0.75rem; padding:0.875rem 1rem; border-radius:10px; display:flex; align-items:center; justify-content:space-between;
-                                                            background:{{ $remainingBal >= 0 ? 'rgba(59,130,246,0.04)' : 'rgba(239,68,68,0.04)' }};
-                                                            border:1px solid {{ $remainingBal >= 0 ? 'rgba(59,130,246,0.18)' : 'rgba(239,68,68,0.18)' }};">
+                                                                background:{{ $remainingBal >= 0 ? 'rgba(59,130,246,0.04)' : 'rgba(239,68,68,0.04)' }};
+                                                                border:1px solid {{ $remainingBal >= 0 ? 'rgba(59,130,246,0.18)' : 'rgba(239,68,68,0.18)' }};">
                                             <span
                                                 style="font-size:0.8rem; font-weight:600; color:var(--ink-muted); display:flex; align-items:center; gap:0.4rem;">
                                                 <i class="fas fa-wallet"
@@ -1474,10 +1479,10 @@
                                 @if(($project->ld_status ?? 'inactive') === 'active')
                                     <button type="submit" id="ld-terminate-btn"
                                         onclick="document.getElementById('ld_action_input').value='terminate'" style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.4rem 1rem;
-                                               border-radius:8px;border:none;background:#d97706;color:white;
-                                               font-size:0.75rem;font-weight:700;cursor:pointer;
-                                               font-family:'Instrument Sans',sans-serif;
-                                               box-shadow:0 2px 6px rgba(217,119,6,0.25);">
+                                                   border-radius:8px;border:none;background:#d97706;color:white;
+                                                   font-size:0.75rem;font-weight:700;cursor:pointer;
+                                                   font-family:'Instrument Sans',sans-serif;
+                                                   box-shadow:0 2px 6px rgba(217,119,6,0.25);">
                                         <i class="fas fa-circle-stop" style="font-size:0.7rem;"></i> Terminate Penalty
                                     </button>
                                 @endif
@@ -2051,5 +2056,34 @@
             @method('PATCH')
         </form>
     @endif
+    {{-- Photo Viewer Modal --}}
+    <x-modal id="photo-viewer-modal" title="Progress Photo" type="default" icon="fa-image" size="lg">
+        <div style="display:flex; flex-direction:column; gap:1rem;">
+            <div
+                style="width:100%; max-height:65vh; overflow:hidden; border-radius:10px; background:#000; display:flex; align-items:center; justify-content:center;">
+                <img id="photo-viewer-img" src="" alt="Progress photo"
+                    style="max-width:100%; max-height:65vh; width:auto; height:auto; object-fit:contain; display:block;">
+            </div>
+            <div>
+                <p id="photo-viewer-caption"
+                    style="margin:0; font-size:0.875rem; color:var(--text-primary); font-weight:600;"></p>
+                <p id="photo-viewer-meta" style="margin:0.3rem 0 0; font-size:0.75rem; color:#9ca3af;"></p>
+            </div>
+        </div>
+
+        <x-slot name="footer">
+            <button type="button" onclick="closeModal('photo-viewer-modal')"
+                style="padding:0.6rem 1.2rem; border:1.5px solid var(--border); border-radius:9px; background:var(--bg-primary); color:var(--text-secondary); font-weight:600; font-size:0.85rem; cursor:pointer; font-family:'Instrument Sans',sans-serif; transition:all 0.15s;"
+                onmouseover="this.style.borderColor='var(--orange-500)'"
+                onmouseout="this.style.borderColor='var(--border)'">
+                Close
+            </button>
+            <a id="photo-viewer-download" href="" download
+                style="display:inline-flex; align-items:center; gap:0.4rem; padding:0.6rem 1.4rem; background:var(--orange-500); color:white; border:none; border-radius:9px; font-weight:700; font-size:0.85rem; cursor:pointer; font-family:'Instrument Sans',sans-serif; box-shadow:0 2px 8px rgba(249,115,22,0.3); transition:all 0.15s; text-decoration:none;"
+                onmouseover="this.style.background='#ea580c'" onmouseout="this.style.background='var(--orange-500)'">
+                <i class="fas fa-download" style="font-size:0.75rem;"></i> Download
+            </a>
+        </x-slot>
+    </x-modal>
 
 </x-app-layout>

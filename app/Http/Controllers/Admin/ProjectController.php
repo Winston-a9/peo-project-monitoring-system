@@ -35,6 +35,7 @@ class ProjectController extends Controller
     private const MAX_TE_VO_DAYS = 9999;
     private const MAX_EDIT_REASON_LENGTH = 1000;
     private const REMARKS_MAX_LENGTH = 50_000;
+    private const MAX_PROJECT_PHOTOS = 3;
 
     // ============================================================
     // SECTION 1: LISTING & DISPLAY
@@ -691,15 +692,17 @@ class ProjectController extends Controller
 
         $project->update($data);
 
-        // ── Step 11b: Store progress photo if provided ───────────
+        // ── Step 11b: Store progress photo if provided (max 3, FIFO) ─
         if ($request->hasFile('progress_photo')) {
+            $this->enforceAttachmentLimit($project, self::MAX_PROJECT_PHOTOS - 1);
+
             $path = $request->file('progress_photo')->store('project-attachments/' . $project->id, 'public');
 
             $project->attachments()->create([
-                'user_id' => auth()->id(),
-                'path' => $path,
+                'user_id'       => auth()->id(),
+                'path'          => $path,
                 'original_name' => $request->file('progress_photo')->getClientOriginalName(),
-                'caption' => sprintf(
+                'caption'       => sprintf(
                     'Progress update — As Planned: %s%%, Work Done: %s%%',
                     $data['as_planned'] ?? $project->as_planned,
                     $data['work_done'] ?? $project->work_done
@@ -916,6 +919,30 @@ class ProjectController extends Controller
             : $label;
 
         return "● {$time} • {$date}\n  {$shortLabel} {$cleanAction}\n  Justification: {$cleanReason}";
+    }
+
+    /**
+     * Ensures a project has at most $keep existing attachments before a new
+     * one is added — deletes the oldest first (both the DB row and the
+     * physical file in storage) until the count is within the limit.
+     *
+     * Called with self::MAX_PROJECT_PHOTOS - 1 so that after this runs,
+     * adding the new photo brings the total back up to exactly the cap.
+     */
+    private function enforceAttachmentLimit(Project $project, int $keep): void
+    {
+        $existing = $project->attachments()->orderBy('created_at')->get();
+
+        if ($existing->count() <= $keep) {
+            return;
+        }
+
+        $toDelete = $existing->take($existing->count() - $keep);
+
+        foreach ($toDelete as $attachment) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($attachment->path);
+            $attachment->delete();
+        }
     }
 
     private function normalizeArray(mixed $value, string $type = 'string'): array
@@ -1745,5 +1772,22 @@ class ProjectController extends Controller
 
         return redirect()->route('admin.projects.index')
             ->with('success', 'Project deleted successfully.');
+    }
+    // ============================================================
+    // SECTION 11: ATTACHMENT DOWNLOAD
+    // ============================================================
+
+    public function downloadAttachment(\App\Models\ProjectAttachment $attachment): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        $this->authorizeProjectAccess($attachment->project);
+
+        if (!\Illuminate\Support\Facades\Storage::disk('public')->exists($attachment->path)) {
+            abort(404, 'File not found.');
+        }
+
+        return \Illuminate\Support\Facades\Storage::disk('public')->download(
+            $attachment->path,
+            $attachment->original_name
+        );
     }
 }
