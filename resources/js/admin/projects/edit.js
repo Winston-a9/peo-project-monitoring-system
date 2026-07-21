@@ -155,24 +155,24 @@ window.computeSlippage = function () {
     const sl = parseFloat((wd - ap).toFixed(3));
     document.getElementById('slippage').value = sl;
 
-    if (sl > 0) { 
-        lbl.style.color = '#16a34a'; 
-        lbl.innerHTML = '<i class="fas fa-arrow-up"></i> Ahead'; 
-        valEl.style.color = '#16a34a'; 
+    if (sl > 0) {
+        lbl.style.color = '#16a34a';
+        lbl.innerHTML = '<i class="fas fa-arrow-up"></i> Ahead';
+        valEl.style.color = '#16a34a';
         display.style.borderColor = 'rgba(22,163,74,0.2)';
         display.style.background = 'rgba(22,163,74,0.04)';
     }
-    else if (sl < 0) { 
-        lbl.style.color = '#dc2626'; 
-        lbl.innerHTML = '<i class="fas fa-arrow-down"></i> Behind'; 
-        valEl.style.color = '#dc2626'; 
+    else if (sl < 0) {
+        lbl.style.color = '#dc2626';
+        lbl.innerHTML = '<i class="fas fa-arrow-down"></i> Behind';
+        valEl.style.color = '#dc2626';
         display.style.borderColor = 'rgba(220,38,38,0.2)';
         display.style.background = 'rgba(220,38,38,0.04)';
     }
-    else { 
-        lbl.style.color = '#9ca3af'; 
-        lbl.innerHTML = '<i class="fas fa-minus"></i> On schedule'; 
-        valEl.style.color = '#9ca3af'; 
+    else {
+        lbl.style.color = '#9ca3af';
+        lbl.innerHTML = '<i class="fas fa-minus"></i> On schedule';
+        valEl.style.color = '#9ca3af';
         display.style.borderColor = 'rgba(156,163,175,0.2)';
         display.style.background = 'rgba(156,163,175,0.06)';
     }
@@ -670,6 +670,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window._rimType = null; // 'te' | 'vo' | 'so' | null
     window._pendingForm = null; // Store form reference to avoid selector issues
     window._rimBypassIntercept = false; // Flag to bypass modal on re-submission
+    window._rimQueue = []; // Queue pending reason prompts in order
 
     // Use event delegation to handle form submissions reliably across page reloads
     document.addEventListener('submit', function (e) {
@@ -710,15 +711,15 @@ document.addEventListener('DOMContentLoaded', () => {
         // Store the form reference for later use in rimConfirm()
         window._pendingForm = form;
 
-        // Ask in order: TE → VO → SO
-        if (teDays > 0 && teReason === '') {
-            window._rimType = 'te';
-        } else if (voDays > 0 && voReason === '') {
-            window._rimType = 'vo';
-        } else if (soDays > 0 && soReason === '') {
-            window._rimType = 'so';
-        }
+        const queue = [];
+        if (teDays > 0 && teReason === '') queue.push('te');
+        if (voDays > 0 && voReason === '') queue.push('vo');
+        if (soDays > 0 && soReason === '') queue.push('so');
 
+        if (queue.length === 0) return;
+
+        window._rimQueue = queue;
+        window._rimType = window._rimQueue.shift();
         openRIM();
     }, false);
 
@@ -800,6 +801,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.rimCancel = function () {
         closeModal('reason-intercept-modal');
         window._rimType = null;
+        window._rimQueue = [];
 
         // Clear reason values
         if (window._pendingForm) {
@@ -845,6 +847,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         closeModal('reason-intercept-modal');
+
+        if (window._rimQueue.length > 0) {
+            window._rimType = window._rimQueue.shift();
+            openRIM();
+            return;
+        }
+
         window._rimType = null;
 
         // Set bypass flag so the submit event listener doesn't re-trigger the modal
@@ -862,6 +871,54 @@ document.addEventListener('DOMContentLoaded', () => {
         originalAmtInput.addEventListener('input', function () {
             window.calculateLDPerDay();
             window.calcAdvanceRetention();
+        });
+    }
+
+    /* ── Progress photo requirement ── */
+    window.checkProgressPhotoRequired = function () {
+        const apEl = document.getElementById('as_planned');
+        const wdEl = document.getElementById('work_done');
+        const badge = document.getElementById('progress_photo_required_badge');
+        if (!apEl || !wdEl || !badge) return false;
+
+        const ap = parseFloat(apEl.value);
+        const wd = parseFloat(wdEl.value);
+        const apChanged = !isNaN(ap) && Math.abs(ap - _originalAsPlanned) > 0.0005;
+        const wdChanged = !isNaN(wd) && Math.abs(wd - _originalWorkDone) > 0.0005;
+        const required = apChanged || wdChanged;
+
+        badge.style.display = required ? 'inline' : 'none';
+        return required;
+    };
+
+    const progressPhotoInput = document.getElementById('progress_photo_input');
+    ['as_planned', 'work_done'].forEach(id => {
+        document.getElementById(id)?.addEventListener('input', window.checkProgressPhotoRequired);
+    });
+    window.checkProgressPhotoRequired();
+
+    const editForm = document.getElementById('project-edit-form');
+    if (editForm) {
+        editForm.addEventListener('submit', function (e) {
+            const required = window.checkProgressPhotoRequired();
+            const hasFile = progressPhotoInput && progressPhotoInput.files && progressPhotoInput.files.length > 0;
+
+            if (required && !hasFile) {
+                e.preventDefault();
+                const field = document.getElementById('progress_photo_field');
+                field?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                progressPhotoInput?.focus();
+
+                // Switch to the Performance tab so the error is visible
+                const perfBtn = document.querySelector('[data-tab="tab-progress"]');
+                if (perfBtn) window.switchTab('tab-progress', perfBtn);
+
+                let hint = document.getElementById('progress_photo_hint');
+                if (hint) {
+                    hint.style.color = '#ef4444';
+                    hint.innerHTML = '<i class="fas fa-exclamation-circle"></i> Please attach a progress photo before saving — As Planned or Work Done was changed.';
+                }
+            }
         });
     }
 

@@ -194,6 +194,10 @@ class Project extends Model
     {
         return $this->hasMany(\App\Models\ProjectLog::class);
     }
+    public function attachments(): \Illuminate\Database\Eloquent\Relations\HasMany
+{
+    return $this->hasMany(ProjectAttachment::class);
+}
     public function ldHistories()
 {
     return $this->hasMany(LdHistory::class)->orderBy('month');

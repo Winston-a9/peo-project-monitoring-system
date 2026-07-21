@@ -177,7 +177,7 @@ window.calculateOriginalExpiry = function () {
 
     // Add (contractDays - 1) to the start date
     const originalExpiry = new Date(dateStarted);
-    originalExpiry.setDate(originalExpiry.getDate() + contractDays - 1);
+    originalExpiry.setDate(originalExpiry.getDate() + contractDays);
 
     // Format as YYYY-MM-DD for the date input
     const year = originalExpiry.getFullYear();

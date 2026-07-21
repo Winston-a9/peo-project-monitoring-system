@@ -101,7 +101,8 @@
         {{-- ========================================================
         MAIN FORM
         ======================================================== --}}
-        <form method="POST" action="{{ route('admin.projects.update', $project) }}">
+        <form method="POST" action="{{ route('admin.projects.update', $project) }}" enctype="multipart/form-data"
+            id="project-edit-form">
             @csrf
             @method('PATCH')
 
@@ -217,7 +218,8 @@
                             {{-- Geotagged Location --}}
                             <div class="field-group">
                                 <label class="field-label">Geotagged Location</label>
-                                <input type="text" name="geotagged_location" class="field-input {{ $errors->has('geotagged_location') ? 'has-error' : '' }}"
+                                <input type="text" name="geotagged_location"
+                                    class="field-input {{ $errors->has('geotagged_location') ? 'has-error' : '' }}"
                                     value="{{ old('geotagged_location', $project->geotagged_location) }}"
                                     placeholder="e.g. GPS coordinates or landmark description">
                                 @error('geotagged_location')
@@ -238,20 +240,21 @@
                                         $isOther = $oldFund && !in_array($oldFund, $fundOptions);
                                     @endphp
                                     @foreach($fundOptions as $opt)
-                                        <option value="{{ $opt }}" {{ $oldFund === $opt ? 'selected' : '' }}>{{ $opt }}</option>
+                                        <option value="{{ $opt }}" {{ $oldFund === $opt ? 'selected' : '' }}>{{ $opt }}
+                                        </option>
                                     @endforeach
                                     <option value="__other" {{ $isOther ? 'selected' : '' }}>Other (specify)</option>
                                 </select>
 
                                 <input type="text" id="fund_source_other"
                                     class="field-input {{ $errors->has('fund_source') ? 'has-error' : '' }}"
-                                    placeholder="Enter custom fund source"
-                                    value="{{ $isOther ? $oldFund : '' }}"
+                                    placeholder="Enter custom fund source" value="{{ $isOther ? $oldFund : '' }}"
                                     style="margin-top:0.6rem; {{ $isOther ? '' : 'display:none;' }}"
                                     oninput="toggleFundSourceOther()">
 
                                 {{-- This is the field actually submitted to Laravel --}}
-                                <input type="hidden" name="fund_source" id="fund_source_hidden" value="{{ old('fund_source', $project->fund_source) }}">
+                                <input type="hidden" name="fund_source" id="fund_source_hidden"
+                                    value="{{ old('fund_source', $project->fund_source) }}">
 
                                 @error('fund_source')
                                     <p class="field-error"><i class="fas fa-exclamation-circle"></i> {{ $message }}</p>
@@ -272,12 +275,11 @@
                             {{-- Division --}}
                             <div class="field-group">
                                 <label class="field-label">Division <span style="color:#ef4444;">*</span></label>
-                                <select name="division" class="field-input {{ $errors->has('division') ? 'has-error' : '' }}" required
-                                    {{ !auth()->user()->isSuperAdmin() ? 'disabled' : '' }}>
+                                <select name="division"
+                                    class="field-input {{ $errors->has('division') ? 'has-error' : '' }}" required {{ !auth()->user()->isSuperAdmin() ? 'disabled' : '' }}>
                                     <option value="" disabled>Select a division</option>
                                     @foreach($divisions as $div)
-                                        <option value="{{ $div }}"
-                                            {{ old('division', $project->division ?? $currentDivision) === $div ? 'selected' : '' }}>
+                                        <option value="{{ $div }}" {{ old('division', $project->division ?? $currentDivision) === $div ? 'selected' : '' }}>
                                             {{ $div }}
                                         </option>
                                     @endforeach
@@ -436,7 +438,8 @@
                     </div>
                     <input type="hidden" name="date_started" value="{{ $project->date_started->format('Y-m-d') }}">
                     @error('date_started')
-                        <p class="field-error" style="margin-bottom:0.75rem;"><i class="fas fa-exclamation-circle"></i> {{ $message }}</p>
+                        <p class="field-error" style="margin-bottom:0.75rem;"><i class="fas fa-exclamation-circle"></i>
+                            {{ $message }}</p>
                     @enderror
                     <input type="hidden" name="original_contract_expiry"
                         value="{{ $project->original_contract_expiry->format('Y-m-d') }}">
@@ -554,7 +557,53 @@
                                 </div>
                             </div>
                         @endif
+
+                        <div class="field-group" id="progress_photo_field">
+                            <label class="field-label">
+                                Progress Photo
+                                <span id="progress_photo_required_badge" style="display:none; color:#ef4444; font-weight:700;">* required — performance changed</span>
+                            </label>
+                            <input type="file" name="progress_photo" id="progress_photo_input" class="field-input"
+                                accept="image/png,image/jpeg,image/webp">
+                            <p class="field-hint" id="progress_photo_hint">
+                                Required whenever As Planned or Work Done is changed. JPG, PNG, or WEBP, max 5MB.
+                            </p>
+                            @error('progress_photo')
+                                <p class="field-error"><i class="fas fa-exclamation-circle"></i> {{ $message }}</p>
+                            @enderror
+                        </div>
                     </div>
+                    {{-- Progress Photo Gallery card --}}
+                @if($project->attachments->count() > 0)
+                    <div class="form-card" style="margin-bottom:1.5rem;">
+                        <div class="section-header">
+                            <i class="fas fa-images"></i>
+                            <span>Progress Photos</span>
+                            <span class="tag-chip" style="margin-left:auto;">{{ $project->attachments->count() }}</span>
+                        </div>
+                        <div class="section-body">
+                            <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:1rem;">
+                                @foreach($project->attachments->sortByDesc('created_at') as $attachment)
+                                    <div style="border:1.5px solid var(--border); border-radius:10px; overflow:hidden; background:var(--bg-secondary);">
+                                        <img src="{{ $attachment->url }}" alt="Progress photo"
+                                            style="width:100%; height:120px; object-fit:cover; display:block;">
+                                        <div style="padding:0.6rem 0.75rem;">
+                                            <p style="margin:0; font-size:0.7rem; color:var(--text-secondary); line-height:1.4;">
+                                                {{ $attachment->caption }}
+                                            </p>
+                                            <p style="margin:0.3rem 0 0; font-size:0.65rem; color:#9ca3af;">
+                                                {{ $attachment->created_at->format('M d, Y h:i A') }}
+                                                @if($attachment->user)
+                                                    · {{ $attachment->user->name }}
+                                                @endif
+                                            </p>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                @endif
                 </div>{{-- /form-card: Work Progress --}}
 
             </div>{{-- /tab-progress --}}
@@ -1052,8 +1101,8 @@
                                         </div>
                                         <div
                                             style="margin-top:0.75rem; padding:0.875rem 1rem; border-radius:10px; display:flex; align-items:center; justify-content:space-between;
-                                                        background:{{ $remainingBal >= 0 ? 'rgba(59,130,246,0.04)' : 'rgba(239,68,68,0.04)' }};
-                                                        border:1px solid {{ $remainingBal >= 0 ? 'rgba(59,130,246,0.18)' : 'rgba(239,68,68,0.18)' }};">
+                                                            background:{{ $remainingBal >= 0 ? 'rgba(59,130,246,0.04)' : 'rgba(239,68,68,0.04)' }};
+                                                            border:1px solid {{ $remainingBal >= 0 ? 'rgba(59,130,246,0.18)' : 'rgba(239,68,68,0.18)' }};">
                                             <span
                                                 style="font-size:0.8rem; font-weight:600; color:var(--ink-muted); display:flex; align-items:center; gap:0.4rem;">
                                                 <i class="fas fa-wallet"
@@ -1310,7 +1359,7 @@
                         </div>
                     </div>
                 </div>{{-- /form-card: Retention --}}
-                 {{-- Liquidated Damages Assessment --}}
+                {{-- Liquidated Damages Assessment --}}
                 <div class="form-card" style="margin-bottom:1.5rem;" id="ld-card"
                     data-ld-status="{{ $project->ld_status ?? 'inactive' }}">
 
@@ -1322,7 +1371,7 @@
                     <div class="section-body">
 
                         <input type="hidden" name="ld_action" id="ld_action_input" value="">
-                        
+
                         <div id="ld-chunk-start">
                             <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.75rem;
                         padding:0.85rem 1rem; border-radius:10px;
@@ -1382,123 +1431,121 @@
                             </div>
                         </div>
 
-                            <div id="ld-chunk-fields" style="display:none;">
+                        <div id="ld-chunk-fields" style="display:none;">
 
-                                {{-- Status banner — dynamically updated by ldSetStatusBanner() --}}
-                                <div id="ld-status-banner" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.75rem;
+                            {{-- Status banner — dynamically updated by ldSetStatusBanner() --}}
+                            <div id="ld-status-banner" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.75rem;
                        padding:0.85rem 1rem; border-radius:10px; margin-bottom:1.25rem;
                        background:rgba(220,38,38,0.06); border:1.5px solid rgba(220,38,38,0.2);">
-                                    <div style="display:flex; align-items:center; gap:0.6rem;">
-                                        <i id="ld-banner-icon" class="fas fa-circle-play"
-                                            style="color:#dc2626; font-size:0.9rem;"></i>
-                                        <span id="ld-banner-label"
-                                            style="font-size:0.82rem; font-weight:700; color:#dc2626;">
-                                            LD Penalty: Penalty Running
-                                        </span>
-                                        <span id="ld-banner-dates"
-                                            style="font-size:0.72rem; color:#9ca3af; font-weight:500;"></span>
-                                    </div>
-
-                                    {{-- Terminate button — only shown when active --}}
-                                    @if(($project->ld_status ?? 'inactive') === 'active')
-                                                <button type="submit" id="ld-terminate-btn"
-                                                    onclick="document.getElementById('ld_action_input').value='terminate'" style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.4rem 1rem;
-                                           border-radius:8px;border:none;background:#d97706;color:white;
-                                           font-size:0.75rem;font-weight:700;cursor:pointer;
-                                           font-family:'Instrument Sans',sans-serif;
-                                           box-shadow:0 2px 6px rgba(217,119,6,0.25);">
-                                                    <i class="fas fa-circle-stop" style="font-size:0.7rem;"></i> Terminate Penalty
-                                                </button>
-                                    @endif
+                                <div style="display:flex; align-items:center; gap:0.6rem;">
+                                    <i id="ld-banner-icon" class="fas fa-circle-play"
+                                        style="color:#dc2626; font-size:0.9rem;"></i>
+                                    <span id="ld-banner-label"
+                                        style="font-size:0.82rem; font-weight:700; color:#dc2626;">
+                                        LD Penalty: Penalty Running
+                                    </span>
+                                    <span id="ld-banner-dates"
+                                        style="font-size:0.72rem; color:#9ca3af; font-weight:500;"></span>
                                 </div>
 
-                                {{-- Calculation grid — your existing fields, untouched --}}
-                                <div class="grid-2col">
+                                {{-- Terminate button — only shown when active --}}
+                                @if(($project->ld_status ?? 'inactive') === 'active')
+                                    <button type="submit" id="ld-terminate-btn"
+                                        onclick="document.getElementById('ld_action_input').value='terminate'" style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.4rem 1rem;
+                                               border-radius:8px;border:none;background:#d97706;color:white;
+                                               font-size:0.75rem;font-weight:700;cursor:pointer;
+                                               font-family:'Instrument Sans',sans-serif;
+                                               box-shadow:0 2px 6px rgba(217,119,6,0.25);">
+                                        <i class="fas fa-circle-stop" style="font-size:0.7rem;"></i> Terminate Penalty
+                                    </button>
+                                @endif
+                            </div>
 
-                                    <div class="field-group">
-                                        <label for="ld_accomplished" class="field-label">Accomplished (%)</label>
-                                        <input type="number" id="ld_accomplished" name="ld_accomplished"
-                                            class="field-input"
-                                            value="{{ old('ld_accomplished', $project->ld_accomplished ?? '') }}"
-                                            min="0" max="100" step="0.001" style="padding-right:2.5rem;"
-                                            onkeydown="return event.key !== '-' && event.key !== 'e'"
-                                            oninput="if(parseFloat(this.value)>100)this.value=100; calculateLDPerDay()">
-                                        <p class="field-hint">Percentage of work completed</p>
-                                    </div>
+                            {{-- Calculation grid — your existing fields, untouched --}}
+                            <div class="grid-2col">
 
-                                    <div class="field-group">
-                                        <label for="ld_unworked" class="field-label">
-                                            Unworked (%) <span style="font-weight:400; color:#9ca3af;">(auto)</span>
-                                        </label>
-                                        <input type="hidden" id="ld_unworked" name="ld_unworked"
-                                            value="{{ old('ld_unworked', $project->ld_unworked ?? '') }}">
-                                        <p
-                                            style="font-size:0.9rem; font-weight:600; color:var(--text-primary); margin:0; padding:0.1rem 0;">
-                                            <span
-                                                id="ld_unworked_display">{{ old('ld_unworked', $project->ld_unworked ?? '—') }}</span>
-                                            <span
-                                                style="color:var(--ink-muted); font-weight:500; margin-left:2px;">%</span>
+                                <div class="field-group">
+                                    <label for="ld_accomplished" class="field-label">Accomplished (%)</label>
+                                    <input type="number" id="ld_accomplished" name="ld_accomplished" class="field-input"
+                                        value="{{ old('ld_accomplished', $project->ld_accomplished ?? '') }}" min="0"
+                                        max="100" step="0.001" style="padding-right:2.5rem;"
+                                        onkeydown="return event.key !== '-' && event.key !== 'e'"
+                                        oninput="if(parseFloat(this.value)>100)this.value=100; calculateLDPerDay()">
+                                    <p class="field-hint">Percentage of work completed</p>
+                                </div>
+
+                                <div class="field-group">
+                                    <label for="ld_unworked" class="field-label">
+                                        Unworked (%) <span style="font-weight:400; color:#9ca3af;">(auto)</span>
+                                    </label>
+                                    <input type="hidden" id="ld_unworked" name="ld_unworked"
+                                        value="{{ old('ld_unworked', $project->ld_unworked ?? '') }}">
+                                    <p
+                                        style="font-size:0.9rem; font-weight:600; color:var(--text-primary); margin:0; padding:0.1rem 0;">
+                                        <span
+                                            id="ld_unworked_display">{{ old('ld_unworked', $project->ld_unworked ?? '—') }}</span>
+                                        <span style="color:var(--ink-muted); font-weight:500; margin-left:2px;">%</span>
+                                    </p>
+                                </div>
+
+                                <div class="field-group">
+                                    <label for="ld_days_overdue_input" class="field-label">
+                                        Days Overdue <span style="font-weight:400; color:#9ca3af;">(auto)</span>
+                                    </label>
+                                    <input type="hidden" id="ld_days_overdue_input" name="ld_days_overdue"
+                                        value="{{ old('ld_days_overdue', $project->ld_days_overdue ?? 0) }}">
+                                    <div
+                                        style="padding:0.75rem 1rem; border:1.5px solid var(--border); border-radius:9px; background:var(--bg-secondary);">
+                                        <p style="margin:0; display:flex; align-items:baseline; gap:0.4rem;">
+                                            <span id="ld_days_overdue_display"
+                                                style="font-size:1.1rem; font-weight:800; font-family:'Syne',sans-serif; letter-spacing:-0.02em; color:var(--tx2);">—</span>
+                                            <span id="ld_days_unit"
+                                                style="font-size:0.8rem; font-weight:600; color:var(--tx2);">calculating…</span>
                                         </p>
-                                    </div>
-
-                                    <div class="field-group">
-                                        <label for="ld_days_overdue_input" class="field-label">
-                                            Days Overdue <span style="font-weight:400; color:#9ca3af;">(auto)</span>
-                                        </label>
-                                        <input type="hidden" id="ld_days_overdue_input" name="ld_days_overdue"
-                                            value="{{ old('ld_days_overdue', $project->ld_days_overdue ?? 0) }}">
-                                        <div
-                                            style="padding:0.75rem 1rem; border:1.5px solid var(--border); border-radius:9px; background:var(--bg-secondary);">
-                                            <p style="margin:0; display:flex; align-items:baseline; gap:0.4rem;">
-                                                <span id="ld_days_overdue_display"
-                                                    style="font-size:1.1rem; font-weight:800; font-family:'Syne',sans-serif; letter-spacing:-0.02em; color:var(--tx2);">—</span>
-                                                <span id="ld_days_unit"
-                                                    style="font-size:0.8rem; font-weight:600; color:var(--tx2);">calculating…</span>
-                                            </p>
-                                            <p style="font-size:0.68rem; color:#9ca3af; margin:3px 0 0;">
-                                                {{ $project->revised_contract_expiry
+                                        <p style="font-size:0.68rem; color:#9ca3af; margin:3px 0 0;">
+                                            {{ $project->revised_contract_expiry
     ? 'Revised Expiry: ' . $project->revised_contract_expiry->format('M d, Y')
     : 'Original Expiry: ' . $project->original_contract_expiry->format('M d, Y') }}
-                                            </p>
-                                        </div>
-                                        <p class="field-hint" id="ld_overdue_hint">
-                                            Auto-calculated from
-                                            {{ $project->revised_contract_expiry ? 'revised' : 'original' }} contract
-                                            expiry
                                         </p>
                                     </div>
-
-                                    <div class="field-group">
-                                        <label for="ld_per_day" class="field-label">
-                                            LD per Day (₱) <span style="font-weight:400; color:#9ca3af;">(auto)</span>
-                                        </label>
-                                        <input type="hidden" id="ld_per_day" name="ld_per_day"
-                                            value="{{ old('ld_per_day', $project->ld_per_day ?? '0') }}">
-                                        <p
-                                            style="font-size:0.9rem; font-weight:700; color:var(--text-primary); margin:0; padding:0.1rem 0; font-family:'Syne',sans-serif;">
-                                            ₱<span
-                                                id="ld_per_day_display">{{ number_format((float) old('ld_per_day', $project->ld_per_day ?? 0), 2) }}</span>
-                                        </p>
-                                        <p class="field-hint">Formula: (Unworked % ÷ 100) × Remaining Balance × 0.001
-                                        </p>
-                                    </div>
-
-                                    <div class="field-group" style="grid-column:1/-1;">
-                                        <label for="total_ld" class="field-label">
-                                            Total LD (₱) <span style="font-weight:400; color:#9ca3af;">(auto)</span>
-                                        </label>
-                                        <input type="hidden" id="total_ld" name="total_ld"
-                                            value="{{ old('total_ld', $project->total_ld ?? '0') }}">
-                                        <p
-                                            style="font-size:1.35rem; font-weight:800; color:#dc2626; margin:0; padding:0.1rem 0; font-family:'Syne',sans-serif; letter-spacing:-0.02em;">
-                                            ₱<span
-                                                id="total_ld_display">{{ number_format((float) old('total_ld', $project->total_ld ?? 0), 2) }}</span>
-                                        </p>
-                                        <p class="field-hint">Formula: LD per Day × Days Overdue</p>
-                                    </div>
-
+                                    <p class="field-hint" id="ld_overdue_hint">
+                                        Auto-calculated from
+                                        {{ $project->revised_contract_expiry ? 'revised' : 'original' }} contract
+                                        expiry
+                                    </p>
                                 </div>
+
+                                <div class="field-group">
+                                    <label for="ld_per_day" class="field-label">
+                                        LD per Day (₱) <span style="font-weight:400; color:#9ca3af;">(auto)</span>
+                                    </label>
+                                    <input type="hidden" id="ld_per_day" name="ld_per_day"
+                                        value="{{ old('ld_per_day', $project->ld_per_day ?? '0') }}">
+                                    <p
+                                        style="font-size:0.9rem; font-weight:700; color:var(--text-primary); margin:0; padding:0.1rem 0; font-family:'Syne',sans-serif;">
+                                        ₱<span
+                                            id="ld_per_day_display">{{ number_format((float) old('ld_per_day', $project->ld_per_day ?? 0), 2) }}</span>
+                                    </p>
+                                    <p class="field-hint">Formula: (Unworked % ÷ 100) × Remaining Balance × 0.001
+                                    </p>
+                                </div>
+
+                                <div class="field-group" style="grid-column:1/-1;">
+                                    <label for="total_ld" class="field-label">
+                                        Total LD (₱) <span style="font-weight:400; color:#9ca3af;">(auto)</span>
+                                    </label>
+                                    <input type="hidden" id="total_ld" name="total_ld"
+                                        value="{{ old('total_ld', $project->total_ld ?? '0') }}">
+                                    <p
+                                        style="font-size:1.35rem; font-weight:800; color:#dc2626; margin:0; padding:0.1rem 0; font-family:'Syne',sans-serif; letter-spacing:-0.02em;">
+                                        ₱<span
+                                            id="total_ld_display">{{ number_format((float) old('total_ld', $project->total_ld ?? 0), 2) }}</span>
+                                    </p>
+                                    <p class="field-hint">Formula: LD per Day × Days Overdue</p>
+                                </div>
+
                             </div>
+                        </div>
 
                     </div>
                 </div>
@@ -1643,6 +1690,8 @@
             ];
             const _totalTECount = {{ $teCount }};
             const _totalVOCount = {{ $voCount }};
+            const _originalAsPlanned = {{ (float) $project->as_planned }};
+            const _originalWorkDone = {{ (float) $project->work_done }};
         </script>
         @vite('resources/js/admin/projects/edit.js')
     @endpush
@@ -1666,7 +1715,8 @@
                     style="display:block; font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-muted); margin-bottom:0.4rem;">
                     Reason / Coverage <span style="color:#ef4444;">*</span>
                 </label>
-                <textarea id="rim-reason" name="rim_reason" rows="4" placeholder="Describe the reason or scope covered by this extension…"
+                <textarea id="rim-reason" name="rim_reason" rows="4"
+                    placeholder="Describe the reason or scope covered by this extension…"
                     style="width:100%; padding:0.72rem 1rem; border:1.5px solid var(--border); border-radius:9px; font-size:0.875rem; color:var(--text-primary); background:var(--bg-primary); outline:none; font-family:'Instrument Sans',sans-serif; resize:vertical; transition:border-color 0.2s,box-shadow 0.2s; box-sizing:border-box; min-height:100px; line-height:1.5;"
                     onfocus="this.style.borderColor='var(--orange-500)';this.style.boxShadow='0 0 0 3px rgba(249,115,22,0.1)'"
                     onblur="this.style.borderColor='var(--border)';this.style.boxShadow='none'"
