@@ -120,6 +120,7 @@
         $extCount = $teCount + $voCount + ($hasSO ? 1 : 0);
         $logs = $project->logs()->with('user')->latest()->get();
         $ldHistories = $project->ldHistories()->orderBy('month', 'desc')->with('updatedBy')->get();
+        $latestAttachment = $project->attachments()->latest('created_at')->first();
     @endphp
 
     <div class="show-page-inner">
@@ -182,6 +183,40 @@
                             <span class="meta" style="color: {{ $slipThemeColor }};">{{ $slipLabel }}</span>
                         </div>
                     </div>
+
+                    @if($latestAttachment)
+                        <div class="snapshot-photo-card">
+                            <div class="snapshot-photo-head">
+                                <span class="label">Latest progress photo</span>
+                                <span class="snapshot-photo-pill">
+                                    <i class="fas fa-camera"></i>
+                                    {{ $latestAttachment->created_at->format('M d, Y') }}
+                                </span>
+                            </div>
+                            <div class="snapshot-photo-body">
+                                <img src="{{ $latestAttachment->url }}" alt="Latest progress photo">
+                                <div class="snapshot-photo-copy">
+                                    <p class="snapshot-photo-caption">
+                                        {{ $latestAttachment->caption ?: 'Latest work progress update' }}
+                                    </p>
+                                    @if($latestAttachment->user)
+                                        <p class="snapshot-photo-meta">
+                                            <i class="fas fa-user"></i>
+                                            {{ $latestAttachment->user->name }}
+                                        </p>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    @else
+                        <div class="snapshot-photo-card snapshot-photo-card-empty">
+                            <div class="snapshot-photo-head">
+                                <span class="label">Latest progress photo</span>
+                            </div>
+                            <p class="snapshot-photo-caption" style="margin:0;">No progress photo has been attached yet.</p>
+                        </div>
+                    @endif
+
                     <div class="snapshot-footer">
                         <div class="snapshot-footer-col">
                             <span class="footer-label">Due date</span>

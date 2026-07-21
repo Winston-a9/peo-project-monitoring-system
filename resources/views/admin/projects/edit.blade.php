@@ -572,6 +572,28 @@
                                 <p class="field-error"><i class="fas fa-exclamation-circle"></i> {{ $message }}</p>
                             @enderror
                         </div>
+
+                        @php $latestAttachment = $project->attachments()->latest('created_at')->first(); @endphp
+                        @if($latestAttachment)
+                            <div class="field-group">
+                                <label class="field-label">Latest Progress Photo</label>
+                                <div style="display:grid; grid-template-columns:120px minmax(0,1fr); gap:0.85rem; align-items:center; padding:0.9rem; border:1px solid var(--border); border-radius:12px; background:linear-gradient(135deg, rgba(249,115,22,0.06), rgba(255,255,255,0.95));">
+                                    <img src="{{ $latestAttachment->url }}" alt="Latest progress photo"
+                                        style="width:100%; height:92px; object-fit:cover; border-radius:10px; border:1px solid var(--border); display:block;">
+                                    <div style="display:flex; flex-direction:column; gap:0.35rem; min-width:0;">
+                                        <p style="margin:0; font-size:0.82rem; font-weight:600; color:var(--text-primary); line-height:1.45;">
+                                            {{ $latestAttachment->caption ?: 'Latest work progress update' }}
+                                        </p>
+                                        <p style="margin:0; font-size:0.72rem; color:var(--text-secondary);">
+                                            {{ $latestAttachment->created_at->format('M d, Y h:i A') }}
+                                            @if($latestAttachment->user)
+                                                · {{ $latestAttachment->user->name }}
+                                            @endif
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
                     </div>
                     {{-- Progress Photo Gallery card --}}
                 @if($project->attachments->count() > 0)
