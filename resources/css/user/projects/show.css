@@ -326,6 +326,90 @@ body {
     background: rgba(248, 248, 248, 0.92);
 }
 
+.snapshot-photo-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    padding: 0.95rem;
+    border-radius: 18px;
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.13), var(--bg2));
+    border: 1px solid var(--bd);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.snapshot-photo-card-empty {
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.08), var(--bg2));
+    border-color: var(--bd);
+}
+
+.snapshot-photo-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.snapshot-photo-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.58rem;
+    border-radius: 999px;
+    background: rgba(249, 115, 22, 0.12);
+    color: var(--or6);
+    font-size: 0.72rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.snapshot-photo-body {
+    display: grid;
+    grid-template-columns: 120px minmax(0, 1fr);
+    gap: 0.85rem;
+    align-items: center;
+}
+
+.snapshot-photo-body img {
+    width: 100%;
+    height: 92px;
+    object-fit: cover;
+    border-radius: 14px;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    display: block;
+}
+
+.snapshot-photo-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 0;
+}
+
+.snapshot-photo-caption {
+    margin: 0;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1.45;
+}
+
+.snapshot-photo-meta {
+    margin: 0;
+    font-size: 0.72rem;
+    color: var(--tx2);
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.item-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink2);
+}
+
 .footer-label {
     font-size: 0.7rem;
     font-weight: 700;
@@ -418,6 +502,14 @@ body {
 
     .snapshot-footer {
         grid-template-columns: 1fr;
+    }
+
+    .snapshot-photo-body {
+        grid-template-columns: 1fr;
+    }
+
+    .snapshot-photo-body img {
+        height: 140px;
     }
 
     .snapshot-footer-status {

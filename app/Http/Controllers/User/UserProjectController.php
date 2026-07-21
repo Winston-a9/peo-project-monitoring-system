@@ -4,8 +4,11 @@ namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
 use App\Models\Project;
+use App\Models\ProjectAttachment;
 use App\Services\ProjectReportPdf;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class UserProjectController extends Controller
 {
@@ -15,9 +18,46 @@ class UserProjectController extends Controller
         return view('user.projects.index', compact('projects'));
     }
 
+    public function create()
+    {
+        abort(403, 'Regular users cannot create projects.');
+    }
+
+    public function store(Request $request)
+    {
+        abort(403, 'Regular users cannot create projects.');
+    }
+
     public function show(Project $project)
     {
         return view('user.projects.show', compact('project'));
+    }
+
+    public function edit(Project $project)
+    {
+        abort(403, 'Regular users cannot update projects.');
+    }
+
+    public function update(Request $request, Project $project)
+    {
+        abort(403, 'Regular users cannot update projects.');
+    }
+
+    public function destroy(Project $project)
+    {
+        abort(403, 'Regular users cannot delete projects.');
+    }
+
+    public function downloadAttachment(ProjectAttachment $attachment): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        if (!Storage::disk('public')->exists($attachment->path)) {
+            abort(404, 'File not found.');
+        }
+
+        return Storage::disk('public')->download(
+            $attachment->path,
+            $attachment->original_name
+        );
     }
 
     public function exportPdf(Project $project): \Symfony\Component\HttpFoundation\StreamedResponse

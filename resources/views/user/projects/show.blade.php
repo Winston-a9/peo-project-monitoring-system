@@ -117,6 +117,9 @@
 
         $extCount = $teCount + $voCount + ($hasSO ? 1 : 0);
         $logs = $project->logs()->with('user')->latest()->get();
+        $ldHistories = $project->ldHistories()->orderBy('month', 'desc')->with('updatedBy')->get();
+        $latestAttachment = $project->attachments()->latest('created_at')->first();
+        $attachments = $project->attachments()->orderBy('created_at', 'desc')->get();
     @endphp
 
     <div class="show-page-inner">
@@ -179,6 +182,40 @@
                             <span class="meta" style="color: {{ $slipThemeColor }};">{{ $slipLabel }}</span>
                         </div>
                     </div>
+                    @if($latestAttachment)
+                        <div class="snapshot-photo-card">
+                            <div class="snapshot-photo-head">
+                                <span class="label">Latest progress photo</span>
+                                <span class="snapshot-photo-pill">
+                                    <i class="fas fa-camera"></i>
+                                    {{ $latestAttachment->created_at->format('M d, Y') }}
+                                </span>
+                            </div>
+                            <div class="snapshot-photo-body" style="cursor:pointer;"
+                                onclick="openPhotoModal('{{ $latestAttachment->url }}', '{{ addslashes($latestAttachment->caption ?? '') }}', '{{ $latestAttachment->created_at->format('M d, Y h:i A') }}', '{{ addslashes($latestAttachment->user->name ?? 'Unknown') }}', '{{ addslashes($latestAttachment->original_name) }}', '{{ route('user.attachments.download', $latestAttachment) }}')">
+                                <img src="{{ $latestAttachment->url }}" alt="Latest progress photo" style="pointer-events:none;">
+                                <div class="snapshot-photo-copy">
+                                    <p class="snapshot-photo-caption">
+                                        {{ $latestAttachment->caption ?: 'Latest work progress update' }}
+                                    </p>
+                                    @if($latestAttachment->user)
+                                        <p class="snapshot-photo-meta">
+                                            <i class="fas fa-user"></i>
+                                            {{ $latestAttachment->user->name }}
+                                        </p>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    @else
+                        <div class="snapshot-photo-card snapshot-photo-card-empty">
+                            <div class="snapshot-photo-head">
+                                <span class="label">Latest progress photo</span>
+                            </div>
+                            <p class="snapshot-photo-caption" style="margin:0;">No progress photo has been attached yet.</p>
+                        </div>
+                    @endif
+
                     <div class="snapshot-footer">
                         <div class="snapshot-footer-col">
                             <span class="footer-label">Due date</span>
@@ -270,6 +307,14 @@
                         <span class="dv" style="text-align:right;max-width:60%;">{{ $project->location }}</span>
                     </div>
                     <div class="dr">
+                        <span class="dl"><i class="fas fa-crosshairs"></i> Geotagged Location</span>
+                        <span class="dv" style="text-align:right;max-width:60%;">{{ $project->geotagged_location ?: '—' }}</span>
+                    </div>
+                    <div class="dr">
+                        <span class="dl"><i class="fas fa-wallet"></i> Fund Source</span>
+                        <span class="dv" style="text-align:right;max-width:60%;">{{ $project->fund_source ?: '—' }}</span>
+                    </div>
+                    <div class="dr">
                         <span class="dl"><i class="fas fa-building"></i> Contractor</span>
                         <span class="dv" style="text-align:right;max-width:60%;">{{ $project->contractor }}</span>
                     </div>
@@ -277,6 +322,11 @@
                         <span class="dl"><i class="fas fa-peso-sign"></i> Contract Amount</span>
                         <span class="dv"
                             style="text-align:right;max-width:60%;">₱{{ number_format($project->original_contract_amount, 2) }}</span>
+                    </div>
+                    <div class="dr">
+                        <span class="dl"><i class="fas fa-file-invoice-dollar"></i> Revised Contract Amount</span>
+                        <span class="dv"
+                            style="text-align:right;max-width:60%;">₱{{ number_format($remainingBal, 2) }}</span>
                     </div>
                     <div class="dr">
                         <span class="dl"><i class="fas fa-circle-dot"></i> Status</span>
@@ -297,10 +347,6 @@
                         </div>
                     </div>
                     <div class="dr">
-                        <span class="dl"><i class="fas fa-peso-sign"></i> Original Amount</span>
-                        <span class="dv">₱{{ number_format($project->original_contract_amount, 2) }}</span>
-                    </div>
-                    <div class="dr">
                         <span class="dl"><i class="fas fa-clock-rotate-left"></i> Last Updated</span>
                         <div>
                             <p class="dv">{{ $project->updated_at->format('M d, Y') }}</p>
@@ -314,6 +360,17 @@
                             <p class="dv">{{ $project->created_at->format('M d, Y') }}</p>
                             <p class="ds">{{ $project->created_at->format('h:i A') }}</p>
                         </div>
+                    </div>
+                    <div class="dr" style="{{ $project->performance_bond_date ? '' : 'opacity:0.48;' }}">
+                        <span class="dl"><i class="fas fa-certificate" style="{{ $project->performance_bond_date ? 'color:#06b6d4;' : 'color:#9ca3af;' }}"></i> Performance Bond Expiry</span>
+                        @if($project->performance_bond_date)
+                            <div>
+                                <p class="dv">{{ $project->performance_bond_date->format('F d, Y') }}</p>
+                                <p class="ds">{{ $project->performance_bond_date->format('l') }}</p>
+                            </div>
+                        @else
+                            <span class="pill p-gy">Not set</span>
+                        @endif
                     </div>
                 </div>
 
@@ -443,6 +500,40 @@
                         </div>
                     </div>
                 </div>
+
+                @if($attachments->count() > 0)
+                    <div class="card" style="margin-top:0.875rem;">
+                        <div class="ch" style="justify-content:space-between;">
+                            <div style="display:flex;align-items:center;gap:0.5rem;">
+                                <i class="fas fa-images" style="color:var(--or5);font-size:0.8rem;"></i>
+                                <span class="ct">Progress Photos</span>
+                            </div>
+                            <span class="pill p-or">{{ $attachments->count() }}</span>
+                        </div>
+                        <div style="padding:1.1rem 1.25rem;">
+                            <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:1rem;">
+                                @foreach($attachments as $attachment)
+                                    <div style="border:1.5px solid var(--bd); border-radius:10px; overflow:hidden; background:var(--bg2); cursor:pointer;"
+                                        onclick="openPhotoModal('{{ $attachment->url }}', '{{ addslashes($attachment->caption ?? '') }}', '{{ $attachment->created_at->format('M d, Y h:i A') }}', '{{ addslashes($attachment->user->name ?? 'Unknown') }}', '{{ addslashes($attachment->original_name) }}', '{{ route('user.attachments.download', $attachment) }}')">
+                                        <img src="{{ $attachment->url }}" alt="Progress photo"
+                                            style="width:100%; height:120px; object-fit:cover; display:block; pointer-events:none;">
+                                        <div style="padding:0.6rem 0.75rem;">
+                                            <p style="margin:0; font-size:0.7rem; color:var(--tx2); line-height:1.4;">
+                                                {{ $attachment->caption }}
+                                            </p>
+                                            <p style="margin:0.3rem 0 0; font-size:0.65rem; color:#9ca3af;">
+                                                {{ $attachment->created_at->format('M d, Y h:i A') }}
+                                                @if($attachment->user)
+                                                    · {{ $attachment->user->name }}
+                                                @endif
+                                            </p>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                @endif
             </div>
         </div>
 
@@ -757,80 +848,137 @@
                             <span class="pill p-re">Total: ₱{{ number_format($project->total_ld, 2) }}</span>
                         @endif
                     </div>
-                    
-                    @php
-                        $ldStatus = $project->ld_status ?? 'inactive';
-                        $statusConfig = [
-                            'inactive' => [
-                                'label' => 'Not Started',
-                                'icon' => 'fa-circle-pause',
-                                'bgColor' => 'rgba(156,163,175,0.08)',
-                                'borderColor' => 'rgba(156,163,175,0.2)',
-                                'iconColor' => '#9ca3af',
-                                'textColor' => '#9ca3af'
-                            ],
-                            'active' => [
-                                'label' => 'Penalty Running',
-                                'icon' => 'fa-circle-play',
-                                'bgColor' => 'rgba(220,38,38,0.06)',
-                                'borderColor' => 'rgba(220,38,38,0.2)',
-                                'iconColor' => '#dc2626',
-                                'textColor' => '#dc2626'
-                            ],
-                            'terminated' => [
-                                'label' => 'Terminated',
-                                'icon' => 'fa-circle-stop',
-                                'bgColor' => 'rgba(34,197,94,0.06)',
-                                'borderColor' => 'rgba(34,197,94,0.2)',
-                                'iconColor' => '#16a34a',
-                                'textColor' => '#16a34a'
-                            ]
-                        ];
-                        $config = $statusConfig[$ldStatus] ?? $statusConfig['inactive'];
-                    @endphp
-                    
-                    <div style="display:flex; align-items:center; gap:0.6rem; padding:0.75rem 1rem; border-radius:9px; margin-bottom:0.75rem;
-                        background:{{ $config['bgColor'] }}; border:1.5px solid {{ $config['borderColor'] }};">
-                        <i class="fas {{ $config['icon'] }}" style="color:{{ $config['iconColor'] }}; font-size:0.85rem; flex-shrink:0;"></i>
-                        <p style="margin:0; font-size:0.8rem; font-weight:600; color:{{ $config['textColor'] }};">
-                            LD Status: <span style="font-weight:700;">{{ $config['label'] }}</span>
-                        </p>
-                    </div>
-                        <div class="dr" style="border-right:1px solid var(--bd);">
-                            <span class="dl"><i class="fas fa-percent"></i> Accomplished</span>
-                            <span
-                                class="dv">{{ $project->ld_accomplished !== null ? $project->ld_accomplished . '%' : '—' }}</span>
-                        </div>
-                        <div class="dr">
-                            <span class="dl"><i class="fas fa-percent"></i> Unworked</span>
-                            <span class="dv">{{ $project->ld_unworked !== null ? $project->ld_unworked . '%' : '—' }}</span>
-                        </div>
-                        @php
-                            $ldExpiryDate = $project->revised_contract_expiry ?? $project->original_contract_expiry;
-                            $ldLiveDays = (int) now()->startOfDay()->diffInDays($ldExpiryDate->startOfDay(), false);
-                            $ldLiveOverdue = $ldLiveDays < 0 ? abs($ldLiveDays) : 0;
-                        @endphp
-                        <div class="dr" style="border-right:1px solid var(--bd);">
-                            <span class="dl"><i class="fas fa-calendar-xmark"></i> Days Overdue</span>
-                            @if($ldLiveOverdue > 0)
-                                <span class="dv" style="color:#dc2626;">{{ $ldLiveOverdue }}
-                                    {{ $ldLiveOverdue === 1 ? 'day' : 'days' }}</span>
-                            @else
-                                <span style="color:#9ca3af;font-size:0.82rem;">—</span>
+
+                    <div style="display:flex;align-items:center;border-bottom:1px solid var(--bd);background:var(--bg2);">
+                        <button onclick="toggleLdTab('overview')" id="ld-tab-overview"
+                            style="flex:1;padding:0.7rem 1.25rem;background:transparent;border:none;cursor:pointer;font-size:0.8rem;font-weight:700;color:var(--tx);border-bottom:2px solid #dc2626;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:0.5rem;font-family:'Instrument Sans',sans-serif;">
+                            <i class="fas fa-gauge" style="font-size:0.72rem;color:#dc2626;"></i> Overview
+                        </button>
+                        <button onclick="toggleLdTab('history')" id="ld-tab-history"
+                            style="flex:1;padding:0.7rem 1.25rem;background:transparent;border:none;cursor:pointer;font-size:0.8rem;font-weight:700;color:var(--tx2);border-bottom:2px solid transparent;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:0.5rem;font-family:'Instrument Sans',sans-serif;">
+                            <i class="fas fa-table-list" style="font-size:0.72rem;"></i> Monthly History
+                            @if($ldHistories->count())
+                                <span class="pill" style="background:rgba(220,38,38,0.1);color:#dc2626;border:1px solid rgba(220,38,38,0.22);">{{ $ldHistories->count() }}</span>
                             @endif
+                        </button>
+                    </div>
+
+                    <div id="ld-tab-overview-content" style="display:block;">
+                        @php
+                            $ldStatus = $project->ld_status ?? 'inactive';
+                            $statusConfig = [
+                                'inactive' => [
+                                    'label' => 'Not Started',
+                                    'icon' => 'fa-circle-pause',
+                                    'bgColor' => 'rgba(156,163,175,0.08)',
+                                    'borderColor' => 'rgba(156,163,175,0.2)',
+                                    'iconColor' => '#9ca3af',
+                                    'textColor' => '#9ca3af'
+                                ],
+                                'active' => [
+                                    'label' => 'Penalty Running',
+                                    'icon' => 'fa-circle-play',
+                                    'bgColor' => 'rgba(220,38,38,0.06)',
+                                    'borderColor' => 'rgba(220,38,38,0.2)',
+                                    'iconColor' => '#dc2626',
+                                    'textColor' => '#dc2626'
+                                ],
+                                'terminated' => [
+                                    'label' => 'Terminated',
+                                    'icon' => 'fa-circle-stop',
+                                    'bgColor' => 'rgba(34,197,94,0.06)',
+                                    'borderColor' => 'rgba(34,197,94,0.2)',
+                                    'iconColor' => '#16a34a',
+                                    'textColor' => '#16a34a'
+                                ]
+                            ];
+                            $config = $statusConfig[$ldStatus] ?? $statusConfig['inactive'];
+                        @endphp
+
+                        <div style="display:flex; align-items:center; gap:0.6rem; padding:0.75rem 1rem; border-radius:9px; margin-bottom:0.75rem;
+                            background:{{ $config['bgColor'] }}; border:1.5px solid {{ $config['borderColor'] }};">
+                            <i class="fas {{ $config['icon'] }}" style="color:{{ $config['iconColor'] }}; font-size:0.85rem; flex-shrink:0;"></i>
+                            <p style="margin:0; font-size:0.8rem; font-weight:600; color:{{ $config['textColor'] }};">
+                                LD Status: <span style="font-weight:700;">{{ $config['label'] }}</span>
+                            </p>
                         </div>
-                        <div class="dr">
-                            <span class="dl"><i class="fas fa-peso-sign"></i> LD / Day</span>
-                            <span
-                                class="dv">{{ $project->ld_per_day ? '₱' . number_format($project->ld_per_day, 2) : '—' }}</span>
+
+                        <div style="display:grid;grid-template-columns:1fr 1fr;">
+                            <div class="dr" style="border-right:1px solid var(--bd);">
+                                <span class="dl"><i class="fas fa-percent"></i> Accomplished</span>
+                                <span class="dv">{{ $project->ld_accomplished !== null ? $project->ld_accomplished . '%' : '—' }}</span>
+                            </div>
+                            <div class="dr">
+                                <span class="dl"><i class="fas fa-percent"></i> Unworked</span>
+                                <span class="dv">{{ $project->ld_unworked !== null ? $project->ld_unworked . '%' : '—' }}</span>
+                            </div>
+                            @php
+                                $ldExpiryDate = $project->revised_contract_expiry ?? $project->original_contract_expiry;
+                                $ldLiveDays = (int) now()->startOfDay()->diffInDays($ldExpiryDate->startOfDay(), false);
+                                $ldLiveOverdue = $ldLiveDays < 0 ? abs($ldLiveDays) : 0;
+                            @endphp
+                            <div class="dr" style="border-right:1px solid var(--bd);">
+                                <span class="dl"><i class="fas fa-calendar-xmark"></i> Days Overdue</span>
+                                @if($ldLiveOverdue > 0)
+                                    <span class="dv" style="color:#dc2626;">{{ $ldLiveOverdue }} {{ $ldLiveOverdue === 1 ? 'day' : 'days' }}</span>
+                                @else
+                                    <span style="color:#9ca3af;font-size:0.82rem;">—</span>
+                                @endif
+                            </div>
+                            <div class="dr">
+                                <span class="dl"><i class="fas fa-peso-sign"></i> LD / Day</span>
+                                <span class="dv">{{ $project->ld_per_day ? '₱' . number_format($project->ld_per_day, 2) : '—' }}</span>
+                            </div>
+                        </div>
+                        <div style="padding:0.875rem 1.25rem;background:rgba(239,68,68,0.04);border-top:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;">
+                            <span class="dl"><i class="fas fa-peso-sign" style="color:#dc2626;"></i> Total LD</span>
+                            <span style="font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;color:#dc2626;">
+                                ₱{{ $project->total_ld ? number_format($project->total_ld, 2) : '0.00' }}
+                            </span>
                         </div>
                     </div>
-                    <div
-                        style="padding:0.875rem 1.25rem;background:rgba(239,68,68,0.04);border-top:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;">
-                        <span class="dl"><i class="fas fa-peso-sign" style="color:#dc2626;"></i> Total LD</span>
-                        <span style="font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;color:#dc2626;">
-                            ₱{{ $project->total_ld ? number_format($project->total_ld, 2) : '0.00' }}
-                        </span>
+
+                    <div id="ld-tab-history-content" style="display:none;">
+                        @if($ldHistories->count())
+                            <div style="overflow-x:auto;">
+                                <table class="te-tbl">
+                                    <thead>
+                                        <tr>
+                                            <th style="text-align:left;">Month</th>
+                                            <th style="text-align:center;">Accomplished</th>
+                                            <th style="text-align:center;">Unworked</th>
+                                            <th style="text-align:center;">Days Overdue</th>
+                                            <th style="text-align:right;">LD Amount</th>
+                                            <th style="text-align:right;">Last Updated</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($ldHistories as $i => $entry)
+                                            <tr style="background:{{ $i % 2 === 0 ? 'var(--bg)' : 'var(--bg2)' }};">
+                                                <td style="font-weight:700;color:#dc2626;white-space:nowrap;">{{ $entry->month->format('F Y') }}</td>
+                                                <td style="text-align:center;">{{ $entry->ld_accomplished !== null ? $entry->ld_accomplished . '%' : '—' }}</td>
+                                                <td style="text-align:center;">{{ $entry->ld_unworked !== null ? $entry->ld_unworked . '%' : '—' }}</td>
+                                                <td style="text-align:center;">{{ $entry->days_overdue }}</td>
+                                                <td style="text-align:right;font-weight:700;color:#dc2626;">₱{{ number_format($entry->ld_amount, 2) }}</td>
+                                                <td style="text-align:right;">
+                                                    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px;">
+                                                        <span style="font-size:0.75rem;color:var(--tx2);">{{ $entry->updated_at->format('M d, Y') }}</span>
+                                                        @if($entry->updatedBy)
+                                                            <span style="font-size:0.65rem;color:#9ca3af;">by {{ $entry->updatedBy->name }}</span>
+                                                        @endif
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @else
+                            <div style="padding:2rem 1.25rem;text-align:center;color:#9ca3af;">
+                                <i class="fas fa-inbox" style="font-size:1.1rem;margin-bottom:0.5rem;display:block;"></i>
+                                <p style="font-size:0.82rem;">No monthly LD history recorded yet.</p>
+                            </div>
+                        @endif
                     </div>
                 </div>
             @endif
@@ -846,70 +994,54 @@
                             style="flex:1;padding:0.875rem 1.25rem;background:transparent;border:none;cursor:pointer;font-size:0.825rem;font-weight:700;color:var(--tx2);border-bottom:2px solid transparent;transition:all 0.2s;display:flex;align-items:center;gap:0.5rem;font-family:'Instrument Sans',sans-serif;">
                             <i class="fas fa-table" style="font-size:0.75rem;"></i> Financial Entries
                         </button>
-                        <div
-                            style="padding:0.875rem 1.25rem;display:flex;align-items:center;gap:0.5rem;border-left:1px solid var(--bd);flex-shrink:0;">
+                        <div style="padding:0.875rem 1.25rem;display:flex;align-items:center;gap:0.5rem;border-left:1px solid var(--bd);flex-shrink:0;">
                             <i class="fas fa-file-invoice-dollar" style="color:#16a34a;font-size:0.8rem;"></i>
-                            <span class="pill"
-                                style="background:rgba(34,197,94,0.1);color:#16a34a;border:1px solid rgba(34,197,94,0.22);">{{ $billingCount }}
-                                {{ $billingCount === 1 ? 'billing' : 'billings' }}</span>
+                            <span class="pill" style="background:rgba(34,197,94,0.1);color:#16a34a;border:1px solid rgba(34,197,94,0.22);">{{ $billingCount }} {{ $billingCount === 1 ? 'billing' : 'billings' }}</span>
                         </div>
                     </div>
                     <div id="billing-tab-summary-content" style="display:block;">
                         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid var(--bd);">
                             <div style="padding:1.25rem;border-right:1px solid var(--bd);">
                                 <p class="ey" style="margin-bottom:0.5rem;">Original Contract Amount</p>
-                                <p
-                                    style="font-family:'Syne',sans-serif;font-size:1.35rem;font-weight:800;color:var(--tx);line-height:1;letter-spacing:-0.02em;">
+                                <p style="font-family:'Syne',sans-serif;font-size:1.35rem;font-weight:800;color:var(--tx);line-height:1;letter-spacing:-0.02em;">
                                     ₱{{ number_format($project->original_contract_amount, 2) }}</p>
                                 <p style="font-size:0.7rem;color:#9ca3af;margin-top:0.4rem;">Before any cost adjustments</p>
                             </div>
                             <div style="padding:1.25rem;border-right:1px solid var(--bd);">
                                 <p class="ey" style="margin-bottom:0.5rem;">Total Amount Billed</p>
-                                <p
-                                    style="font-family:'Syne',sans-serif;font-size:1.35rem;font-weight:800;color:#16a34a;line-height:1;letter-spacing:-0.02em;">
+                                <p style="font-family:'Syne',sans-serif;font-size:1.35rem;font-weight:800;color:#16a34a;line-height:1;letter-spacing:-0.02em;">
                                     ₱{{ number_format($totalBilled, 2) }}</p>
                                 @php $billedPct = $project->original_contract_amount > 0 ? round(($totalBilled / $project->original_contract_amount) * 100, 1) : 0; @endphp
                             </div>
                             <div style="padding:1.25rem;">
                                 <p class="ey" style="margin-bottom:0.5rem;">Remaining Balance</p>
-                                <p
-                                    style="font-family:'Syne',sans-serif;font-size:1.35rem;font-weight:800;color:{{ $remainingBal >= 0 ? '#3b82f6' : '#dc2626' }};line-height:1;letter-spacing:-0.02em;">
+                                <p style="font-family:'Syne',sans-serif;font-size:1.35rem;font-weight:800;color:{{ $remainingBal >= 0 ? '#3b82f6' : '#dc2626' }};line-height:1;letter-spacing:-0.02em;">
                                     ₱{{ number_format(abs($remainingBal), 2) }}
-                                    @if($remainingBal < 0)<span style="font-size:0.75rem;font-weight:700;color:#dc2626;">
-                                    (over)</span>@endif
+                                    @if($remainingBal < 0)<span style="font-size:0.75rem;font-weight:700;color:#dc2626;">(over)</span>@endif
                                 </p>
                                 @php $remainPct = $project->original_contract_amount > 0 ? round((abs($remainingBal) / $project->original_contract_amount) * 100, 1) : 0; @endphp
                             </div>
                         </div>
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;padding:1.25rem;">
-                            <div
-                                style="padding:1rem;border-radius:14px;background:rgba(59,130,246,0.05);border:1px solid rgba(59,130,246,0.12);">
+                            <div style="padding:1rem;border-radius:14px;background:rgba(59,130,246,0.05);border:1px solid rgba(59,130,246,0.12);">
                                 <p class="ey" style="margin-bottom:0.5rem;color:#2563eb;">Advance Billing</p>
-                                <p
-                                    style="margin:0;font-family:'Syne',sans-serif;font-size:1.15rem;font-weight:800;color:var(--tx);">
+                                <p style="margin:0;font-family:'Syne',sans-serif;font-size:1.15rem;font-weight:800;color:var(--tx);">
                                     {{ $advancePct !== null ? $advancePct . '%' : '—' }}
                                     @if($advanceAmt !== null)
-                                        <span
-                                            style="font-size:0.9rem;font-weight:600;color:#2563eb;display:block;margin-top:0.35rem;">₱{{ number_format($advanceAmt, 2) }}</span>
+                                        <span style="font-size:0.9rem;font-weight:600;color:#2563eb;display:block;margin-top:0.35rem;">₱{{ number_format($advanceAmt, 2) }}</span>
                                     @endif
                                 </p>
-                                <p class="ds" style="margin-top:0.5rem;color:#2563eb;">Prepayment deducted from billings
-                                    over the contract.</p>
+                                <p class="ds" style="margin-top:0.5rem;color:#2563eb;">Prepayment deducted from billings over the contract.</p>
                             </div>
-                            <div
-                                style="padding:1rem;border-radius:14px;background:rgba(168,85,247,0.05);border:1px solid rgba(168,85,247,0.12);">
+                            <div style="padding:1rem;border-radius:14px;background:rgba(168,85,247,0.05);border:1px solid rgba(168,85,247,0.12);">
                                 <p class="ey" style="margin-bottom:0.5rem;color:#9333ea;">Retention</p>
-                                <p
-                                    style="margin:0;margin-bottom:0.2rem;font-family:'Syne',sans-serif;font-size:1.15rem;font-weight:800;color:var(--tx);">
+                                <p style="margin:0;margin-bottom:0.2rem;font-family:'Syne',sans-serif;font-size:1.15rem;font-weight:800;color:var(--tx);">
                                     {{ $retentionPct !== null ? $retentionPct . '%' : '—' }}
                                 </p>
                                 @if($retentionAmt !== null)
-                                    <p
-                                        style="margin:0;font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;color:#9333ea;">
-                                        ₱{{ number_format($retentionAmt, 2) }}</p>
+                                    <p style="margin:0;font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;color:#9333ea;">₱{{ number_format($retentionAmt, 2) }}</p>
                                 @endif
-                                <p class="ds" style="margin-top:0.5rem;color:#9333ea;">Holdback withheld from each progress
-                                    billing.</p>
+                                <p class="ds" style="margin-top:0.5rem;color:#9333ea;">Holdback withheld from each progress billing.</p>
                             </div>
                         </div>
                     </div>
@@ -919,12 +1051,10 @@
                                 <thead>
                                     <tr>
                                         <th style="text-align:left;">Entry</th>
-                                        <th style="text-align:center;">Date Requested</th>
                                         <th style="text-align:right;">Amount</th>
                                         <th style="text-align:right;">Remaining Balance</th>
                                     </tr>
                                 </thead>
-                                <tbody>
                                 <tbody>
                                     @php
                                         $tableRows = [];
@@ -939,13 +1069,10 @@
                                                 || str_starts_with((string) $d, 'Variation Order')
                                         ));
 
-                                        // Build TE/VO ext rows — use date_requested from allRows context
-                                        // We re-derive date_requested per ext entry using the same offset logic as the extensions tab
-                                        $teCount_fin    = collect($allDocs)->filter(fn($d) => str_starts_with($d, 'Time Extension'))->count();
-                                        $voCount_fin    = collect($allDocs)->filter(fn($d) => str_starts_with($d, 'Variation Order'))->count();
+                                        $teCount_fin = collect($allDocs)->filter(fn($d) => str_starts_with($d, 'Time Extension'))->count();
+                                        $voCount_fin = collect($allDocs)->filter(fn($d) => str_starts_with($d, 'Variation Order'))->count();
                                         $dateReqAll_fin = is_array($project->date_requested ?? null) ? $project->date_requested : [];
 
-                                        // TE entries occupy date_requested[0..teCount-1], VO entries occupy [teCount..teCount+voCount-1]
                                         $extDateMap = [];
                                         $teIdx = 0; $voIdx = 0;
                                         foreach ($allDocs as $di => $doc) {
@@ -961,10 +1088,10 @@
                                         foreach ($allExtCosts as $ei => $cost) {
                                             if ($cost !== null && (float) $cost != 0) {
                                                 $tableRows[] = [
-                                                    'type'     => 'ext',
-                                                    'label'    => $allDocs[$ei] ?? 'Extension Cost',
-                                                    'date'     => $extDateMap[$ei] ?? null,
-                                                    'amount'   => (float) $cost,
+                                                    'type' => 'ext',
+                                                    'label' => $allDocs[$ei] ?? 'Extension Cost',
+                                                    'date' => $extDateMap[$ei] ?? null,
+                                                    'amount' => (float) $cost,
                                                     'isDeduct' => (float) $cost < 0,
                                                 ];
                                             }
@@ -972,22 +1099,20 @@
 
                                         foreach ($billingAmounts as $bi => $amount) {
                                             $tableRows[] = [
-                                                'type'    => 'billing',
-                                                'label'   => 'Billing No.' . ($bi + 1),
-                                                'date'    => $billingDates[$bi] ?? null,
-                                                'amount'  => (float) $amount,
-                                                'isDeduct'=> false,
+                                                'type' => 'billing',
+                                                'label' => 'Billing No.' . ($bi + 1),
+                                                'date' => $billingDates[$bi] ?? null,
+                                                'amount' => (float) $amount,
+                                                'isDeduct' => false,
                                             ];
                                         }
 
-                                        // Sort by date ascending (oldest → newest / most recent at bottom), nulls first
                                         usort($tableRows, function ($a, $b) {
                                             $da = $a['date'] ? strtotime($a['date']) : 0;
                                             $db = $b['date'] ? strtotime($b['date']) : 0;
                                             return $da - $db;
                                         });
 
-                                        // Re-stamp isLast on the last billing row after sort
                                         $lastBillingIdx = null;
                                         foreach ($tableRows as $ri => $row) {
                                             if ($row['type'] === 'billing') $lastBillingIdx = $ri;
@@ -999,136 +1124,91 @@
                                         }
                                         unset($row);
 
-                                        // Adjusted contract = original + sum of all signed ext costs
                                         $adjustedContract = (float) $project->original_contract_amount
                                             + collect($tableRows)->where('type', 'ext')->sum('amount');
 
                                         $runningBilled = 0;
                                         $runningAdjustedContract = (float) $project->original_contract_amount;
                                     @endphp
-                                        @foreach($tableRows as $ri => $row)
-                                            @php
-                                                $isEven = $ri % 2 === 0;
-                                                $isExt = $row['type'] === 'ext';
-                                                if ($isExt) {
-                                                    $runningAdjustedContract += $row['amount']; // apply signed adjustment
-                                                } else {
-                                                    $runningBilled += $row['amount'];
-                                                }
-                                                $runningRemain = $runningAdjustedContract - $runningBilled;
-                                            @endphp
+                                    @foreach($tableRows as $ri => $row)
+                                        @php
+                                            $isEven = $ri % 2 === 0;
+                                            $isExt = $row['type'] === 'ext';
+                                            if ($isExt) {
+                                                $runningAdjustedContract += $row['amount'];
+                                            } else {
+                                                $runningBilled += $row['amount'];
+                                            }
+                                            $runningRemain = $runningAdjustedContract - $runningBilled;
+                                        @endphp
                                         <tr style="background:{{ $isEven ? 'var(--bg)' : 'var(--bg2)' }};"
                                             onmouseover="this.style.background='rgba({{ $isExt ? '99,102,241' : '34,197,94' }},0.04)'"
                                             onmouseout="this.style.background='{{ $isEven ? 'var(--bg)' : 'var(--bg2)' }}'">
                                             <td>
                                                 <div style="display:flex;align-items:center;gap:0.5rem;">
-                                                    <div
-                                                        style="width:26px;height:26px;border-radius:7px;background:{{ $isExt ? ($row['amount'] < 0 ? 'rgba(239,68,68,0.1)' : 'rgba(99,102,241,0.1)') : 'rgba(34,197,94,0.1)' }};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                                                        <i class="fas {{ $isExt ? 'fa-file-signature' : 'fa-file-invoice-dollar' }}"
-                                                            style="font-size:0.65rem;color:{{ $isExt ? ($row['amount'] < 0 ? '#dc2626' : '#6366f1') : '#16a34a' }};"></i>
+                                                    <div style="width:26px;height:26px;border-radius:7px;background:{{ $isExt ? ($row['amount'] < 0 ? 'rgba(239,68,68,0.1)' : 'rgba(99,102,241,0.1)') : 'rgba(34,197,94,0.1)' }};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                                        <i class="fas {{ $isExt ? 'fa-file-signature' : 'fa-file-invoice-dollar' }}" style="font-size:0.65rem;color:{{ $isExt ? ($row['amount'] < 0 ? '#dc2626' : '#6366f1') : '#16a34a' }};"></i>
                                                     </div>
                                                     <div>
-                                                        <span
-                                                            style="font-weight:700;color:{{ $isExt ? ($row['amount'] < 0 ? '#dc2626' : '#6366f1') : 'var(--tx)' }};">{{ $row['label'] }}</span>
+                                                        <span style="font-weight:700;color:{{ $isExt ? ($row['amount'] < 0 ? '#dc2626' : '#6366f1') : 'var(--tx)' }};">{{ $row['label'] }}</span>
                                                         @if($isExt)
                                                             @php $isDeduct = $row['amount'] < 0; @endphp
-                                                            <span
-                                                                style="font-size:0.6rem;font-weight:700;
-                                                                    background:{{ $isDeduct ? 'rgba(239,68,68,0.1)' : 'rgba(99,102,241,0.1)' }};
-                                                                    color:{{ $isDeduct ? '#dc2626' : '#6366f1' }};
-                                                                    border:1px solid {{ $isDeduct ? 'rgba(239,68,68,0.2)' : 'rgba(99,102,241,0.2)' }};
-                                                                    border-radius:99px;padding:1px 6px;margin-left:4px;">
+                                                            <span style="font-size:0.6rem;font-weight:700;background:{{ $isDeduct ? 'rgba(239,68,68,0.1)' : 'rgba(99,102,241,0.1)' }};color:{{ $isDeduct ? '#dc2626' : '#6366f1' }};border:1px solid {{ $isDeduct ? 'rgba(239,68,68,0.2)' : 'rgba(99,102,241,0.2)' }};border-radius:99px;padding:1px 6px;margin-left:4px;">
                                                                 {{ $isDeduct ? 'Deduction' : 'Contract Adj.' }}
                                                             </span>
                                                         @endif
                                                         @if(!$isExt && ($row['isLast'] ?? false))
-                                                            <span
-                                                                style="font-size:0.6rem;font-weight:700;background:rgba(34,197,94,0.1);color:#16a34a;border:1px solid rgba(34,197,94,0.22);border-radius:99px;padding:1px 7px;margin-left:4px;">Latest</span>
+                                                            <span style="font-size:0.6rem;font-weight:700;background:rgba(34,197,94,0.1);color:#16a34a;border:1px solid rgba(34,197,94,0.22);border-radius:99px;padding:1px 7px;margin-left:4px;">Latest</span>
                                                         @endif
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td style="text-align:center;color:var(--tx2);font-size:0.8rem;">
-                                                @if($row['date'])
-                                                    <span
-                                                        style="font-weight:600;color:var(--tx);">{{ \Carbon\Carbon::parse($row['date'])->format('M d, Y') }}</span>
-                                                @else
-                                                    <span style="color:#9ca3af;">—</span>
-                                                @endif
-                                            </td>
                                             <td style="text-align:right;">
                                                 @if($isExt)
                                                     @php $isDeduct = $row['amount'] < 0; @endphp
-                                                    <span style="font-weight:600;
-                                                        color:{{ $isDeduct ? '#dc2626' : '#16a34a' }};
-                                                        opacity:0.85;font-size:0.85rem;">
+                                                    <span style="font-weight:600;color:{{ $isDeduct ? '#dc2626' : '#16a34a' }};opacity:0.85;font-size:0.85rem;">
                                                         {{ $isDeduct ? '−' : '+' }}₱{{ number_format(abs($row['amount']), 2) }}
                                                     </span>
-                                                    <p style="font-size:0.6rem;
-                                                        color:{{ $isDeduct ? '#dc2626' : '#9ca3af' }};
-                                                        margin-top:1px;text-align:right;">
+                                                    <p style="font-size:0.6rem;color:{{ $isDeduct ? '#dc2626' : '#9ca3af' }};margin-top:1px;text-align:right;">
                                                         {{ $isDeduct ? 'deduction' : 'contract adj.' }}
                                                     </p>
                                                 @else
-                                                    <span style="font-weight:700;color:#dc2626;
-                                                        font-family:'Syne',sans-serif;font-size:0.95rem;">
+                                                    <span style="font-weight:700;color:#dc2626;font-family:'Syne',sans-serif;font-size:0.95rem;">
                                                         −₱{{ number_format($row['amount'], 2) }}
                                                     </span>
-                                                    <p style="font-size:0.6rem;color:#9ca3af;margin-top:1px;text-align:right;">
-                                                        payment
-                                                    </p>
+                                                    <p style="font-size:0.6rem;color:#9ca3af;margin-top:1px;text-align:right;">payment</p>
                                                 @endif
                                             </td>
                                             <td style="text-align:right;">
                                                 @if($isExt)
                                                     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px;">
-                                                        <span style="font-weight:700;color:{{ $runningRemain >= 0 ? '#3b82f6' : '#dc2626' }};">
-                                                            ₱{{ number_format($runningRemain, 2) }}
-                                                        </span>
+                                                        <span style="font-weight:700;color:{{ $runningRemain >= 0 ? '#3b82f6' : '#dc2626' }};">₱{{ number_format($runningRemain, 2) }}</span>
                                                         <span style="font-size:0.62rem;color:#9ca3af;">after adj.</span>
                                                     </div>
                                                 @else
-                                                    <span
-                                                        style="font-weight:700;color:{{ $runningRemain >= 0 ? '#3b82f6' : '#dc2626' }};">₱{{ number_format($runningRemain, 2) }}</span>
+                                                    <span style="font-weight:700;color:{{ $runningRemain >= 0 ? '#3b82f6' : '#dc2626' }};">₱{{ number_format($runningRemain, 2) }}</span>
                                                 @endif
                                             </td>
                                         </tr>
                                     @endforeach
                                 </tbody>
                                 <tfoot>
-    <tr>
-                                        <td colspan="2"
-                                            style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink2);">
-                                            Total
-                                        </td>
-
-                                        {{-- Amount: sum of billings + ext cost adjustments --}}
+                                    <tr>
+                                        <td colspan="1" style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink2);">Total</td>
                                         <td style="text-align:right;">
                                             @php
-                                                $totalExtCostFinancials = collect($tableRows)
-                                                    ->where('type', 'ext')
-                                                    ->sum(fn($r) => (float) $r['amount']);
-                                                $grandTotal = $totalBilled + $totalExtCostFinancials;
+                                                $totalExtCostFinancials = collect($tableRows)->where('type', 'ext')->sum(fn($r) => (float) $r['amount']);
                                             @endphp
                                             <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
                                                 @if($totalExtCostFinancials > 0)
-                                                    <span style="font-size:0.7rem;color:#6366f1;font-weight:600;">
-                                                        +₱{{ number_format($totalExtCostFinancials, 2) }} adj.
-                                                    </span>
+                                                    <span style="font-size:0.7rem;color:#6366f1;font-weight:600;">+₱{{ number_format($totalExtCostFinancials, 2) }} adj.</span>
                                                 @endif
-                                                <span style="font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:800;color:#16a34a;">
-                                                    ₱{{ number_format($totalBilled, 2) }}
-                                                </span>
+                                                <span style="font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:800;color:#16a34a;">₱{{ number_format($totalBilled, 2) }}</span>
                                             </div>
                                         </td>
-
-                                        {{-- Remaining balance: adjusted contract minus billed --}}
                                         <td style="text-align:right;">
                                             @php $finalRemaining = $adjustedContract - $totalBilled; @endphp
-                                            <span style="font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:800;
-                                                color:{{ $finalRemaining >= 0 ? '#3b82f6' : '#dc2626' }};">
-                                                ₱{{ number_format($finalRemaining, 2) }}
-                                            </span>
+                                            <span style="font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:800;color:{{ $finalRemaining >= 0 ? '#3b82f6' : '#dc2626' }};">₱{{ number_format($finalRemaining, 2) }}</span>
                                         </td>
                                     </tr>
                                 </tfoot>
@@ -1140,13 +1220,10 @@
 
             @if(!$hasLD && !$hasBilling)
                 <div class="card" style="padding:3rem 1.5rem;text-align:center;">
-                    <div
-                        style="width:52px;height:52px;background:rgba(34,197,94,0.07);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;">
+                    <div style="width:52px;height:52px;background:rgba(34,197,94,0.07);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;">
                         <i class="fas fa-peso-sign" style="font-size:1.3rem;color:rgba(34,197,94,0.4);"></i>
                     </div>
-                    <p
-                        style="font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;color:var(--ink2);margin-bottom:0.25rem;">
-                        No Financial Records</p>
+                    <p style="font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;color:var(--ink2);margin-bottom:0.25rem;">No Financial Records</p>
                     <p style="font-size:0.82rem;color:#9ca3af;">No billing or liquidated damages data recorded yet.</p>
                 </div>
             @endif
@@ -1347,4 +1424,28 @@
     @push('scripts')
         @vite('resources/js/user/projects/show.js')
     @endpush
+
+    <x-modal id="photo-viewer-modal" title="Progress Photo" type="default" icon="fa-image" size="lg">
+        <div style="display:flex; flex-direction:column; gap:1rem;">
+            <div style="width:100%; max-height:65vh; overflow:hidden; border-radius:10px; background:#000; display:flex; align-items:center; justify-content:center;">
+                <img id="photo-viewer-img" src="" alt="Progress photo"
+                    style="max-width:100%; max-height:65vh; width:auto; height:auto; object-fit:contain; display:block;">
+            </div>
+            <div>
+                <p id="photo-viewer-caption" style="margin:0; font-size:0.875rem; color:var(--tx); font-weight:600;"></p>
+                <p id="photo-viewer-meta" style="margin:0.3rem 0 0; font-size:0.75rem; color:#9ca3af;"></p>
+            </div>
+        </div>
+
+        <x-slot name="footer">
+            <button type="button" onclick="closeModal('photo-viewer-modal')"
+                style="padding:0.6rem 1.2rem; border:1.5px solid var(--bd); border-radius:9px; background:var(--bg); color:var(--tx2); font-weight:600; font-size:0.85rem; cursor:pointer; font-family:'Instrument Sans',sans-serif; transition:all 0.15s;">
+                Close
+            </button>
+            <a id="photo-viewer-download" href=""
+                style="display:inline-flex; align-items:center; gap:0.4rem; padding:0.6rem 1.4rem; background:var(--or5); color:white; border:none; border-radius:9px; font-weight:700; font-size:0.85rem; cursor:pointer; font-family:'Instrument Sans',sans-serif; box-shadow:0 2px 8px rgba(249,115,22,0.3); transition:all 0.15s; text-decoration:none;">
+                <i class="fas fa-download" style="font-size:0.75rem;"></i> Download
+            </a>
+        </x-slot>
+    </x-modal>
 </x-app-layout>

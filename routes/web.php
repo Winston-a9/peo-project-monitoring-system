@@ -77,7 +77,14 @@ Route::middleware(['auth', 'role:user'])->prefix('user')->name('user.')->group(f
     })->name('dashboard');
 
     Route::get('/projects', [UserProjectController::class, 'index'])->name('projects.index');
+    Route::get('/projects/create', [UserProjectController::class, 'create'])->name('projects.create');
+    Route::post('/projects', [UserProjectController::class, 'store'])->name('projects.store');
+    Route::get('/projects/{project}/edit', [UserProjectController::class, 'edit'])->name('projects.edit');
+    Route::put('/projects/{project}', [UserProjectController::class, 'update'])->name('projects.update');
+    Route::patch('/projects/{project}', [UserProjectController::class, 'update'])->name('projects.update');
+    Route::delete('/projects/{project}', [UserProjectController::class, 'destroy'])->name('projects.destroy');
     Route::middleware('throttle:export')->get('/projects/{project}/export-pdf', [UserProjectController::class, 'exportPdf'])->name('projects.export-pdf');
+    Route::get('/attachments/{attachment}/download', [UserProjectController::class, 'downloadAttachment'])->name('attachments.download');
     Route::get('/projects/{project}', [UserProjectController::class, 'show'])->name('projects.show');
 
     Route::get('/reports', [UserProjectController::class, 'reports'])->name('reports.index');
